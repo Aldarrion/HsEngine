@@ -174,6 +174,8 @@ public:
     // Debug shape renderer
     DebugShapeRenderer* GetDebugShapeRenderer() const;
 
+    RESULT AddMaterial(UniquePtr<Material>&& material);
+
 private:
     static constexpr auto VK_VERSION = VK_API_VERSION_1_1;
     static constexpr uint VKR_INVALID = -1;

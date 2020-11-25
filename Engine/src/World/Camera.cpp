@@ -8,6 +8,37 @@ namespace hs
 {
 
 //------------------------------------------------------------------------------
+void Camera::InitAsPerspective(const Vec3& pos, const Vec3& target, float fovY, float near, float far)
+{
+    projectionType_ = ProjectionType::Perspective;
+
+    pos_ = pos;
+    forward_ = (target - pos).Normalized();
+    forward_.y = Clamp(forward_.y, -0.99f, 0.99f);
+
+    right_ = Vec3::UP().Cross(forward_).Normalized();
+    fovy_ = fovY;
+    near_ = near;
+    far_ = far;
+
+    UpdateMatrices();
+
+    angles_.x = asinf(forward_.y);
+    float cosX = cosf(angles_.x);
+
+    float y1 = acosf(forward_.x / cosX);
+    float y2 = 2 * HS_PI - y1;
+
+    float d1 = abs(sin(y1) - (forward_.z / cosX));
+    float d2 = abs(sin(y2) - (forward_.z / cosX));
+
+    if (d1 < d2)
+        angles_.y = y1;
+    else
+        angles_.y = y2;
+}
+
+//------------------------------------------------------------------------------
 void Camera::Init(const PropertyContainer& data)
 {
     pos_ = data.GetValue(CameraDef::POSITION).V3;
@@ -25,10 +56,9 @@ void Camera::FillData(PropertyContainer& data)
 //------------------------------------------------------------------------------
 void Camera::UpdateCameraVectors()
 {
-    if (angles_.x > 89.0f)
-        angles_.x = 89;
-    else if (angles_.x < -89.0f)
-        angles_.x = -89;
+    static constexpr float PITCH_LIMIT{ DegToRad(89.0f) };
+
+    angles_.x  = Clamp(angles_.x, -PITCH_LIMIT, PITCH_LIMIT);
 
     forward_.x = cos(DegToRad(angles_.y)) * cos(DegToRad(angles_.x));
     forward_.y = sin(DegToRad(angles_.x));
@@ -38,7 +68,7 @@ void Camera::UpdateCameraVectors()
 }
 
 //------------------------------------------------------------------------------
-void Camera::UpdateMatrics()
+void Camera::UpdateMatrices()
 {
     if (projectionType_ == ProjectionType::Orthographic)
     {
@@ -55,7 +85,7 @@ void Camera::UpdateMatrics()
 //------------------------------------------------------------------------------
 void Camera::Update()
 {
-    UpdateMatrics();
+    UpdateMatrices();
 }
 
 //------------------------------------------------------------------------------

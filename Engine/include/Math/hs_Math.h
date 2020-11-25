@@ -9,6 +9,7 @@ namespace hs
 {
 
 static constexpr float HS_PI = 3.14159265359f;
+static constexpr float HS_PI_HALF = HS_PI / 2;
 static constexpr float HS_TAU = 2 * HS_PI;
 
 //------------------------------------------------------------------------------
@@ -23,6 +24,13 @@ template<class NumberT>
 inline constexpr NumberT Min(NumberT a, NumberT b)
 {
     return a < b ? a : b;
+}
+
+//------------------------------------------------------------------------------
+template<class NumberT>
+inline constexpr NumberT Clamp(NumberT x, NumberT min, NumberT max)
+{
+    return x < min ? min : (x > max ? max : x);
 }
 
 //------------------------------------------------------------------------------

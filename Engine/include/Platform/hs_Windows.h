@@ -11,3 +11,11 @@
 
 #include <windows.h>
 
+#ifdef near
+    #undef near
+#endif
+
+#ifdef far
+    #undef far
+#endif
+

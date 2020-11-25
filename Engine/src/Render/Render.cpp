@@ -1133,7 +1133,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
         }
     }
 
-    camera_.UpdateMatrics();
+    camera_.UpdateMatrices();
 
     //
     serializationManager_ = MakeUnique<SerializationManager>();
@@ -1154,6 +1154,15 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
 
     state_.Reset();
 
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
+RESULT Render::AddMaterial(UniquePtr<Material>&& material)
+{
+    if (HS_FAILED(material->Init()))
+        return R_FAIL;
+    materials_.Add(std::move(material));
     return R_OK;
 }
 

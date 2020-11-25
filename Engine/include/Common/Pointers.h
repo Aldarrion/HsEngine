@@ -3,6 +3,7 @@
 #include "Common/hs_Assert.h"
 
 #include <cstddef>
+#include <type_traits>
 
 namespace hs
 {
@@ -11,6 +12,10 @@ namespace hs
 template<class T>
 class UniquePtr
 {
+    // All UniquePtrs are friends so accessing ptr_ in member functions works
+    template<class X>
+    friend class UniquePtr;
+
 public:
     using Pointer_t = T*;
 
@@ -93,6 +98,30 @@ public:
     explicit operator bool() const
     {
         return ptr_ != nullptr;
+    }
+
+    //------------------------------------------------------------------------------
+    template<class U>
+    UniquePtr(UniquePtr<U>&& otherPtr,
+        typename std::enable_if_t<std::is_convertible_v<U*, T*>, void>* = 0)
+    {
+        ptr_ = otherPtr.ptr_;
+        otherPtr.ptr_ = nullptr;
+    }
+
+    //------------------------------------------------------------------------------
+    template<class U>
+    typename std::enable_if_t<std::is_convertible_v<U*, T*>, UniquePtr<T>&>
+        operator=(UniquePtr<U>&& otherPtr)
+    {
+        // First save to temp to achieve branchless self-assignment protection
+        auto otherPtr = other.ptr_;
+        other.ptr_ = nullptr;
+
+        delete ptr_;
+        ptr_ = otherPtr;
+
+        return *this;
     }
 
 private:

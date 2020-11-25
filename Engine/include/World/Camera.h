@@ -19,6 +19,8 @@ enum class ProjectionType
 class Camera
 {
 public:
+    void InitAsPerspective(const Vec3& pos, const Vec3& target, float fovY = 75, float near = 0.01f, float far = 1000.0f);
+
     const Mat44& ToCamera() const;
     const Mat44& ToProjection() const;
     const Vec3& Position() const;
@@ -30,7 +32,7 @@ public:
     void FillData(PropertyContainer& data);
 
     void Update();
-    void UpdateMatrics();
+    void UpdateMatrices();
 
     Box2D GetOrthoFrustum() const;
 
@@ -45,7 +47,7 @@ private:
     Vec3 forward_{ Vec3::FORWARD() };
     Vec3 right_{ Vec3::RIGHT() };
 
-    Vec2 angles_{ 0, 90 };
+    Vec2 angles_{ 0, HS_PI_HALF };
     float fovy_{ 75 };
     float near_{ 0.01f };
     float far_{ 1000 };

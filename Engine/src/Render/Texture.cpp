@@ -120,7 +120,7 @@ RESULT Texture::Allocate(void** data, const char* diagName)
     allSubres.baseMipLevel     = 0;
     allSubres.levelCount       = 1;
     allSubres.baseArrayLayer   = 0;
-    allSubres.layerCount       = 1;
+    allSubres.layerCount       = imgInfo.arrayLayers;
 
     if (data)
     {
