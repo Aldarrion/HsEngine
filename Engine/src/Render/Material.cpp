@@ -366,12 +366,11 @@ void PhongMaterial::Draw()
         Vec4    ViewPos;
     };
 
-    void* mapped;
-    DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(SceneData), &mapped);
-    //auto ubo = (SceneData*)mapped;
+    SceneData* ubo{};
+    DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(SceneData), (void**)&ubo);
 
-    //ubo->Projection = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
-    //ubo->ViewPos    = g_Render->GetCamera().Position().ToVec4();
+    ubo->Projection = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
+    ubo->ViewPos    = g_Render->GetCamera().Position().ToVec4Pos();
 
     g_Render->GetUBOCache()->EndAlloc();
 

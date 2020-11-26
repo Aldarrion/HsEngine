@@ -2,7 +2,9 @@
 
 #include "Input/Input.h"
 #include "Render/Render.h"
+#include "Common/Logging.h"
 #include "Resources/Serialization.h"
+#include "Engine.h"
 
 namespace hs
 {
@@ -60,9 +62,9 @@ void Camera::UpdateCameraVectors()
 
     angles_.x  = Clamp(angles_.x, -PITCH_LIMIT, PITCH_LIMIT);
 
-    forward_.x = cos(DegToRad(angles_.y)) * cos(DegToRad(angles_.x));
-    forward_.y = sin(DegToRad(angles_.x));
-    forward_.z = sin(DegToRad(angles_.y)) * cos(DegToRad(angles_.x));
+    forward_.x = cos(angles_.y) * cos(angles_.x);
+    forward_.y = sin(angles_.x);
+    forward_.z = sin(angles_.y) * cos(angles_.x);
 
     right_ = Vec3::UP().Cross(forward_).Normalized();
 }
@@ -78,6 +80,64 @@ void Camera::UpdateMatrices()
     {
         projection_ = MakePerspectiveProjection(DegToRad(fovy_), g_Render->GetAspect(), near_, far_);
     }
+
+    toCamera_ = MakeLookAt(pos_, pos_ + forward_);
+}
+
+//------------------------------------------------------------------------------
+void Camera::UpdateFreeFly()
+{
+    bool isMoveMode = g_Input->GetState(VK_RBUTTON);
+    if (isMoveMode)
+    {
+        g_Input->SetMouseMode(MouseMode::Relative);
+        Vec2 mouseDelta = g_Input->GetMouseDelta();
+        angles_.x -= mouseDelta.y * 0.0025f;
+        angles_.y -= mouseDelta.x * 0.0025f;
+        
+        if (mouseDelta != Vec2{})
+        {
+            UpdateCameraVectors();
+        }
+    }
+    else
+    {
+        g_Input->SetMouseMode(MouseMode::Absolute);
+    }
+
+    if (isMoveMode)
+    {
+        if (g_Input->GetState('W'))
+        {
+            pos_ += forward_ * freeflySpeed_ * g_Engine->GetDTime();
+        }
+        else if (g_Input->GetState('S'))
+        {
+            pos_ -= forward_ * freeflySpeed_ * g_Engine->GetDTime();
+        }
+    
+        if (g_Input->GetState('D'))
+        {
+            pos_ += right_ * freeflySpeed_ * g_Engine->GetDTime();
+        }
+        else if (g_Input->GetState('A'))
+        {
+            pos_ -= right_ * freeflySpeed_ * g_Engine->GetDTime();
+        }
+
+        if (g_Input->GetState('Q'))
+        {
+            pos_ += Vec3::UP() * freeflySpeed_ * g_Engine->GetDTime();
+        }
+        else if (g_Input->GetState('E'))
+        {
+            pos_ -= Vec3::UP() * freeflySpeed_ * g_Engine->GetDTime();
+        }
+    }
+
+    float extent = 20;
+    //projection_ = MakeOrthographicProjection(-extent, extent, -extent / g_Render->GetAspect(), extent / g_Render->GetAspect(), 0.1f, 1000);
+    projection_ = MakePerspectiveProjection(DegToRad(fovy_), g_Render->GetAspect(), near_, far_);
 
     toCamera_ = MakeLookAt(pos_, pos_ + forward_);
 }
