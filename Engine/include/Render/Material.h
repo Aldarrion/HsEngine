@@ -12,13 +12,15 @@
 namespace hs
 {
 
+struct RenderPassContext;
+
 //------------------------------------------------------------------------------
 class Material
 {
 public:
     virtual ~Material() = default;
     virtual RESULT Init() = 0;
-    virtual void Draw() = 0;
+    virtual void Draw(const RenderPassContext& ctx) = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -37,7 +39,7 @@ public:
     ~SpriteMaterial();
 
     RESULT Init() override;
-    void Draw() override;
+    void Draw(const RenderPassContext& ctx) override;
     void DrawSprite(const SpriteDrawData& data);
 
 private:
@@ -53,7 +55,7 @@ public:
     ~DebugShapeMaterial();
 
     RESULT Init() override;
-    void Draw() override;
+    void Draw(const RenderPassContext& ctx) override;
     void DrawShape(Span<const Vec3> verts, const Color& color);
 
 private:
@@ -72,7 +74,7 @@ class TexturedTriangleMaterial : public Material
 {
 public:
     RESULT Init() override;
-    void Draw() override;
+    void Draw(const RenderPassContext& ctx) override;
 
 private:
     Shader*     triangleVert_{};
@@ -88,7 +90,7 @@ class PhongMaterial : public Material
 {
 public:
     RESULT Init() override;
-    void Draw() override;
+    void Draw(const RenderPassContext& ctx) override;
 
 private:
     Shader*         phongVert_{};
@@ -100,7 +102,7 @@ class SkyboxMaterial : public Material
 {
 public:
     RESULT Init() override;
-    void Draw() override;
+    void Draw(const RenderPassContext& ctx) override;
 
 private:
     Shader*     skyboxVert_{};

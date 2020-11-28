@@ -33,6 +33,20 @@ namespace hs
 {
 
 //------------------------------------------------------------------------------
+enum RenderPassType
+{
+    RPT_MAIN,
+    RPT_OVERLAY,
+    RPT_COUNT,
+};
+
+//------------------------------------------------------------------------------
+struct RenderPassContext
+{
+    RenderPassType passType_;
+};
+
+//------------------------------------------------------------------------------
 static constexpr uint SRV_SLOT_COUNT = 8;
 static constexpr uint IMMUTABLE_SAMPLER_COUNT = 1;
 static constexpr uint DYNAMIC_UBO_COUNT = 2;
@@ -239,6 +253,9 @@ private:
     VkRenderPass        mainRenderPass_{};
     VkFramebuffer       mainFrameBuffer_[BB_IMG_COUNT]{};
 
+    VkRenderPass        overlayRenderPass_{};
+    VkFramebuffer       overlayFrameBuffer_[BB_IMG_COUNT]{};
+
     // Descriptors
     VkDescriptorPool    bindlessPool_{};
     VkDescriptorSet     bindlessSet_{};
@@ -294,13 +311,18 @@ private:
 
     RESULT CreateSurface();
     RESULT CreateSwapchain();
+
     RESULT CreateMainRenderPass();
     RESULT CreateMainFrameBuffer();
 
+    RESULT CreateOverlayRenderPass();
+    RESULT CreateOverlayFrameBuffer();
+
     void DestroySurface();
     void DestroySwapchain();
-    void DestroyMainRenderPass();
-    void DestroyMainFrameBuffer();
+
+    void DestroyRenderPass(VkRenderPass& renderPass);
+    void DestroyFrameBuffer(VkFramebuffer* frameBufferArr);
 
     //----------------------
     // Vertex layout manager

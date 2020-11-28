@@ -246,12 +246,20 @@ RESULT Render::OnWindowResized(uint width, uint height)
     }
 
     // TODO(pavel): Is this necessary here? Swapchain format could change so it may be a good idea to do it.
-    DestroyMainRenderPass();
+    DestroyRenderPass(mainRenderPass_);
     if (HS_FAILED(CreateMainRenderPass()))
         return R_FAIL;
 
-    DestroyMainFrameBuffer();
+    DestroyFrameBuffer(mainFrameBuffer_);
     if (HS_FAILED(CreateMainFrameBuffer()))
+        return R_FAIL;
+
+    DestroyRenderPass(overlayRenderPass_);
+    if (HS_FAILED(CreateOverlayRenderPass()))
+        return R_FAIL;
+
+    DestroyFrameBuffer(overlayFrameBuffer_);
+    if (HS_FAILED(CreateOverlayFrameBuffer()))
         return R_FAIL;
 
     vkFreeCommandBuffers(vkDevice_, directCmdPool_, BB_IMG_COUNT, directCmdBuffers_);
@@ -460,21 +468,21 @@ RESULT Render::CreateMainRenderPass()
     colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference colorAttachmentRef{};
     colorAttachmentRef.attachment   = 0;
     colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    //VkAttachmentDescription depthAttachment{};
-    //depthAttachment.format          = VK_FORMAT_D24_UNORM_S8_UINT;
-    //depthAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-    //depthAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    //depthAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    //depthAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    //depthAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    //depthAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
-    //depthAttachment.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    VkAttachmentDescription depthAttachment{};
+    depthAttachment.format          = VK_FORMAT_D24_UNORM_S8_UINT;
+    depthAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
+    depthAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthAttachment.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference depthAttachmentRef{};
     depthAttachmentRef.attachment   = 1;
@@ -484,7 +492,7 @@ RESULT Render::CreateMainRenderPass()
     subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount    = 1;
     subpass.pColorAttachments       = &colorAttachmentRef;
-    //subpass.pDepthStencilAttachment = &depthAttachmentRef;
+    subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
     /*VkSubpassDependency dependency{};
     dependency.srcSubpass       = VK_SUBPASS_EXTERNAL;
@@ -494,7 +502,7 @@ RESULT Render::CreateMainRenderPass()
     dependency.dstStageMask     = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.dstAccessMask    = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;*/
 
-    VkAttachmentDescription attachments[] = { colorAttachment/*, depthAttachment*/ };
+    VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment };
     VkRenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.attachmentCount = hs_arr_len(attachments);
@@ -517,7 +525,7 @@ RESULT Render::CreateMainFrameBuffer()
 {
     for (int bbIdx = 0; bbIdx < BB_IMG_COUNT; ++bbIdx)
     {
-        VkImageView viewAttachments[] = { bbViews_[bbIdx]/*, depthViews_[bbIdx]*/ };
+        VkImageView viewAttachments[] = { bbViews_[bbIdx], depthViews_[bbIdx] };
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -530,6 +538,72 @@ RESULT Render::CreateMainFrameBuffer()
 
         hs_assert(!mainFrameBuffer_[bbIdx]);
         if (VKR_FAILED(vkCreateFramebuffer(vkDevice_, &framebufferInfo, nullptr, &mainFrameBuffer_[bbIdx])))
+            return R_FAIL;
+    }
+
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
+RESULT Render::CreateOverlayRenderPass()
+{
+    VkAttachmentDescription colorAttachment{};
+    colorAttachment.format          = swapChainFormat_;
+    colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_LOAD;
+    colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference colorAttachmentRef{};
+    colorAttachmentRef.attachment   = 0;
+    colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference depthAttachmentRef{};
+    depthAttachmentRef.attachment   = 1;
+    depthAttachmentRef.layout       = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount    = 1;
+    subpass.pColorAttachments       = &colorAttachmentRef;
+
+    VkAttachmentDescription attachments[] = { colorAttachment };
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = hs_arr_len(attachments);
+    renderPassInfo.pAttachments = attachments;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+
+    hs_assert(!overlayRenderPass_);
+
+    if (VKR_FAILED(vkCreateRenderPass(vkDevice_, &renderPassInfo, nullptr, &overlayRenderPass_)))
+        return R_FAIL;
+
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
+RESULT Render::CreateOverlayFrameBuffer()
+{
+    for (int bbIdx = 0; bbIdx < BB_IMG_COUNT; ++bbIdx)
+    {
+        VkImageView viewAttachments[] = { bbViews_[bbIdx] };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass      = overlayRenderPass_;
+        framebufferInfo.attachmentCount = hs_arr_len(viewAttachments);
+        framebufferInfo.pAttachments    = viewAttachments;
+        framebufferInfo.width           = width_;
+        framebufferInfo.height          = height_;
+        framebufferInfo.layers          = 1;
+
+        hs_assert(!overlayFrameBuffer_[bbIdx]);
+        if (VKR_FAILED(vkCreateFramebuffer(vkDevice_, &framebufferInfo, nullptr, &overlayFrameBuffer_[bbIdx])))
             return R_FAIL;
     }
 
@@ -565,24 +639,24 @@ void Render::DestroySwapchain()
 }
 
 //------------------------------------------------------------------------------
-void Render::DestroyMainRenderPass()
+void Render::DestroyRenderPass(VkRenderPass& renderPass)
 {
-    if (mainRenderPass_)
+    if (renderPass)
     {
-        vkDestroyRenderPass(vkDevice_, mainRenderPass_, nullptr);
-        mainRenderPass_ = VK_NULL_HANDLE;
+        vkDestroyRenderPass(vkDevice_, renderPass, nullptr);
+        renderPass = VK_NULL_HANDLE;
     }
 }
 
 //------------------------------------------------------------------------------
-void Render::DestroyMainFrameBuffer()
+void Render::DestroyFrameBuffer(VkFramebuffer* frameBufferArr)
 {
     for (int bbIdx = 0; bbIdx < BB_IMG_COUNT; ++bbIdx)
     {
-        if (mainFrameBuffer_[bbIdx])
+        if (frameBufferArr[bbIdx])
         {
-            vkDestroyFramebuffer(vkDevice_, mainFrameBuffer_[bbIdx], nullptr);
-            mainFrameBuffer_[bbIdx] = VK_NULL_HANDLE;
+            vkDestroyFramebuffer(vkDevice_, frameBufferArr[bbIdx], nullptr);
+            frameBufferArr[bbIdx] = VK_NULL_HANDLE;
         }
     }
 }
@@ -1098,17 +1172,23 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     //-----------------------
     // Caches
     uboCache_ = MakeUnique<DynamicUBOCache>();
-    if (FAILED(uboCache_->Init()))
+    if (HS_FAILED(uboCache_->Init()))
         return R_FAIL;
 
     vbCache_ = MakeUnique<VertexBufferCache>();
-    if (FAILED(vbCache_->Init()))
+    if (HS_FAILED(vbCache_->Init()))
         return R_FAIL;
 
-    if (FAILED(CreateMainRenderPass()))
+    if (HS_FAILED(CreateMainRenderPass()))
         return R_FAIL;
 
-    if (FAILED(CreateMainFrameBuffer()))
+    if (HS_FAILED(CreateMainFrameBuffer()))
+        return R_FAIL;
+
+    if (HS_FAILED(CreateOverlayRenderPass()))
+        return R_FAIL;
+
+    if (HS_FAILED(CreateOverlayFrameBuffer()))
         return R_FAIL;
 
     //-----------------------
@@ -1583,45 +1663,67 @@ void Render::Draw(uint vertexCount, uint firstVertex)
 //------------------------------------------------------------------------------
 void Render::Update(float dTime)
 {
-    const Color clearColor = Color::ToLinear(Color{ 0.72f, 0.74f, 0.98f, 1.0f });
-
-    VkClearValue clearVal[2] = {};
-    clearVal[0].color = VkClearColorValue { { clearColor.r, clearColor.g, clearColor.b, clearColor.a } };
-    clearVal[1].depthStencil =  VkClearDepthStencilValue { 1, 0 };
-
-    VkRenderPassBeginInfo renderPassBeginInfo{};
-    renderPassBeginInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.renderPass      = mainRenderPass_;
-    renderPassBeginInfo.framebuffer     = mainFrameBuffer_[currentBBIdx_];
-    renderPassBeginInfo.renderArea      = VkRect2D { VkOffset2D { 0, 0 }, VkExtent2D { width_, height_ } };
-    renderPassBeginInfo.clearValueCount = hs_arr_len(clearVal);
-    renderPassBeginInfo.pClearValues    = clearVal;
-
     ImGui_ImplVulkan_NewFrame();
 
     //-------------------
     // Frame start
 
-    vkCmdBeginRenderPass(directCmdBuffers_[currentBBIdx_], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    for (int i = 0; i < materials_.Count(); ++i)
+    // Main pass
     {
-        materials_[i]->Draw();
+        const Color clearColor = Color::ToLinear(Color{ 0.72f, 0.74f, 0.98f, 1.0f });
+
+        VkClearValue clearVal[2] = {};
+        clearVal[0].color = VkClearColorValue { { clearColor.r, clearColor.g, clearColor.b, clearColor.a } };
+        clearVal[1].depthStencil =  VkClearDepthStencilValue { 1, 0 };
+
+        VkRenderPassBeginInfo renderPassBeginInfo{};
+        renderPassBeginInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass      = mainRenderPass_;
+        renderPassBeginInfo.framebuffer     = mainFrameBuffer_[currentBBIdx_];
+        renderPassBeginInfo.renderArea      = VkRect2D { VkOffset2D { 0, 0 }, VkExtent2D { width_, height_ } };
+        renderPassBeginInfo.clearValueCount = hs_arr_len(clearVal);
+        renderPassBeginInfo.pClearValues    = clearVal;
+
+        RenderPassContext ctx;
+        ctx.passType_ = RPT_MAIN;
+
+        vkCmdBeginRenderPass(directCmdBuffers_[currentBBIdx_], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        for (int i = 0; i < materials_.Count(); ++i)
+        {
+            materials_[i]->Draw(ctx);
+        }
+
+        vkCmdEndRenderPass(directCmdBuffers_[currentBBIdx_]);
     }
 
-    if (drawCanvas_)
-        drawCanvas_->Draw();
 
-    if (spriteRenderer_)
-        spriteRenderer_->Draw();
+    // Overlay pass
+    {
+        VkRenderPassBeginInfo renderPassBeginInfo{};
+        renderPassBeginInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass      = overlayRenderPass_;
+        renderPassBeginInfo.framebuffer     = overlayFrameBuffer_[currentBBIdx_];
+        renderPassBeginInfo.renderArea      = VkRect2D { VkOffset2D { 0, 0 }, VkExtent2D { width_, height_ } };
 
-    if (debugShapeRenderer_)
-        debugShapeRenderer_->Draw();
+        vkCmdBeginRenderPass(directCmdBuffers_[currentBBIdx_], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), directCmdBuffers_[currentBBIdx_]);
+        if (drawCanvas_)
+            drawCanvas_->Draw();
 
-    vkCmdEndRenderPass(directCmdBuffers_[currentBBIdx_]);
+        if (spriteRenderer_)
+            spriteRenderer_->Draw();
+
+        if (debugShapeRenderer_)
+            debugShapeRenderer_->Draw();
+
+        ImGui::Render();
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), directCmdBuffers_[currentBBIdx_]);
+
+        vkCmdEndRenderPass(directCmdBuffers_[currentBBIdx_]);
+    }
+
 
     //-------------------
     // Submit and Present

@@ -124,7 +124,7 @@ RESULT SpriteMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void SpriteMaterial::Draw()
+void SpriteMaterial::Draw(const RenderPassContext& ctx)
 {
     hs_assert(false);
 }
@@ -239,7 +239,7 @@ RESULT DebugShapeMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void DebugShapeMaterial::Draw()
+void DebugShapeMaterial::Draw(const RenderPassContext& ctx)
 {
     hs_assert(false);
 }
@@ -333,7 +333,7 @@ RESULT TexturedTriangleMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void TexturedTriangleMaterial::Draw()
+void TexturedTriangleMaterial::Draw(const RenderPassContext& ctx)
 {
     g_Render->SetShader<PS_VERT>(triangleVert_);
     g_Render->SetShader<PS_FRAG>(triangleFrag_);
@@ -357,7 +357,7 @@ RESULT PhongMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void PhongMaterial::Draw()
+void PhongMaterial::Draw(const RenderPassContext& ctx)
 {
     // TODO move scene CB elsewhere
     struct SceneData
@@ -420,7 +420,7 @@ RESULT SkyboxMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void SkyboxMaterial::Draw()
+void SkyboxMaterial::Draw(const RenderPassContext& ctx)
 {
     // TODO move scene CB elsewhere
     struct SceneData
