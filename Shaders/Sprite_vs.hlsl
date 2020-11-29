@@ -1,5 +1,5 @@
 #include "SpriteCommon.h"
-#include "shaderStructs/Common.h"
+#include "ShaderStructs/Common.h"
 
 struct vertex
 {

@@ -111,4 +111,16 @@ private:
     Texture*    skyboxCubemap_{};
 };
 
+//------------------------------------------------------------------------------
+class PBRMaterial : public Material
+{
+public:
+    RESULT Init() override;
+    void Draw(const RenderPassContext& ctx) override;
+
+private:
+    Shader*     pbrVert_{};
+    Shader*     pbrFrag_{};
+};
+
 }

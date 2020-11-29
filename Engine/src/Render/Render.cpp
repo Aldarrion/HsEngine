@@ -1300,7 +1300,7 @@ RESULT Render::InitImgui()
     initInfo.MinImageCount     = BB_IMG_COUNT;
     initInfo.ImageCount        = BB_IMG_COUNT;
     initInfo.CheckVkResultFn   = ImguiVkCheckResult;
-    if (!ImGui_ImplVulkan_Init(&initInfo, mainRenderPass_))
+    if (!ImGui_ImplVulkan_Init(&initInfo, overlayRenderPass_))
         return R_FAIL;
 
     // Upload Fonts
@@ -1858,7 +1858,7 @@ void Render::SetDynamicUbo(uint slot, const DynamicUBOEntry& entry)
 {
     hs_assert(slot < DYNAMIC_UBO_COUNT + 1);
 
-    state_.dynamicUBOs_[slot - 1] = entry;
+    state_.dynamicUBOs_[slot] = entry;
 }
 
 //------------------------------------------------------------------------------

@@ -8,7 +8,12 @@ namespace hs
 #endif
 
 #ifndef __cplusplus
+    #define HS_PI           3.14159265359
+    #define HS_PI_HALF      (HS_PI / 2)
+    #define HS_TAU          (2 * HS_PI)
+
     #define Mat44 float4x4
+    #define Vec3 float3
     #define Vec4 float4
 
     struct BindingUBO
@@ -29,15 +34,26 @@ namespace sh
 {
 #endif
 
+//------------------------------------------------------------------------------
 struct SceneData
 {
     Mat44   VP;
     Vec4    ViewPos;
 };
 
+//------------------------------------------------------------------------------
 struct SpriteData
 {
     Mat44 World;
+};
+
+//------------------------------------------------------------------------------
+struct PBRData
+{
+    Vec3 Albedo;
+    float Metallic;
+    float Roughness;
+    float AO;
 };
 
 #ifdef __cplusplus

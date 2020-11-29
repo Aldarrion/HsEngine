@@ -12,6 +12,8 @@
 
 #include "Common.h"
 
+#include "imgui/imgui.h"
+
 #include <string>
 
 namespace hs
@@ -101,9 +103,11 @@ void SetSceneData()
     ubo->VP = projMat;
 
     g_Render->GetUBOCache()->EndAlloc();
-    g_Render->SetDynamicUbo(1, constBuffer);
+    g_Render->SetDynamicUbo(0, constBuffer);
 }
 
+//------------------------------------------------------------------------------
+// Sprite Material
 //------------------------------------------------------------------------------
 SpriteMaterial::~SpriteMaterial() = default;
 
@@ -205,7 +209,7 @@ void SpriteMaterial::DrawSprite(const SpriteDrawData& data)
             ubo->World = data.world_;
         g_Render->GetUBOCache()->EndAlloc();
 
-        g_Render->SetDynamicUbo(2, uniformBuffer);
+        g_Render->SetDynamicUbo(1, uniformBuffer);
     }
 
     SetSceneData();
@@ -221,6 +225,8 @@ void SpriteMaterial::DrawSprite(const SpriteDrawData& data)
 }
 
 
+//------------------------------------------------------------------------------
+// Debug shape Material
 //------------------------------------------------------------------------------
 DebugShapeMaterial::~DebugShapeMaterial() = default;
 
@@ -280,7 +286,8 @@ void DebugShapeMaterial::DrawShape(Span<const Vec3> verts, const Color& color)
     g_Render->Draw(verts.Count(), 0);
 }
 
-
+//------------------------------------------------------------------------------
+// Textured triangle Material
 //------------------------------------------------------------------------------
 RESULT TexturedTriangleMaterial::Init()
 {
@@ -345,6 +352,8 @@ void TexturedTriangleMaterial::Draw(const RenderPassContext& ctx)
 
 
 //------------------------------------------------------------------------------
+// Phong Material
+//------------------------------------------------------------------------------
 RESULT PhongMaterial::Init()
 {
     phongVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Phong_vs.hlsl");
@@ -374,7 +383,7 @@ void PhongMaterial::Draw(const RenderPassContext& ctx)
 
     g_Render->GetUBOCache()->EndAlloc();
 
-    g_Render->SetDynamicUbo(1, constBuffer);
+    g_Render->SetDynamicUbo(0, constBuffer);
 
 
     // This material setup
@@ -384,6 +393,8 @@ void PhongMaterial::Draw(const RenderPassContext& ctx)
     g_Render->Draw(3 * 12, 0);
 }
 
+//------------------------------------------------------------------------------
+// Skybox Material
 //------------------------------------------------------------------------------
 RESULT SkyboxMaterial::Init()
 {
@@ -441,7 +452,7 @@ void SkyboxMaterial::Draw(const RenderPassContext& ctx)
 
     g_Render->GetUBOCache()->EndAlloc();
 
-    g_Render->SetDynamicUbo(1, constBuffer);
+    g_Render->SetDynamicUbo(0, constBuffer);
 
 
     // This material setup
@@ -452,6 +463,66 @@ void SkyboxMaterial::Draw(const RenderPassContext& ctx)
     g_Render->SetTexture(0, skyboxCubemap_);
 
     g_Render->SetDepthState(false);
+
+    g_Render->Draw(3 * 12, 0);
+}
+
+
+//------------------------------------------------------------------------------
+// PBR Material
+//------------------------------------------------------------------------------
+RESULT PBRMaterial::Init()
+{
+    pbrVert_ = g_Render->GetShaderManager()->GetOrCreateShader("PBR_vs.hlsl");
+    pbrFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("PBR_fs.hlsl");
+
+    if (!pbrVert_ || !pbrFrag_)
+        return R_FAIL;
+
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
+float roughness = 0.2f;
+float metallic = 1.0f;
+float ao = 1.0f;
+Vec3 albedo(0.8f, 0.5f, 0.5f);
+
+//------------------------------------------------------------------------------
+void PBRMaterial::Draw(const RenderPassContext& ctx)
+{
+    // Scene data
+    sh::SceneData* scene{};
+    DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), (void**)&scene);
+
+    scene->VP       = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
+    scene->ViewPos  = g_Render->GetCamera().Position().ToVec4Pos();
+
+    g_Render->GetUBOCache()->EndAlloc();
+    g_Render->SetDynamicUbo(0, constBuffer);
+
+    ImGui::Begin("PBR settings");
+        ImGui::ColorPicker3("Albedo", albedo.v);
+        ImGui::SliderFloat("Roughness", &roughness, 0, 1);
+        ImGui::SliderFloat("Metellic", &metallic, 0, 1);
+        ImGui::SliderFloat("Ambient", &ao, 0, 1);
+    ImGui::End();
+
+    // PBR data
+    sh::PBRData* pbr{};
+    DynamicUBOEntry pbrConstBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::PBRData), (void**)&pbr);
+
+    pbr->Albedo = albedo;
+    pbr->Roughness = roughness;
+    pbr->Metallic = metallic;
+    pbr->AO = ao;
+
+    g_Render->GetUBOCache()->EndAlloc();
+    g_Render->SetDynamicUbo(1, pbrConstBuffer);
+
+    // This material setup
+    g_Render->SetShader<PS_VERT>(pbrVert_);
+    g_Render->SetShader<PS_FRAG>(pbrFrag_);
 
     g_Render->Draw(3 * 12, 0);
 }
