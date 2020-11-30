@@ -94,7 +94,7 @@ void Camera::UpdateFreeFly()
         Vec2 mouseDelta = g_Input->GetMouseDelta();
         angles_.x -= mouseDelta.y * 0.0025f;
         angles_.y -= mouseDelta.x * 0.0025f;
-        
+
         if (mouseDelta != Vec2{})
         {
             UpdateCameraVectors();
@@ -115,7 +115,7 @@ void Camera::UpdateFreeFly()
         {
             pos_ -= forward_ * freeflySpeed_ * g_Engine->GetDTime();
         }
-    
+
         if (g_Input->GetState('D'))
         {
             pos_ += right_ * freeflySpeed_ * g_Engine->GetDTime();
@@ -135,7 +135,7 @@ void Camera::UpdateFreeFly()
         }
     }
 
-    float extent = 20;
+    //float extent = 20;
     //projection_ = MakeOrthographicProjection(-extent, extent, -extent / g_Render->GetAspect(), extent / g_Render->GetAspect(), 0.1f, 1000);
     projection_ = MakePerspectiveProjection(DegToRad(fovy_), g_Render->GetAspect(), near_, far_);
 
