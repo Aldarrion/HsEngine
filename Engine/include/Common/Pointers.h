@@ -102,17 +102,17 @@ public:
 
     //------------------------------------------------------------------------------
     template<class U>
-    UniquePtr(UniquePtr<U>&& otherPtr,
+    UniquePtr(UniquePtr<U>&& other,
         typename std::enable_if_t<std::is_convertible_v<U*, T*>, void>* = 0)
     {
-        ptr_ = otherPtr.ptr_;
+        ptr_ = other.ptr_;
         otherPtr.ptr_ = nullptr;
     }
 
     //------------------------------------------------------------------------------
     template<class U>
     typename std::enable_if_t<std::is_convertible_v<U*, T*>, UniquePtr<T>&>
-        operator=(UniquePtr<U>&& otherPtr)
+        operator=(UniquePtr<U>&& other)
     {
         // First save to temp to achieve branchless self-assignment protection
         auto otherPtr = other.ptr_;

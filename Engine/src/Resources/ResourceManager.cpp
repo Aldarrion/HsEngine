@@ -1,7 +1,9 @@
 #include "Resources/ResourceManager.h"
 
+#include "Render/Material.h"
 #include "Render/Texture.h"
 
+#include "Common/Logging.h"
 #include "Common/Types.h"
 
 namespace hs

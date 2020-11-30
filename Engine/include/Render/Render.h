@@ -4,6 +4,7 @@
 
 #include "World/Camera.h"
 
+#include "Render/RenderPassContext.h"
 #include "Render/VertexBufferEntry.h"
 #include "Render/DynamicUniformBufferEntry.h"
 #include "Render/VkTypes.h"
@@ -84,9 +85,32 @@ struct VisualObject
 // Arrays may be shared between passes - depth pre pass + ambient pass etc.
 // Objects in arrays need to be sorted by the material sortId
 // Objects with the exact same material instance should be next to each other so we can use instancing
+// We also need to consider mesh identity, so mesh + material is highest prio, we can move some of the per material data to InstaceData later
+
 // How to solve that some materials don't need a mesh to work? Pass a null mesh? Dummy mesh?
 // Material has textures, mesh has vertex and index buffers etc.
 //
+
+/*
+
+How to work with special renderers, such as sprite and debug shape? Both can be kept for now since they are low prio but they can be merged with the rest later on.
+However, there may be some special handling needed for sprites for example such as batching (altough they are transparent so sort is necessary).
+
+
+During a render pass we want to iterate visual objects as we have them in the arrays,
+there should probably be a preprocess step which can alter the order in these but it will not be needed right away.
+
+This should be fine for now even if it's not very efficient since it sets all the state every time and draws one by one
+If we have some dummy mesh for procedural geometry we can easily pass it here
+
+for (VisualObject& vo : visualObjects)
+{
+    vo.material_->Draw(ctx, vo.mesh_);
+}
+
+*/
+
+
 
 //------------------------------------------------------------------------------
 enum DepthState
@@ -200,7 +224,7 @@ public:
     // Debug shape renderer
     DebugShapeRenderer* GetDebugShapeRenderer() const;
 
-    RESULT AddMaterial(UniquePtr<Material>&& material);
+    void RenderObject(VisualObject* object);
 
 private:
     static constexpr auto VK_VERSION = VK_API_VERSION_1_1;
@@ -315,11 +339,12 @@ private:
 
     RenderState state_;
 
-    Array<UniquePtr<Material>>  materials_;
     UniquePtr<DrawCanvas>       drawCanvas_;
 
     UniquePtr<SpriteRenderer>       spriteRenderer_;
     UniquePtr<DebugShapeRenderer>   debugShapeRenderer_;
+
+    Array<VisualObject*>            renderObjects_[RPT_COUNT];
 
     RESULT CreateSurface();
     RESULT CreateSwapchain();

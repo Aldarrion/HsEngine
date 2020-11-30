@@ -1197,23 +1197,6 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     if (shaderManager_->Init() != R_OK)
         return R_FAIL;
 
-    //-----------------------
-    // Material allocation
-    //materials_.Add(new SkyboxMaterial());
-    //materials_.Add(new TexturedTriangleMaterial());
-    //materials_.Add(new ShapeMaterial());
-    //materials_.Add(new PhongMaterial());
-    //materials_.Add(new SpriteMaterial());
-
-    for (int i = 0; i < materials_.Count(); ++i)
-    {
-        if (HS_FAILED(materials_[i]->Init()))
-        {
-            Log(LogLevel::Error, "Failed to init material");
-            return R_FAIL;
-        }
-    }
-
     camera_.UpdateMatrices();
 
     //
@@ -1239,12 +1222,9 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
 }
 
 //------------------------------------------------------------------------------
-RESULT Render::AddMaterial(UniquePtr<Material>&& material)
+void Render::RenderObject(VisualObject* object)
 {
-    if (HS_FAILED(material->Init()))
-        return R_FAIL;
-    materials_.Add(std::move(material));
-    return R_OK;
+    renderObjects_[RPT_MAIN].Add(object);
 }
 
 //------------------------------------------------------------------------------
@@ -1693,9 +1673,9 @@ void Render::Update(float dTime)
 
         vkCmdBeginRenderPass(directCmdBuffers_[currentBBIdx_], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        for (int i = 0; i < materials_.Count(); ++i)
+        for (int i = 0; i < renderObjects_[RPT_MAIN].Count(); ++i)
         {
-            materials_[i]->Draw(ctx);
+            renderObjects_[RPT_MAIN][i]->material_->Draw(ctx);
         }
 
         vkCmdEndRenderPass(directCmdBuffers_[currentBBIdx_]);
@@ -1738,6 +1718,9 @@ void Render::Update(float dTime)
     FlushGpu<true, true>();
 
     ++frame_;
+
+    for (int passI = 0; passI < RPT_COUNT; ++passI)
+        renderObjects_[passI].Clear();
 }
 
 //------------------------------------------------------------------------------
