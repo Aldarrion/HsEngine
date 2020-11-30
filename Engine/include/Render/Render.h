@@ -33,20 +33,6 @@ namespace hs
 {
 
 //------------------------------------------------------------------------------
-enum RenderPassType
-{
-    RPT_MAIN,
-    RPT_OVERLAY,
-    RPT_COUNT,
-};
-
-//------------------------------------------------------------------------------
-struct RenderPassContext
-{
-    RenderPassType passType_;
-};
-
-//------------------------------------------------------------------------------
 static constexpr uint SRV_SLOT_COUNT = 8;
 static constexpr uint IMMUTABLE_SAMPLER_COUNT = 1;
 static constexpr uint DYNAMIC_UBO_COUNT = 2;
@@ -69,12 +55,38 @@ class ShaderManager;
 class VertexBuffer;
 class DynamicUBOCache;
 class VertexBufferCache;
+struct RenderPassContext;
 
 class DrawCanvas;
 class SpriteRenderer;
 class DebugShapeRenderer;
 
 class SerializationManager;
+
+//
+//------------------------------------------------------------------------------
+struct Mesh
+{
+    // Some visual data
+    // This is held by the resource manager
+};
+
+//------------------------------------------------------------------------------
+struct VisualObject
+{
+    Material* material_;
+    Mesh* mesh_;
+};
+
+//------------------------------------------------------------------------------
+// Render has an array of visual objects for each RenderPass type
+// During each pass materials in each array are drawn
+// Arrays may be shared between passes - depth pre pass + ambient pass etc.
+// Objects in arrays need to be sorted by the material sortId
+// Objects with the exact same material instance should be next to each other so we can use instancing
+// How to solve that some materials don't need a mesh to work? Pass a null mesh? Dummy mesh?
+// Material has textures, mesh has vertex and index buffers etc.
+//
 
 //------------------------------------------------------------------------------
 enum DepthState
@@ -106,7 +118,7 @@ struct RenderState
     VkrPrimitiveTopology    primitiveTopology_{};
     VkrCullMode             cullMode_{};
 
-    uint                    depthState_{ DS_TEST | DS_WRITE};
+    uint                    depthState_{ DS_TEST | DS_WRITE };
 
     void Reset();
 };
@@ -139,7 +151,7 @@ public:
     void SetDepthState(uint state);
 
     // Drawing
-    void Draw(uint vertexCount, uint firstVertex);
+    void Draw(const RenderPassContext& ctx, uint vertexCount, uint firstVertex);
 
     void Update(float dTime);
 
@@ -328,9 +340,9 @@ private:
     // Vertex layout manager
     Array<VkPipelineVertexInputStateCreateInfo> vertexLayouts_;
 
-    static PipelineKey StateToPipelineKey(const RenderState& state);
+    static PipelineKey StateToPipelineKey(const RenderPassContext& ctx, const RenderState& state);
 
-    RESULT PrepareForDraw();
+    RESULT PrepareForDraw(const RenderPassContext& ctx);
     void AfterDraw();
 
     RESULT WaitForFence(VkFence fence);

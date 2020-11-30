@@ -14,6 +14,9 @@ namespace hs
 {
 
 //------------------------------------------------------------------------------
+struct RenderPassContext;
+
+//------------------------------------------------------------------------------
 enum class DrawMode
 {
     Lines,
@@ -27,7 +30,7 @@ public:
     ~DrawCanvas();
 
     RESULT Init();
-    void Draw();
+    void Draw(const RenderPassContext& ctx);
 
 private:
     UniquePtr<VertexBuffer> linesBuffer_{};

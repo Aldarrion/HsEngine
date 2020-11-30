@@ -53,7 +53,7 @@ static int SpriteDrawCallCmp(const void *a, const void *b)
 }
 
 //------------------------------------------------------------------------------
-void SpriteRenderer::Draw()
+void SpriteRenderer::Draw(const RenderPassContext& ctx)
 {
     g_Render->ResetState();
 
@@ -63,7 +63,7 @@ void SpriteRenderer::Draw()
     //Log(LogLevel::Info, "Sprite draw calls: %d", drawCalls_.Count());
     for (int i = 0, count = drawCalls_.Count(); i < count; ++i)
     {
-        spriteMaterial_.DrawSprite(SpriteDrawData{
+        spriteMaterial_.DrawSprite(ctx, SpriteDrawData{
             drawCalls_[i].sprite_->texture_,
             drawCalls_[i].sprite_->uvBox_,
             drawCalls_[i].sprite_->size_,

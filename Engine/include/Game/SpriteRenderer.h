@@ -30,7 +30,7 @@ class SpriteRenderer
 {
 public:
     RESULT Init();
-    void Draw();
+    void Draw(const RenderPassContext& ctx);
 
     void ClearSprites();
     void AddSprite(Sprite* sprite, const Mat44& world);

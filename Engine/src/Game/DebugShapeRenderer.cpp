@@ -15,11 +15,11 @@ RESULT DebugShapeRenderer::Init()
 }
 
 //------------------------------------------------------------------------------
-void DebugShapeRenderer::Draw()
+void DebugShapeRenderer::Draw(const RenderPassContext& ctx)
 {
     for (int i = 0; i < shapes_.Count(); ++i)
     {
-        debugShapeMat_.DrawShape(MakeSpan(shapes_[i].vertices_), shapes_[i].color_);
+        debugShapeMat_.DrawShape(ctx, MakeSpan(shapes_[i].vertices_), shapes_[i].color_);
     }
 }
 

@@ -40,7 +40,7 @@ public:
 
     RESULT Init() override;
     void Draw(const RenderPassContext& ctx) override;
-    void DrawSprite(const SpriteDrawData& data);
+    void DrawSprite(const RenderPassContext& ctx, const SpriteDrawData& data);
 
 private:
     Shader* vs_{};
@@ -56,7 +56,7 @@ public:
 
     RESULT Init() override;
     void Draw(const RenderPassContext& ctx) override;
-    void DrawShape(Span<const Vec3> verts, const Color& color);
+    void DrawShape(const RenderPassContext& ctx, Span<const Vec3> verts, const Color& color);
 
 private:
     Shader* shapeVert_{};

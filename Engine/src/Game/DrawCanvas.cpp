@@ -41,7 +41,7 @@ RESULT DrawCanvas::Init()
 }
 
 //------------------------------------------------------------------------------
-void DrawCanvas::Draw()
+void DrawCanvas::Draw(const RenderPassContext& ctx)
 {
     // Update
     if (g_Input->IsButtonDown(BTN_LEFT))
@@ -110,7 +110,7 @@ void DrawCanvas::Draw()
 
     g_Render->SetVertexLayout(0, lineVertType_);
 
-    g_Render->Draw(vertsToDraw, 0);
+    g_Render->Draw(ctx, vertsToDraw, 0);
 }
 
 }

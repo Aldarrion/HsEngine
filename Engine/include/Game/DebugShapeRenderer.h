@@ -25,7 +25,7 @@ class DebugShapeRenderer
 {
 public:
     RESULT Init();
-    void Draw();
+    void Draw(const RenderPassContext& ctx);
 
     void ClearShapes();
     void AddShape(Span<const Vec3> vertices, Color color);

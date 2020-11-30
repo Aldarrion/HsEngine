@@ -7,6 +7,7 @@
 #include "Render/ShaderManager.h"
 #include "Render/VertexBuffer.h"
 #include "Render/DynamicUniformBuffer.h"
+#include "Render/RenderPassContext.h"
 #include "Render/hs_Vulkan.h"
 
 #include "Game/DrawCanvas.h"
@@ -1403,24 +1404,25 @@ void Render::FlushGpu()
 }
 
 //------------------------------------------------------------------------------
-Render::PipelineKey Render::StateToPipelineKey(const RenderState& state)
+Render::PipelineKey Render::StateToPipelineKey(const RenderPassContext& ctx, const RenderState& state)
 {
     PipelineKey key{};
 
+    // Shaders start their ID from 1 so 0 for "no shader" is OK
     if (state.shaders_[PS_VERT])
         key |= state.shaders_[PS_VERT]->id_;        // 16 bit
     if (state.shaders_[PS_FRAG])
         key |= state.shaders_[PS_FRAG]->id_ << 16;  // 16 bit
 
-    key |= (uint64)state.vertexLayouts_[0] << 32;   // 10 bit
-
+    key |= (uint64)state.vertexLayouts_[0]  << 32;  // 10 bit
     key |= (uint64)state.primitiveTopology_ << 42;  // 4 bit
+    key |= (uint64)ctx.passType_            << 46;  // 3 bit
 
     return key;
 }
 
 //------------------------------------------------------------------------------
-RESULT Render::PrepareForDraw()
+RESULT Render::PrepareForDraw(const RenderPassContext& ctx)
 {
     #pragma region Pipeline
     //-------------------
@@ -1540,11 +1542,11 @@ RESULT Render::PrepareForDraw()
     plInfo.pDepthStencilState   = &depthStencil;
     plInfo.pColorBlendState     = &colorBlending;
     plInfo.layout               = pipelineLayout_;
-    plInfo.renderPass           = mainRenderPass_;
+    plInfo.renderPass           = ctx.renderPass_;
 
     VkPipeline pipeline{};
 
-    PipelineKey plKey = StateToPipelineKey(state_);
+    PipelineKey plKey = StateToPipelineKey(ctx, state_);
     auto cachedPl = pipelineCache_.find(plKey);
     if (cachedPl != pipelineCache_.end())
     {
@@ -1652,9 +1654,9 @@ void Render::AfterDraw()
 }
 
 //------------------------------------------------------------------------------
-void Render::Draw(uint vertexCount, uint firstVertex)
+void Render::Draw(const RenderPassContext& ctx, uint vertexCount, uint firstVertex)
 {
-    if (PrepareForDraw() == R_OK)
+    if (PrepareForDraw(ctx) == R_OK)
         vkCmdDraw(directCmdBuffers_[currentBBIdx_], vertexCount, 1, firstVertex, 0);
 
     AfterDraw();
@@ -1687,6 +1689,7 @@ void Render::Update(float dTime)
 
         RenderPassContext ctx;
         ctx.passType_ = RPT_MAIN;
+        ctx.renderPass_ = mainRenderPass_;
 
         vkCmdBeginRenderPass(directCmdBuffers_[currentBBIdx_], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -1701,6 +1704,10 @@ void Render::Update(float dTime)
 
     // Overlay pass
     {
+        RenderPassContext ctx;
+        ctx.passType_ = RPT_OVERLAY;
+        ctx.renderPass_ = overlayRenderPass_;
+
         VkRenderPassBeginInfo renderPassBeginInfo{};
         renderPassBeginInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassBeginInfo.renderPass      = overlayRenderPass_;
@@ -1710,13 +1717,13 @@ void Render::Update(float dTime)
         vkCmdBeginRenderPass(directCmdBuffers_[currentBBIdx_], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         if (drawCanvas_)
-            drawCanvas_->Draw();
+            drawCanvas_->Draw(ctx);
 
         if (spriteRenderer_)
-            spriteRenderer_->Draw();
+            spriteRenderer_->Draw(ctx);
 
         if (debugShapeRenderer_)
-            debugShapeRenderer_->Draw();
+            debugShapeRenderer_->Draw(ctx);
 
         ImGui::Render();
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), directCmdBuffers_[currentBBIdx_]);

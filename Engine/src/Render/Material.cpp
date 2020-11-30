@@ -134,7 +134,7 @@ void SpriteMaterial::Draw(const RenderPassContext& ctx)
 }
 
 //------------------------------------------------------------------------------
-void SpriteMaterial::DrawSprite(const SpriteDrawData& data)
+void SpriteMaterial::DrawSprite(const RenderPassContext& ctx, const SpriteDrawData& data)
 {
     {
         SpriteVertex* mapped{};
@@ -221,7 +221,7 @@ void SpriteMaterial::DrawSprite(const SpriteDrawData& data)
     g_Render->SetShader<PS_VERT>(vs_);
     g_Render->SetShader<PS_FRAG>(fs_);
 
-    g_Render->Draw(6, 0);
+    g_Render->Draw(ctx, 6, 0);
 }
 
 
@@ -259,7 +259,7 @@ struct DebugShapeVertex
 };
 
 //------------------------------------------------------------------------------
-void DebugShapeMaterial::DrawShape(Span<const Vec3> verts, const Color& color)
+void DebugShapeMaterial::DrawShape(const RenderPassContext& ctx, Span<const Vec3> verts, const Color& color)
 {
     {
         DebugShapeVertex* mapped{};
@@ -283,7 +283,7 @@ void DebugShapeMaterial::DrawShape(Span<const Vec3> verts, const Color& color)
     g_Render->SetShader<PS_FRAG>(shapeFrag_);
     g_Render->SetPrimitiveTopology(VkrPrimitiveTopology::LINE_STRIP);
 
-    g_Render->Draw(verts.Count(), 0);
+    g_Render->Draw(ctx, verts.Count(), 0);
 }
 
 //------------------------------------------------------------------------------
@@ -347,7 +347,7 @@ void TexturedTriangleMaterial::Draw(const RenderPassContext& ctx)
     g_Render->SetTexture(0, texture_);
     g_Render->SetTexture(1, textureBox_);
     g_Render->SetTexture(2, textureTree_);
-    g_Render->Draw(3, 0);
+    g_Render->Draw(ctx, 3, 0);
 }
 
 
@@ -390,7 +390,7 @@ void PhongMaterial::Draw(const RenderPassContext& ctx)
     g_Render->SetShader<PS_VERT>(phongVert_);
     g_Render->SetShader<PS_FRAG>(phongFrag_);
 
-    g_Render->Draw(3 * 12, 0);
+    g_Render->Draw(ctx, 3 * 12, 0);
 }
 
 //------------------------------------------------------------------------------
@@ -408,6 +408,15 @@ RESULT SkyboxMaterial::Init()
         pixels[3] = stbi_load("textures/skybox/bottom.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         pixels[4] = stbi_load("textures/skybox/front.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         pixels[5] = stbi_load("textures/skybox/back.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+        for (uint i = 0; i < hs_arr_len(pixels); ++i)
+        {
+            if (!pixels[i])
+            {
+                hs_assert(!"Could not load a skybox image");
+                return R_FAIL;
+            }
+        }
 
         skyboxCubemap_ = new Texture(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_CUBE);
 
@@ -464,7 +473,7 @@ void SkyboxMaterial::Draw(const RenderPassContext& ctx)
 
     g_Render->SetDepthState(false);
 
-    g_Render->Draw(3 * 12, 0);
+    g_Render->Draw(ctx, 3 * 12, 0);
 }
 
 
@@ -524,7 +533,7 @@ void PBRMaterial::Draw(const RenderPassContext& ctx)
     g_Render->SetShader<PS_VERT>(pbrVert_);
     g_Render->SetShader<PS_FRAG>(pbrFrag_);
 
-    g_Render->Draw(3 * 12, 0);
+    g_Render->Draw(ctx, 3 * 12, 0);
 }
 
 }
