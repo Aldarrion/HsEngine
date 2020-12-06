@@ -10,15 +10,15 @@ struct ps_in
 
 //------------------------------------------------------------------------------
 ConstantBuffer<SceneData>   Scene   : register(b1, space2);
-ConstantBuffer<PBRData>     PBR     : register(b2, space2); // Space3 maybe?
+ConstantBuffer<PBRData>     PBR     : register(b3, space2); // Space3 maybe?
 
 //------------------------------------------------------------------------------
 static const float3 LightPositions[4] =
 {
-    float3(0, 0, 0),
-    float3(0, 0, 0),
-    float3(0, 0, 0),
-    float3(0, 0, 0)
+    float3(10, -10, 0),
+    float3(-10, -10, 0),
+    float3(-10, 10, 0),
+    float3(10, 10, 0)
 };
 
 //------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ float4 main(ps_in input)
 
         float dist = distance(LightPositions[i], input.FragPos);
         float attenuation = 1.0 / (dist * dist);
-        attenuation = 1.0; // TODO do this correctly
+        //attenuation = 1.0; // TODO do this correctly
         float3 radiance = LightColors[i] * attenuation;
 
         // Fresnel

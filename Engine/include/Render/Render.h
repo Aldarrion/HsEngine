@@ -36,7 +36,7 @@ namespace hs
 //------------------------------------------------------------------------------
 static constexpr uint SRV_SLOT_COUNT = 8;
 static constexpr uint IMMUTABLE_SAMPLER_COUNT = 1;
-static constexpr uint DYNAMIC_UBO_COUNT = 2;
+static constexpr uint DYNAMIC_UBO_COUNT = 3;
 
 //------------------------------------------------------------------------------
 extern class Render* g_Render;
@@ -75,8 +75,9 @@ struct Mesh
 //------------------------------------------------------------------------------
 struct VisualObject
 {
-    Material* material_;
-    Mesh* mesh_;
+    Mat44       transform_;
+    Material*   material_;
+    Mesh*       mesh_;
 };
 
 //------------------------------------------------------------------------------
@@ -225,6 +226,8 @@ public:
     DebugShapeRenderer* GetDebugShapeRenderer() const;
 
     void RenderObject(VisualObject* object);
+    void RenderObjects(Span<VisualObject> objects);
+    void RenderObjects(Span<VisualObject*> objects);
 
 private:
     static constexpr auto VK_VERSION = VK_API_VERSION_1_1;

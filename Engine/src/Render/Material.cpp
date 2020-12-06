@@ -12,8 +12,6 @@
 
 #include "Common.h"
 
-#include "imgui/imgui.h"
-
 #include <string>
 
 namespace hs
@@ -56,7 +54,7 @@ uint SpriteVertexLayout()
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-    vertexInputInfo.vertexAttributeDescriptionCount = hs_arr_len(attributeDescriptions);
+    vertexInputInfo.vertexAttributeDescriptionCount = HS_ARR_LEN(attributeDescriptions);
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
 
     return g_Render->GetOrCreateVertexLayout(vertexInputInfo);
@@ -85,7 +83,7 @@ uint PosColVertLayout()
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-    vertexInputInfo.vertexAttributeDescriptionCount = hs_arr_len(attributeDescriptions);
+    vertexInputInfo.vertexAttributeDescriptionCount = HS_ARR_LEN(attributeDescriptions);
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
 
     return g_Render->GetOrCreateVertexLayout(vertexInputInfo);
@@ -128,7 +126,7 @@ RESULT SpriteMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void SpriteMaterial::Draw(const RenderPassContext& ctx)
+void SpriteMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
 {
     hs_assert(false);
 }
@@ -245,7 +243,7 @@ RESULT DebugShapeMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void DebugShapeMaterial::Draw(const RenderPassContext& ctx)
+void DebugShapeMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
 {
     hs_assert(false);
 }
@@ -340,7 +338,7 @@ RESULT TexturedTriangleMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void TexturedTriangleMaterial::Draw(const RenderPassContext& ctx)
+void TexturedTriangleMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
 {
     g_Render->SetShader<PS_VERT>(triangleVert_);
     g_Render->SetShader<PS_FRAG>(triangleFrag_);
@@ -366,7 +364,7 @@ RESULT PhongMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void PhongMaterial::Draw(const RenderPassContext& ctx)
+void PhongMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
 {
     // TODO move scene CB elsewhere
     struct SceneData
@@ -409,7 +407,7 @@ RESULT SkyboxMaterial::Init()
         pixels[4] = stbi_load("textures/skybox/front.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         pixels[5] = stbi_load("textures/skybox/back.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-        for (uint i = 0; i < hs_arr_len(pixels); ++i)
+        for (uint i = 0; i < HS_ARR_LEN(pixels); ++i)
         {
             if (!pixels[i])
             {
@@ -421,7 +419,7 @@ RESULT SkyboxMaterial::Init()
         skyboxCubemap_ = new Texture(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_CUBE);
 
         auto texAllocRes = skyboxCubemap_->Allocate((void**)pixels, "Skybox");
-        for (uint i = 0; i < hs_arr_len(pixels); ++i)
+        for (uint i = 0; i < HS_ARR_LEN(pixels); ++i)
             stbi_image_free(pixels[i]);
 
         if (FAILED(texAllocRes))
@@ -440,7 +438,7 @@ RESULT SkyboxMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-void SkyboxMaterial::Draw(const RenderPassContext& ctx)
+void SkyboxMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
 {
     // TODO move scene CB elsewhere
     struct SceneData
@@ -492,48 +490,91 @@ RESULT PBRMaterial::Init()
 }
 
 //------------------------------------------------------------------------------
-float roughness = 0.2f;
-float metallic = 1.0f;
-float ao = 1.0f;
-Vec3 albedo(0.8f, 0.5f, 0.5f);
-
-//------------------------------------------------------------------------------
-void PBRMaterial::Draw(const RenderPassContext& ctx)
+void PBRMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
 {
     // Scene data
-    sh::SceneData* scene{};
-    DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), (void**)&scene);
+    {
+        sh::SceneData* scene{};
+        DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), (void**)&scene);
 
-    scene->VP       = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
-    scene->ViewPos  = g_Render->GetCamera().Position().ToVec4Pos();
+        scene->VP       = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
+        scene->ViewPos  = g_Render->GetCamera().Position().ToVec4Pos();
 
-    g_Render->GetUBOCache()->EndAlloc();
-    g_Render->SetDynamicUbo(0, constBuffer);
+        g_Render->GetUBOCache()->EndAlloc();
+        g_Render->SetDynamicUbo(0, constBuffer);
+    }
 
-    ImGui::Begin("PBR settings");
-        ImGui::ColorPicker3("Albedo", albedo.v);
-        ImGui::SliderFloat("Roughness", &roughness, 0, 1);
-        ImGui::SliderFloat("Metellic", &metallic, 0, 1);
-        ImGui::SliderFloat("Ambient", &ao, 0, 1);
-    ImGui::End();
+    // Instance data
+    {
+        sh::InstanceData* inst{};
+        DynamicUBOEntry instCBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::InstanceData), (void**)&inst);
+
+        inst->World = drawData.transform_;
+
+        g_Render->GetUBOCache()->EndAlloc();
+        g_Render->SetDynamicUbo(1, instCBuffer);
+    }
 
     // PBR data
-    sh::PBRData* pbr{};
-    DynamicUBOEntry pbrConstBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::PBRData), (void**)&pbr);
+    {
+        sh::PBRData* pbr{};
+        DynamicUBOEntry pbrConstBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::PBRData), (void**)&pbr);
 
-    pbr->Albedo = albedo;
-    pbr->Roughness = roughness;
-    pbr->Metallic = metallic;
-    pbr->AO = ao;
+        pbr->Albedo = albedo_;
+        pbr->Roughness = roughness_;
+        pbr->Metallic = metallic_;
+        pbr->AO = ao_;
 
-    g_Render->GetUBOCache()->EndAlloc();
-    g_Render->SetDynamicUbo(1, pbrConstBuffer);
+        g_Render->GetUBOCache()->EndAlloc();
+        g_Render->SetDynamicUbo(2, pbrConstBuffer);
+    }
 
     // This material setup
     g_Render->SetShader<PS_VERT>(pbrVert_);
     g_Render->SetShader<PS_FRAG>(pbrFrag_);
 
     g_Render->Draw(ctx, 3 * 12, 0);
+}
+
+//------------------------------------------------------------------------------
+float PBRMaterial::GetRoughness() const
+{
+    return roughness_;
+}
+//------------------------------------------------------------------------------
+void PBRMaterial::SetRoughness(float roughness)
+{
+    roughness_ = roughness;
+}
+//------------------------------------------------------------------------------
+float PBRMaterial::GetMetallic() const
+{
+    return metallic_;
+}
+//------------------------------------------------------------------------------
+void PBRMaterial::SetMetallic(float metallic)
+{
+    metallic_ = metallic;
+}
+//------------------------------------------------------------------------------
+float PBRMaterial::GetAo() const
+{
+    return ao_;
+}
+//------------------------------------------------------------------------------
+void PBRMaterial::SetAo(float ao)
+{
+    ao_ = ao;
+}
+//------------------------------------------------------------------------------
+const Vec3& PBRMaterial::GetAlbedo() const
+{
+    return albedo_;
+}
+//------------------------------------------------------------------------------
+void PBRMaterial::SetAlbedo(const Vec3& albedo)
+{
+    albedo_ = albedo;
 }
 
 }

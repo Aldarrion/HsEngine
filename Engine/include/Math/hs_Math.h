@@ -465,6 +465,8 @@ inline Vec3 operator/(const Vec3& v, float t)
 //------------------------------------------------------------------------------
 struct Mat44;
 inline Vec4 operator*(const Vec4& v, const Mat44& m);
+inline Mat44 operator*(const Mat44& m, float s);
+inline Mat44 operator*(float s, const Mat44& m);
 
 //------------------------------------------------------------------------------
 // Matrix is saved as row major, meaning that the vector at m[0] is the first
@@ -523,7 +525,16 @@ struct Mat44
     }
 
     //------------------------------------------------------------------------------
+    static Mat44 Scale(float scale)
+    {
+        Mat44 scaleMat = Mat44::Identity() * scale;
+        scaleMat(3, 3) = 1;
+        return scaleMat;
+    }
+
+    //------------------------------------------------------------------------------
     Mat44() = default;
+
     //------------------------------------------------------------------------------
     Mat44(
         float _11, float _12, float _13, float _14,
@@ -562,12 +573,14 @@ struct Mat44
     //------------------------------------------------------------------------------
     constexpr float operator()(int i, int j) const
     {
+        hs_assert(i >= 0 && i < 4 && j >= 0 && j < 4);
         return m[i][j];
     }
 
     //------------------------------------------------------------------------------
     constexpr float& operator()(int i, int j)
     {
+        hs_assert(i >= 0 && i < 4 && j >= 0 && j < 4);
         return m[i][j];
     }
 
@@ -720,6 +733,27 @@ inline Vec4 operator*(const Vec4& v, const Mat44& m)
     out.w = v.x * m(0, 3) + v.y * m(1, 3) + v.z * m(2, 3) + v.w * m(3, 3);
 
     return out;
+}
+
+//------------------------------------------------------------------------------
+inline Mat44 operator*(const Mat44& m, float s)
+{
+    Mat44 out;
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            out(i, j) = m(i, j) * s;
+        }
+    }
+
+    return out;
+}
+
+//------------------------------------------------------------------------------
+inline Mat44 operator*(float s, const Mat44& m)
+{
+    return m * s;
 }
 
 //------------------------------------------------------------------------------

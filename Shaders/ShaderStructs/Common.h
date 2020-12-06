@@ -56,6 +56,12 @@ struct PBRData
     float AO;
 };
 
+//------------------------------------------------------------------------------
+struct InstanceData
+{
+    Mat44   World;
+};
+
 #ifdef __cplusplus
 } // namespace shaders
 }

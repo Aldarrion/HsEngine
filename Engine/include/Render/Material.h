@@ -13,6 +13,7 @@ namespace hs
 {
 
 struct RenderPassContext;
+struct DrawData;
 
 //------------------------------------------------------------------------------
 class Material
@@ -20,7 +21,7 @@ class Material
 public:
     virtual ~Material() = default;
     virtual RESULT Init() = 0;
-    virtual void Draw(const RenderPassContext& ctx) = 0;
+    virtual void Draw(const RenderPassContext& ctx, const DrawData& drawData) = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -39,7 +40,7 @@ public:
     ~SpriteMaterial();
 
     RESULT Init() override;
-    void Draw(const RenderPassContext& ctx) override;
+    void Draw(const RenderPassContext& ctx, const DrawData& drawData) override;
     void DrawSprite(const RenderPassContext& ctx, const SpriteDrawData& data);
 
 private:
@@ -55,7 +56,7 @@ public:
     ~DebugShapeMaterial();
 
     RESULT Init() override;
-    void Draw(const RenderPassContext& ctx) override;
+    void Draw(const RenderPassContext& ctx, const DrawData& drawData) override;
     void DrawShape(const RenderPassContext& ctx, Span<const Vec3> verts, const Color& color);
 
 private:
@@ -74,7 +75,7 @@ class TexturedTriangleMaterial : public Material
 {
 public:
     RESULT Init() override;
-    void Draw(const RenderPassContext& ctx) override;
+    void Draw(const RenderPassContext& ctx, const DrawData& drawData) override;
 
 private:
     Shader*     triangleVert_{};
@@ -90,7 +91,7 @@ class PhongMaterial : public Material
 {
 public:
     RESULT Init() override;
-    void Draw(const RenderPassContext& ctx) override;
+    void Draw(const RenderPassContext& ctx, const DrawData& drawData) override;
 
 private:
     Shader*         phongVert_{};
@@ -102,7 +103,7 @@ class SkyboxMaterial : public Material
 {
 public:
     RESULT Init() override;
-    void Draw(const RenderPassContext& ctx) override;
+    void Draw(const RenderPassContext& ctx, const DrawData& drawData) override;
 
 private:
     Shader*     skyboxVert_{};
@@ -116,11 +117,29 @@ class PBRMaterial : public Material
 {
 public:
     RESULT Init() override;
-    void Draw(const RenderPassContext& ctx) override;
+    void Draw(const RenderPassContext& ctx, const DrawData& drawData) override;
+
+    float GetRoughness() const;
+    void SetRoughness(float roughness);
+
+    float GetMetallic() const;
+    void SetMetallic(float metallic);
+
+    float GetAo() const;
+    void SetAo(float ao);
+
+    const Vec3& GetAlbedo() const;
+    void SetAlbedo(const Vec3& albedo);
 
 private:
     Shader*     pbrVert_{};
     Shader*     pbrFrag_{};
+
+    float roughness_{ 0.2f };
+    float metallic_{ 1.0f };
+    float ao_{ 1.0f };
+    Vec3 albedo_{ 0.8f, 0.5f, 0.5f };
+
 };
 
 }

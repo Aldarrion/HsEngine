@@ -202,7 +202,7 @@ VkBool32 ValidationCallback(
     const char* msg,
     void* userData)
 {
-    for (uint i = 0; i < hs_arr_len(IGNORED_MSGS); ++i)
+    for (uint i = 0; i < HS_ARR_LEN(IGNORED_MSGS); ++i)
     {
         if (strstr(msg, IGNORED_MSGS[i]) != NULL)
             return VK_FALSE;
@@ -506,7 +506,7 @@ RESULT Render::CreateMainRenderPass()
     VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment };
     VkRenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = hs_arr_len(attachments);
+    renderPassInfo.attachmentCount = HS_ARR_LEN(attachments);
     renderPassInfo.pAttachments = attachments;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
@@ -531,7 +531,7 @@ RESULT Render::CreateMainFrameBuffer()
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass      = mainRenderPass_;
-        framebufferInfo.attachmentCount = hs_arr_len(viewAttachments);
+        framebufferInfo.attachmentCount = HS_ARR_LEN(viewAttachments);
         framebufferInfo.pAttachments    = viewAttachments;
         framebufferInfo.width           = width_;
         framebufferInfo.height          = height_;
@@ -574,7 +574,7 @@ RESULT Render::CreateOverlayRenderPass()
     VkAttachmentDescription attachments[] = { colorAttachment };
     VkRenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = hs_arr_len(attachments);
+    renderPassInfo.attachmentCount = HS_ARR_LEN(attachments);
     renderPassInfo.pAttachments = attachments;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
@@ -597,7 +597,7 @@ RESULT Render::CreateOverlayFrameBuffer()
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass      = overlayRenderPass_;
-        framebufferInfo.attachmentCount = hs_arr_len(viewAttachments);
+        framebufferInfo.attachmentCount = HS_ARR_LEN(viewAttachments);
         framebufferInfo.pAttachments    = viewAttachments;
         framebufferInfo.width           = width_;
         framebufferInfo.height          = height_;
@@ -779,7 +779,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
             "VK_LAYER_LUNARG_standard_validation",
         };
 
-        instInfo.enabledLayerCount      = (uint)hs_arr_len(validationLayers);
+        instInfo.enabledLayerCount      = (uint)HS_ARR_LEN(validationLayers);
         instInfo.ppEnabledLayerNames    = validationLayers;
     #endif
 
@@ -790,7 +790,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
     };
 
-    instInfo.enabledExtensionCount      = hs_arr_len(instanceExt);
+    instInfo.enabledExtensionCount      = HS_ARR_LEN(instanceExt);
     instInfo.ppEnabledExtensionNames    = instanceExt;
 
     if (VKR_FAILED(vkCreateInstance(&instInfo, nullptr, &vkInstance_)))
@@ -817,7 +817,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     if (VKR_FAILED(vkEnumeratePhysicalDevices(vkInstance_, &physicalDeviceCount, physicalDevices)))
         return R_FAIL;
 
-    hs_assert(physicalDeviceCount > 0 && physicalDeviceCount < hs_arr_len(physicalDevices));
+    hs_assert(physicalDeviceCount > 0 && physicalDeviceCount < HS_ARR_LEN(physicalDevices));
 
     int bestDevice = 0;
     // TODO Actually find the best device and check capabilities here
@@ -893,7 +893,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     deviceInfo.pQueueCreateInfos        = queues;
     deviceInfo.enabledLayerCount        = instInfo.enabledLayerCount;
     deviceInfo.ppEnabledLayerNames      = instInfo.ppEnabledLayerNames;
-    deviceInfo.enabledExtensionCount    = hs_arr_len(deviceExt);
+    deviceInfo.enabledExtensionCount    = HS_ARR_LEN(deviceExt);
     deviceInfo.ppEnabledExtensionNames  = deviceExt;
     deviceInfo.pEnabledFeatures         = &deviceFeatures;
 
@@ -1035,7 +1035,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
 
     VkDescriptorSetLayoutCreateInfo dsLayoutInfo{};
     dsLayoutInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dsLayoutInfo.bindingCount   = hs_arr_len(bindings);
+    dsLayoutInfo.bindingCount   = HS_ARR_LEN(bindings);
     dsLayoutInfo.pBindings      = bindings;
 
     if (VKR_FAILED(vkCreateDescriptorSetLayout(vkDevice_, &dsLayoutInfo, nullptr, &fsSamplerLayout_)))
@@ -1058,7 +1058,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     bindlessSrv.sType           = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     bindlessSrv.pNext           = &bindingFlagsInfo;
     bindlessSrv.flags           = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
-    bindlessSrv.bindingCount    = hs_arr_len(srvBindings);
+    bindlessSrv.bindingCount    = HS_ARR_LEN(srvBindings);
     bindlessSrv.pBindings       = srvBindings;
 
     if (VKR_FAILED(vkCreateDescriptorSetLayout(vkDevice_, &bindlessSrv, nullptr, &bindlessTexturesLayout_)))
@@ -1077,9 +1077,12 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     uboBindings[2] = uboBindings[0];
     uboBindings[2].binding             = 2;
 
+    uboBindings[3] = uboBindings[0];
+    uboBindings[3].binding             = 3;
+
     VkDescriptorSetLayoutCreateInfo dynamicUbo{};
     dynamicUbo.sType           = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dynamicUbo.bindingCount    = hs_arr_len(uboBindings);
+    dynamicUbo.bindingCount    = HS_ARR_LEN(uboBindings);
     dynamicUbo.pBindings       = uboBindings;
 
     if (VKR_FAILED(vkCreateDescriptorSetLayout(vkDevice_, &dynamicUbo, nullptr, &dynamicUBOLayout_)))
@@ -1092,7 +1095,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     };
 
     VkPipelineLayoutCreateInfo plLayoutInfo{};
-    plLayoutInfo.setLayoutCount = hs_arr_len(descLayouts);
+    plLayoutInfo.setLayoutCount = HS_ARR_LEN(descLayouts);
     plLayoutInfo.pSetLayouts    = descLayouts;
 
     plLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1110,7 +1113,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
         poolInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolInfo.flags          = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT | VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT;
         poolInfo.maxSets        = 1;
-        poolInfo.poolSizeCount  = hs_arr_len(poolSizes);
+        poolInfo.poolSizeCount  = HS_ARR_LEN(poolSizes);
         poolInfo.pPoolSizes     = poolSizes;
 
         if (VKR_FAILED(vkCreateDescriptorPool(vkDevice_, &poolInfo, nullptr, &bindlessPool_)))
@@ -1135,7 +1138,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
         VkDescriptorPoolCreateInfo immutableSampler{};
         immutableSampler.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         immutableSampler.maxSets        = 1;
-        immutableSampler.poolSizeCount  = hs_arr_len(immutableSamplerSizes);
+        immutableSampler.poolSizeCount  = HS_ARR_LEN(immutableSamplerSizes);
         immutableSampler.pPoolSizes     = immutableSamplerSizes;
 
         if (VKR_FAILED(vkCreateDescriptorPool(vkDevice_, &immutableSampler, nullptr, &immutableSamplerPool_)))
@@ -1160,7 +1163,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
         VkDescriptorPoolCreateInfo dynamicUbo{};
         dynamicUbo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         dynamicUbo.maxSets        = 1024;
-        dynamicUbo.poolSizeCount  = hs_arr_len(dynUboSizes);
+        dynamicUbo.poolSizeCount  = HS_ARR_LEN(dynUboSizes);
         dynamicUbo.pPoolSizes     = dynUboSizes;
 
         for (int i = 0; i < BB_IMG_COUNT; ++i)
@@ -1225,6 +1228,20 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
 void Render::RenderObject(VisualObject* object)
 {
     renderObjects_[RPT_MAIN].Add(object);
+}
+
+//------------------------------------------------------------------------------
+void Render::RenderObjects(Span<VisualObject> objects)
+{
+    for (int i = 0; i < objects.Count(); ++i)
+        RenderObject(&objects[i]);
+}
+
+//------------------------------------------------------------------------------
+void Render::RenderObjects(Span<VisualObject*> objects)
+{
+    for (int i = 0; i < objects.Count(); ++i)
+        RenderObject(objects[i]);
 }
 
 //------------------------------------------------------------------------------
@@ -1614,7 +1631,7 @@ RESULT Render::PrepareForDraw(const RenderPassContext& ctx)
         state_.uboDescSet_,
     };
 
-    vkCmdBindDescriptorSets(CmdBuff(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout_, 0, hs_arr_len(descSets), descSets, hs_arr_len(dynOffsets), dynOffsets);
+    vkCmdBindDescriptorSets(CmdBuff(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout_, 0, HS_ARR_LEN(descSets), descSets, HS_ARR_LEN(dynOffsets), dynOffsets);
 
     // Vertex buffers
     if (state_.vertexBuffers_[0])
@@ -1664,7 +1681,7 @@ void Render::Update(float dTime)
         renderPassBeginInfo.renderPass      = mainRenderPass_;
         renderPassBeginInfo.framebuffer     = mainFrameBuffer_[currentBBIdx_];
         renderPassBeginInfo.renderArea      = VkRect2D { VkOffset2D { 0, 0 }, VkExtent2D { width_, height_ } };
-        renderPassBeginInfo.clearValueCount = hs_arr_len(clearVal);
+        renderPassBeginInfo.clearValueCount = HS_ARR_LEN(clearVal);
         renderPassBeginInfo.pClearValues    = clearVal;
 
         RenderPassContext ctx;
@@ -1675,7 +1692,8 @@ void Render::Update(float dTime)
 
         for (int i = 0; i < renderObjects_[RPT_MAIN].Count(); ++i)
         {
-            renderObjects_[RPT_MAIN][i]->material_->Draw(ctx);
+            VisualObject* rndrObj = renderObjects_[RPT_MAIN][i];
+            rndrObj->material_->Draw(ctx, DrawData{ rndrObj->transform_ });
         }
 
         vkCmdEndRenderPass(directCmdBuffers_[currentBBIdx_]);

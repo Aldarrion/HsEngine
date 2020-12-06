@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Render/VkTypes.h"
+#include "Math/hs_Math.h"
 
 namespace hs
 {
@@ -16,8 +17,14 @@ enum RenderPassType
 //------------------------------------------------------------------------------
 struct RenderPassContext
 {
-    RenderPassType passType_;
-    VkRenderPass renderPass_;
+    RenderPassType  passType_;
+    VkRenderPass    renderPass_;
+};
+
+//------------------------------------------------------------------------------
+struct DrawData
+{
+    Mat44 transform_;
 };
 
 }

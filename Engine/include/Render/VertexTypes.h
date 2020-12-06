@@ -37,7 +37,7 @@ inline uint ShapeVertexLayout()
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-    vertexInputInfo.vertexAttributeDescriptionCount = hs_arr_len(attributeDescriptions);
+    vertexInputInfo.vertexAttributeDescriptionCount = HS_ARR_LEN(attributeDescriptions);
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
 
     return g_Render->GetOrCreateVertexLayout(vertexInputInfo);

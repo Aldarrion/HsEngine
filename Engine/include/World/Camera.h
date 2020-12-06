@@ -47,7 +47,7 @@ private:
     Vec3 pos_{ 0, 0, -5 };
     Vec3 forward_{ Vec3::FORWARD() };
     Vec3 right_{ Vec3::RIGHT() };
-    float freeflySpeed_{ 40 };
+    float freeflySpeed_{ 20 };
 
     Vec2 angles_{ 0, HS_PI_HALF };
     float fovy_{ 75 };

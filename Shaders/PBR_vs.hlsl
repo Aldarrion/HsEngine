@@ -114,22 +114,16 @@ struct vs_out
     float3 WorldPos : POSITION;
 };
 
-ConstantBuffer<SceneData>   Scene   : register(b1, space2);
+ConstantBuffer<SceneData>       Scene       : register(b1, space2);
+ConstantBuffer<InstanceData>    Instance    : register(b2, space2);
 
 vs_out main(uint vertID : SV_VERTEXID)
 {
-    float4x4 model = {
-        10, 0, 0, 20,
-        0, 10, 0, -30,
-        0, 0, 10, 50,
-        0, 0, 0, 1
-    };
-
     vs_out o = vs_out(0);
 
     float4 pos = float4(CubeVerts[CubeIndices[vertID]], 1);
-    o.Pos = pos * model * Scene.VP;
-    o.WorldPos = (pos * model).xyz;
+    o.Pos = pos * Instance.World * Scene.VP;
+    o.WorldPos = (pos * Instance.World).xyz;
 
     //o.Color = CubeColors[CubeIndices[vertID]];
     o.Normal = normalize(CubeNormals[CubeIndices[vertID]]);
