@@ -18,7 +18,9 @@
 #include "Common/Enums.h"
 #include "Common/Types.h"
 
-#include "Platform/hs_Windows.h"
+#if HS_WINDOWS
+    #include "Platform/hs_Windows.h"
+#endif
 
 #include <unordered_map> // TODO use custom hashmap
 
@@ -157,7 +159,11 @@ class Render
 public:
     RESULT OnWindowResized(uint width, uint height);
     RESULT ReloadShaders();
-    RESULT InitWin32(HWND hwnd, HINSTANCE hinst);
+    #if HS_WINDOWS
+        RESULT InitWin32(HWND hwnd, HINSTANCE hinst);
+    #elif HS_LINUX
+        RESULT InitLinux();
+    #endif
     RESULT InitImgui();
 
     void ClearPipelineCache();
@@ -235,9 +241,11 @@ private:
 
     static constexpr uint BB_IMG_COUNT = 2;
 
-    // Win32
-    HINSTANCE   hinst_;
-    HWND        hwnd_;
+    #if HS_WINDOWS
+        // Win32
+        HINSTANCE   hinst_;
+        HWND        hwnd_;
+    #endif
 
     uint                width_{};
     uint                height_{};

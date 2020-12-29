@@ -30,11 +30,13 @@ void DestroyResourceManager()
     delete g_ResourceManager;
 }
 
-//------------------------------------------------------------------------------
-RESULT ResourceManager::InitWin32()
-{
-    return R_OK;
-}
+#if HS_WINDOWS
+    //------------------------------------------------------------------------------
+    RESULT ResourceManager::InitWin32()
+    {
+        return R_OK;
+    }
+#endif
 
 //------------------------------------------------------------------------------
 void ResourceManager::Free()

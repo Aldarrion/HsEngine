@@ -21,7 +21,9 @@
 #include "Common/hs_Assert.h"
 #include "Common/Util.h"
 
-#include "vulkan/vulkan_win32.h"
+#if HS_WINDOWS
+    #include "vulkan/vulkan_win32.h"
+#endif
 
 #include "imgui/imgui_impl_vulkan.h"
 
@@ -68,7 +70,9 @@ const char* ResultToString(VkResult result)
         case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR: return "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
         case VK_ERROR_VALIDATION_FAILED_EXT: return "VK_ERROR_VALIDATION_FAILED_EXT";
         case VK_ERROR_INVALID_SHADER_NV: return "VK_ERROR_INVALID_SHADER_NV";
-        case VK_ERROR_INCOMPATIBLE_VERSION_KHR: return "VK_ERROR_INCOMPATIBLE_VERSION_KHR";
+        #if HS_WINDOWS
+            case VK_ERROR_INCOMPATIBLE_VERSION_KHR: return "VK_ERROR_INCOMPATIBLE_VERSION_KHR";
+        #endif
         case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT: return "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
         case VK_ERROR_NOT_PERMITTED_EXT: return "VK_ERROR_NOT_PERMITTED_EXT";
         case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT: return "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT";
@@ -294,13 +298,15 @@ RESULT Render::OnWindowResized(uint width, uint height)
 //------------------------------------------------------------------------------
 RESULT Render::CreateSurface()
 {
-    VkWin32SurfaceCreateInfoKHR winSurfaceInfo{};
-    winSurfaceInfo.sType        = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    winSurfaceInfo.hinstance    = hinst_;
-    winSurfaceInfo.hwnd         = hwnd_;
+    #if HS_WINDOWS
+        VkWin32SurfaceCreateInfoKHR winSurfaceInfo{};
+        winSurfaceInfo.sType        = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        winSurfaceInfo.hinstance    = hinst_;
+        winSurfaceInfo.hwnd         = hwnd_;
 
-    if (VKR_FAILED(vkCreateWin32SurfaceKHR(vkInstance_, &winSurfaceInfo, nullptr, &vkSurface_)))
-        return R_FAIL;
+        if (VKR_FAILED(vkCreateWin32SurfaceKHR(vkInstance_, &winSurfaceInfo, nullptr, &vkSurface_)))
+            return R_FAIL;
+    #endif
 
     return R_OK;
 }
@@ -393,7 +399,7 @@ RESULT Render::CreateSwapchain()
     if (VKR_FAILED(vkAcquireNextImageKHR(vkDevice_, vkSwapchain_, (uint64)-1, VK_NULL_HANDLE, nextImageFence_, &currentBBIdx_)))
         return R_FAIL;
 
-    if (FAILED(WaitForFence(nextImageFence_)))
+    if (HS_FAILED(WaitForFence(nextImageFence_)))
         return R_FAIL;
 
     //-----------------------
@@ -744,6 +750,7 @@ void Render::TransitionBarrier(
     );
 }
 
+#if HS_WINDOWS
 //------------------------------------------------------------------------------
 RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
 {
@@ -1223,6 +1230,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
 
     return R_OK;
 }
+#endif
 
 //------------------------------------------------------------------------------
 void Render::RenderObject(VisualObject* object)

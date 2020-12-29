@@ -7,7 +7,9 @@
 
 #include "Math/hs_Math.h"
 
-#include "Platform/hs_Windows.h"
+#if HS_WINDOWS
+    #include "Platform/hs_Windows.h"
+#endif
 
 namespace hs
 {
@@ -47,7 +49,9 @@ struct Pair
 class Input
 {
 public:
-    RESULT InitWin32(HWND hwnd);
+    #if HS_WINDOWS
+        RESULT InitWin32(HWND hwnd);
+    #endif
 
     void Update();
     void EndFrame();
@@ -74,8 +78,10 @@ public:
     Vec2 GetMouseDelta() const;
 
 private:
-    // Win32
-    HWND hwnd_;
+    #if HS_WINDOWS
+        // Win32
+        HWND hwnd_;
+    #endif
 
     enum class ButtonState
     {

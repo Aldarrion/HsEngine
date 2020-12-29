@@ -3,7 +3,12 @@
 #include "Config.h"
 #include <malloc.h>
 
-#define HS_ALLOCA(Type, count) (Type*)_alloca(count * sizeof(Type))
+#if HS_WINDOWS
+    #define HS_ALLOCA(Type, count) (Type*)_alloca(count * sizeof(Type))
+#elif HS_LINUX
+    #include <alloca.h>
+    #define HS_ALLOCA(Type, count) (Type*)alloca(count * sizeof(Type))
+#endif
 
 namespace hs
 {

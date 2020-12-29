@@ -137,7 +137,7 @@ RESULT Texture::Allocate(void** data, const char* diagName)
         {
             uint buffSize = size_.width * size_.height * 4;
             TempStagingBuffer staging(buffSize);
-            if (FAILED(staging.Allocate(data[i])))
+            if (HS_FAILED(staging.Allocate(data[i])))
                 return R_FAIL;
 
             VkBufferImageCopy region{};

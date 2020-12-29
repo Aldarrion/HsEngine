@@ -5,10 +5,13 @@
 
 #include "Math/hs_Math.h"
 
-#include "Platform/hs_Windows.h"
+#if HS_WINDOWS
+    #include "Platform/hs_Windows.h"
+#endif
 
-#include <stdio.h>
-#include <stdarg.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdarg>
 
 namespace hs
 {
@@ -46,7 +49,9 @@ void Log(LogLevel level, const char* formatString, ...)
     buffer[prefixSize + len] = '\n';
     buffer[prefixSize + len + 1] = '\0';
 
-    OutputDebugStringA(buffer);
+    #if HS_WINDOWS
+        OutputDebugStringA(buffer);
+    #endif
 }
 
 //------------------------------------------------------------------------------

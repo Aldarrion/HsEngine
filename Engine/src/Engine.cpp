@@ -23,11 +23,13 @@ void DestroyEngine()
     delete g_Engine;
 }
 
-//------------------------------------------------------------------------------
-RESULT Engine::InitWin32()
-{
-    return R_OK;
-}
+#if HS_WINDOWS
+    //------------------------------------------------------------------------------
+    RESULT Engine::InitWin32()
+    {
+        return R_OK;
+    }
+#endif
 
 //------------------------------------------------------------------------------
 bool Engine::IsWindowActive() const

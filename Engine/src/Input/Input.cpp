@@ -6,7 +6,9 @@
 
 #include "Common/Logging.h"
 
-#include "Platform/hs_Windows.h"
+#if HS_WINDOWS
+    #include "Platform/hs_Windows.h"
+#endif
 
 namespace hs
 {
@@ -28,13 +30,15 @@ void DestroyInput()
     delete g_Input;
 }
 
-//------------------------------------------------------------------------------
-RESULT Input::InitWin32(HWND hwnd)
-{
-    hwnd_ = hwnd;
+#if HS_WINDOWS
+    //------------------------------------------------------------------------------
+    RESULT Input::InitWin32(HWND hwnd)
+    {
+        hwnd_ = hwnd;
 
-    return R_OK;
-}
+        return R_OK;
+    }
+#endif
 
 //------------------------------------------------------------------------------
 void Input::Update()
@@ -60,22 +64,24 @@ void Input::EndFrame()
 //------------------------------------------------------------------------------
 Vec2 Input::GetMousePos() const
 {
-    POINT cursorPos;
-    if (GetCursorPos(&cursorPos) == 0)
-    {
-        Log(LogLevel::Error, "Could not retrieve the cursor position, error: %d", GetLastError());
-    }
-    else
-    {
-        if (!ScreenToClient(hwnd_, &cursorPos))
+    #if HS_WINDOWS
+        POINT cursorPos;
+        if (GetCursorPos(&cursorPos) == 0)
         {
-            Log(LogLevel::Error, "Could not cast cursor pos to client pos, error: %d", GetLastError());
+            Log(LogLevel::Error, "Could not retrieve the cursor position, error: %d", GetLastError());
         }
         else
         {
-            return Vec2{ (float)cursorPos.x, (float)cursorPos.y };
+            if (!ScreenToClient(hwnd_, &cursorPos))
+            {
+                Log(LogLevel::Error, "Could not cast cursor pos to client pos, error: %d", GetLastError());
+            }
+            else
+            {
+                return Vec2{ (float)cursorPos.x, (float)cursorPos.y };
+            }
         }
-    }
+    #endif
 
     return Vec2{};
 }
@@ -109,7 +115,11 @@ bool Input::GetState(int keyCode) const
 {
     if (!g_Engine->IsWindowActive())
         return false;
-    return (GetKeyState(keyCode) & 0x8000) != 0;
+    #if HS_WINDOWS
+        return (GetKeyState(keyCode) & 0x8000) != 0;
+    #else
+        return false;
+    #endif
 }
 
 //------------------------------------------------------------------------------
@@ -159,37 +169,41 @@ void Input::ButtonUp(MouseButton button)
 //------------------------------------------------------------------------------
 void Input::CenterCursor()
 {
-    POINT cursorPos { (int)g_Render->GetWidth() / 2, (int)g_Render->GetHeight() / 2 };
-    if (ClientToScreen(hwnd_, &cursorPos) == 0)
-    {
-        Log(LogLevel::Error, "Could not retrieve the window position, error: %d", GetLastError());
-    }
-    else
-    {
-        if (SetCursorPos(cursorPos.x, cursorPos.y) == 0)
-            Log(LogLevel::Error, "Could not set the cursor position, error: %d", GetLastError());
-    }
+    #if HS_WINDOWS
+        POINT cursorPos { (int)g_Render->GetWidth() / 2, (int)g_Render->GetHeight() / 2 };
+        if (ClientToScreen(hwnd_, &cursorPos) == 0)
+        {
+            Log(LogLevel::Error, "Could not retrieve the window position, error: %d", GetLastError());
+        }
+        else
+        {
+            if (SetCursorPos(cursorPos.x, cursorPos.y) == 0)
+                Log(LogLevel::Error, "Could not set the cursor position, error: %d", GetLastError());
+        }
+    #endif
 }
 
 //------------------------------------------------------------------------------
 void Input::SetMouseMode(MouseMode mode)
 {
-    if (mouseMode_ != mode)
-    {
-        mouseMode_ = mode;
-        if (mouseMode_ == MouseMode::Relative)
+    #if HS_WINDOWS
+        if (mouseMode_ != mode)
         {
-            CenterCursor();
-            int showCount = ShowCursor(false);
-            hs_assert(showCount < 0);
+            mouseMode_ = mode;
+            if (mouseMode_ == MouseMode::Relative)
+            {
+                CenterCursor();
+                int showCount = ShowCursor(false);
+                hs_assert(showCount < 0);
+            }
+            else
+            {
+                hs_assert(mouseMode_ == MouseMode::Absolute);
+                int showCount = ShowCursor(true);
+                hs_assert(showCount >= 0);
+            }
         }
-        else
-        {
-            hs_assert(mouseMode_ == MouseMode::Absolute);
-            int showCount = ShowCursor(true);
-            hs_assert(showCount >= 0);
-        }
-    }
+    #endif
 }
 
 //------------------------------------------------------------------------------

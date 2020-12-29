@@ -20,7 +20,9 @@ class Engine
 public:
     ~Engine() = default;
 
-    RESULT InitWin32();
+    #if HS_WINDOWS
+        RESULT InitWin32();
+    #endif
 
     bool IsWindowActive() const;
     void SetWindowActive(bool isActive);

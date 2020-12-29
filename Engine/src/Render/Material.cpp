@@ -298,7 +298,7 @@ RESULT TexturedTriangleMaterial::Init()
         auto texAllocRes = texture_->Allocate((void**)&pixels, "GrassTile");
         stbi_image_free(pixels);
 
-        if (FAILED(texAllocRes))
+        if (HS_FAILED(texAllocRes))
             return R_FAIL; // TODO release resources
     }
 
@@ -311,7 +311,7 @@ RESULT TexturedTriangleMaterial::Init()
         auto texAllocRes = textureTree_->Allocate((void**)&pixels, "Tree");
         stbi_image_free(pixels);
 
-        if (FAILED(texAllocRes))
+        if (HS_FAILED(texAllocRes))
             return R_FAIL; // TODO release resources
     }
 
@@ -324,7 +324,7 @@ RESULT TexturedTriangleMaterial::Init()
         auto texAllocRes = textureBox_->Allocate((void**)&pixels, "Box");
         stbi_image_free(pixels);
 
-        if (FAILED(texAllocRes))
+        if (HS_FAILED(texAllocRes))
             return R_FAIL; // TODO release resources
     }
 
@@ -422,7 +422,7 @@ RESULT SkyboxMaterial::Init()
         for (uint i = 0; i < HS_ARR_LEN(pixels); ++i)
             stbi_image_free(pixels[i]);
 
-        if (FAILED(texAllocRes))
+        if (HS_FAILED(texAllocRes))
             return R_FAIL; // TODO release resources
     }
 

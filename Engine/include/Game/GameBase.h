@@ -18,7 +18,9 @@ class GameBase
 public:
     virtual ~GameBase() = default;
 
-    virtual RESULT InitWin32() = 0;
+    #if HS_WINDOWS
+        virtual RESULT InitWin32() = 0;
+    #endif
     virtual RESULT OnWindowResized() = 0;
     virtual void Update() = 0;
 };

@@ -2,6 +2,8 @@
 
 #include "Common/Types.h"
 
+#include <cstring>
+
 namespace hs
 {
 

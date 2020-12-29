@@ -87,7 +87,12 @@ void Camera::UpdateMatrices()
 //------------------------------------------------------------------------------
 void Camera::UpdateFreeFly()
 {
-    bool isMoveMode = g_Input->GetState(VK_RBUTTON);
+    // TODO platform independent mouse button handling
+    #if HS_WINDOWS
+        bool isMoveMode = g_Input->GetState(VK_RBUTTON);
+    #else
+        bool isMoveMode = false;
+    #endif
     if (isMoveMode)
     {
         g_Input->SetMouseMode(MouseMode::Relative);

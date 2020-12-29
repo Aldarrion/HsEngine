@@ -9,6 +9,7 @@
 #include <cstring>
 #include <type_traits>
 #include <initializer_list>
+#include <new>
 
 namespace hs
 {
@@ -149,7 +150,7 @@ public:
 
             T* newItems = (T*)malloc(sizeof(T) * capacity_);
 
-            if (std::is_trivial_v<T>)
+            if constexpr (std::is_trivial_v<T>)
             {
                 memcpy(newItems, items_, sizeof(T) * count_);
             }
@@ -187,7 +188,7 @@ public:
             capacity_ = ArrMax(capacity_ << 1, MIN_CAPACITY);
 
             auto newItems = (T*)malloc(sizeof(T) * capacity_);
-            if (std::is_trivial_v<T>)
+            if constexpr (std::is_trivial_v<T>)
             {
                 memcpy(newItems, items_, sizeof(T) * index);
                 memcpy(&newItems[index + 1], &items_[index], (count_ - index) * sizeof(T));
@@ -311,7 +312,7 @@ public:
         capacity_ = ArrMax(capacity, MIN_CAPACITY);
 
         T* newItems = (T*)malloc(sizeof(T) * capacity_);
-        if (std::is_trivial_v<T>)
+        if constexpr (std::is_trivial_v<T>)
         {
             memcpy(newItems, items_, sizeof(T) * oldCapacity);
         }

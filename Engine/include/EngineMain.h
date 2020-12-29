@@ -1,11 +1,18 @@
 #pragma once
 
-#include "Platform/hs_Windows.h"
+#if HS_WINDOWS
+    #include "Platform/hs_Windows.h"
+#endif
 
 namespace hs
 {
 
-//------------------------------------------------------------------------------
-int EngineMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int showCmd);
+#if HS_WINDOWS
+    //------------------------------------------------------------------------------
+    int EngineMainWin32(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int showCmd);
+#elif HS_LINUX
+    //------------------------------------------------------------------------------
+    int EngineMainLinux();
+#endif
 
 }

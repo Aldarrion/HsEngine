@@ -28,7 +28,9 @@ void DestroyResourceManager();
 class ResourceManager
 {
 public:
-    RESULT InitWin32();
+    #if HS_WINDOWS
+        RESULT InitWin32();
+    #endif
 
     RESULT LoadTexture2D(const char* path, Texture** texture);
 

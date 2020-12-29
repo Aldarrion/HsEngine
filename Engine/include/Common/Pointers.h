@@ -106,7 +106,7 @@ public:
         typename std::enable_if_t<std::is_convertible_v<U*, T*>, void>* = 0)
     {
         ptr_ = other.ptr_;
-        otherPtr.ptr_ = nullptr;
+        other.ptr_ = nullptr;
     }
 
     //------------------------------------------------------------------------------

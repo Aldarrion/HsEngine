@@ -4,12 +4,14 @@
 
 #include "cjson/cJSON.h"
 
-#include "Platform/hs_Windows.h"
+#if HS_WINDOWS
+    #include "Platform/hs_Windows.h"
+#endif
 
 namespace hs
 {
 
-#define LOG_AND_FAIL(msg, ...)      do { Log(LogLevel::Error, msg, __VA_ARGS__);\
+#define LOG_AND_FAIL(msg, ...)      do { Log(LogLevel::Error, msg, ## __VA_ARGS__);\
                                     return R_FAIL; } while(false)
 
 //------------------------------------------------------------------------------
@@ -169,7 +171,7 @@ RESULT SerializationManager::LoadConfig(const char* fileName, PropertyContainer&
     }
 
     // Json parsed, fill the container
-    if (FAILED(FillObject(root, container)))
+    if (HS_FAILED(FillObject(root, container)))
     {
         cJSON_Delete(root);
         LOG_AND_FAIL("Failed to decode config file %s", fileName);
