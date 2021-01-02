@@ -1,4 +1,4 @@
-#include "shaderStructs/Common.h"
+#include "ShaderStructs/Common.h"
 #include "SpriteCommon.h"
 
 SamplerState PointSampler : register(s0, space0);

@@ -23,6 +23,8 @@
 
 #if HS_WINDOWS
     #include "vulkan/vulkan_win32.h"
+#elif HS_LINUX
+    #include "GLFW/glfw3.h"
 #endif
 
 #include "imgui/imgui_impl_vulkan.h"
@@ -296,6 +298,86 @@ RESULT Render::OnWindowResized(uint width, uint height)
 }
 
 //------------------------------------------------------------------------------
+PFN_vkSetDebugUtilsObjectNameEXT pfnSetDebugUtilsObjectNameEXT;
+
+//------------------------------------------------------------------------------
+RESULT Render::CreateInstance()
+{
+    //-----------------------
+    // Create Vulkan instance
+    uint apiVersion;
+    if (VKR_FAILED(vkEnumerateInstanceVersion(&apiVersion)))
+        return R_FAIL;
+
+    if (apiVersion < VK_VERSION)
+    {
+        Log(LogLevel::Error, "Vulkan version too low, %d, expected %d", apiVersion, VK_VERSION);
+        return R_FAIL;
+    }
+
+    VkApplicationInfo appInfo{};
+    appInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName    = "VkRenderer";
+    appInfo.applicationVersion  = VK_MAKE_VERSION(0, 0, 1);
+    appInfo.pEngineName         = "VkRenderer";
+    appInfo.engineVersion       = VK_MAKE_VERSION(0, 0, 1);
+    appInfo.apiVersion          = VK_VERSION;
+
+    VkInstanceCreateInfo instInfo{};
+    instInfo.sType              = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instInfo.pApplicationInfo   = &appInfo;
+
+    #if HS_DEBUG
+        const char* validationLayers[] =
+        {
+            "VK_LAYER_KHRONOS_validation",
+        };
+
+        instInfo.enabledLayerCount      = (uint)HS_ARR_LEN(validationLayers);
+        instInfo.ppEnabledLayerNames    = validationLayers;
+    #endif
+
+    const char* instanceExt[] =
+    {
+        #if HS_WINDOWS
+            "VK_KHR_win32_surface",
+        #endif
+        VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+    };
+
+    #if HS_WINDOWS
+        instInfo.enabledExtensionCount      = HS_ARR_LEN(instanceExt);
+        instInfo.ppEnabledExtensionNames    = instanceExt;
+    #elif HS_LINUX
+        uint glfwInstanceExtCount{};
+        const char** glfwInstanceExt = glfwGetRequiredInstanceExtensions(&glfwInstanceExtCount);
+        const char** allExtensions = HS_ALLOCA(const char*, HS_ARR_LEN(instanceExt) + glfwInstanceExtCount);
+        memcpy(allExtensions, instanceExt, HS_ARR_LEN(instanceExt) * sizeof(const char*));
+        memcpy(allExtensions + HS_ARR_LEN(instanceExt), glfwInstanceExt, glfwInstanceExtCount * sizeof(const char*));
+
+        instInfo.enabledExtensionCount      = HS_ARR_LEN(instanceExt) + glfwInstanceExtCount;
+        instInfo.ppEnabledExtensionNames    = allExtensions;
+    #endif
+
+    if (VKR_FAILED(vkCreateInstance(&instInfo, nullptr, &vkInstance_)))
+        return R_FAIL;
+
+    #if HS_DEBUG
+        VkDebugReportCallbackCreateInfoEXT createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+        createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+        createInfo.pfnCallback = ValidationCallback;
+
+        if (VKR_FAILED(CreateDebugReportCallbackEXT(vkInstance_, &createInfo, nullptr, &debugReportCallback_)))
+            return R_FAIL;
+    #endif
+
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
 RESULT Render::CreateSurface()
 {
     #if HS_WINDOWS
@@ -306,7 +388,110 @@ RESULT Render::CreateSurface()
 
         if (VKR_FAILED(vkCreateWin32SurfaceKHR(vkInstance_, &winSurfaceInfo, nullptr, &vkSurface_)))
             return R_FAIL;
+    #elif HS_LINUX
+        if (glfwCreateWindowSurface(vkInstance_, wnd_, nullptr, &vkSurface_) != VK_SUCCESS)
+            return R_FAIL;
     #endif
+
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
+RESULT Render::FindPhysicalDevice()
+{
+    uint physicalDeviceCount = 32;
+    static VkPhysicalDevice physicalDevices[32];
+    if (VKR_FAILED(vkEnumeratePhysicalDevices(vkInstance_, &physicalDeviceCount, physicalDevices)))
+        return R_FAIL;
+
+    hs_assert(physicalDeviceCount > 0 && physicalDeviceCount < HS_ARR_LEN(physicalDevices));
+
+    int bestDevice = 0;
+    // TODO Actually find the best device and check capabilities here
+    vkPhysicalDevice_ = physicalDevices[bestDevice];
+
+    vkGetPhysicalDeviceProperties(vkPhysicalDevice_, &vkPhysicalDeviceProperties_);
+    LOG_DBG("Using GPU: %s", vkPhysicalDeviceProperties_.deviceName);
+
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
+RESULT Render::CreateDevice()
+{
+    // Queues
+    uint queueCount;
+    vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice_, &queueCount, nullptr);
+
+    auto queueProps = HS_ALLOCA(VkQueueFamilyProperties, queueCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice_, &queueCount, queueProps);
+
+    uint directQueueBits = (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
+    LOG_DBG("Enuerating device queue families, %d found", queueCount);
+
+    for (uint i = 0; i < queueCount; ++i)
+    {
+        VkBool32 presentSupport{};
+        //presentSupport = vkGetPhysicalDeviceWin32PresentationSupportKHR(vkPhysicalDevice_, i);
+        VKR_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice_, i, vkSurface_, &presentSupport));
+
+        #if HS_DEBUG
+            static char buff[512];
+            QueueFamiliesToString(queueProps[i].queueFlags, buff);
+            Log(LogLevel::Info, "\t%d: count %d, present %d, bits %s", i, queueProps[i].queueCount, presentSupport, buff);
+        #endif
+
+        if (directQueueFamilyIdx_ == VKR_INVALID
+            && (queueProps[i].queueFlags & directQueueBits) == directQueueBits
+            && queueProps[i].queueCount > 0
+            && presentSupport)
+        {
+            directQueueFamilyIdx_ = i;
+        }
+    }
+
+    hs_assert(directQueueFamilyIdx_ != VKR_INVALID);
+
+    VkDeviceQueueCreateInfo queues[1]{};
+    float prioritites[1]{ 1.0f };
+    queues[0].sType             = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queues[0].queueFamilyIndex  = directQueueFamilyIdx_;
+    queues[0].queueCount        = 1;
+    queues[0].pQueuePriorities  = prioritites;
+
+    // Device
+    VkPhysicalDeviceFeatures features{};
+    vkGetPhysicalDeviceFeatures(vkPhysicalDevice_, &features);
+    // TODO check if the device has all required featues
+
+    VkPhysicalDeviceFeatures deviceFeatures = CreateRequiredFeatures();
+
+    const char* deviceExt[] = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
+    };
+
+    VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures{};
+    indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+    indexingFeatures.descriptorBindingSampledImageUpdateAfterBind   = VK_TRUE;
+    indexingFeatures.descriptorBindingPartiallyBound                = VK_TRUE;
+    indexingFeatures.descriptorBindingVariableDescriptorCount       = VK_TRUE;
+
+    VkDeviceCreateInfo deviceInfo{};
+    deviceInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceInfo.pNext                    = &indexingFeatures;
+    deviceInfo.queueCreateInfoCount     = 1;
+    deviceInfo.pQueueCreateInfos        = queues;
+    deviceInfo.enabledExtensionCount    = HS_ARR_LEN(deviceExt);
+    deviceInfo.ppEnabledExtensionNames  = deviceExt;
+    deviceInfo.pEnabledFeatures         = &deviceFeatures;
+
+    if (VKR_FAILED(vkCreateDevice(vkPhysicalDevice_, &deviceInfo, nullptr, &vkDevice_)))
+        return R_FAIL;
+
+    pfnSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetDeviceProcAddr(vkDevice_, "vkSetDebugUtilsObjectNameEXT");
+
+    vkGetDeviceQueue(vkDevice_, directQueueFamilyIdx_, 0, &vkDirectQueue_);
 
     return R_OK;
 }
@@ -710,9 +895,6 @@ RESULT Render::WaitForFence(VkFence fence)
 }
 
 //------------------------------------------------------------------------------
-PFN_vkSetDebugUtilsObjectNameEXT pfnSetDebugUtilsObjectNameEXT;
-
-//------------------------------------------------------------------------------
 VkResult SetDiagName(VkDevice device, uint64 object, VkObjectType type, const char* name)
 {
     VkDebugUtilsObjectNameInfoEXT nameInfo{};
@@ -757,159 +939,34 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     hwnd_ = hwnd;
     hinst_ = hinst;
 
-    //-----------------------
-    // Create Vulkan instance
-    uint apiVersion;
-    if (VKR_FAILED(vkEnumerateInstanceVersion(&apiVersion)))
-        return R_FAIL;
-
-    if (apiVersion < VK_VERSION)
+    RESULT res = Init();
+    return res;
+}
+#elif HS_LINUX
+    RESULT Render::InitLinux(GLFWwindow* wnd)
     {
-        //Log(LogLevel::Error, "Vulkan version too low, %d, expected %d", apiVersion, VK_VERSION);
-        //return R_FAIL;
+        wnd_ = wnd;
+
+        RESULT res = Init();
+        return res;
     }
+#endif
 
-    VkApplicationInfo appInfo{};
-    appInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName    = "VkRenderer";
-    appInfo.applicationVersion  = VK_MAKE_VERSION(0, 0, 1);
-    appInfo.pEngineName         = "VkRenderer";
-    appInfo.engineVersion       = VK_MAKE_VERSION(0, 0, 1);
-    appInfo.apiVersion          = VK_VERSION;
-
-    VkInstanceCreateInfo instInfo{};
-    instInfo.sType              = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instInfo.pApplicationInfo   = &appInfo;
-
-    #if HS_DEBUG
-        const char* validationLayers[] = {
-            "VK_LAYER_LUNARG_standard_validation",
-        };
-
-        instInfo.enabledLayerCount      = (uint)HS_ARR_LEN(validationLayers);
-        instInfo.ppEnabledLayerNames    = validationLayers;
-    #endif
-
-    const char* instanceExt[] = {
-        "VK_KHR_win32_surface",
-        VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-    };
-
-    instInfo.enabledExtensionCount      = HS_ARR_LEN(instanceExt);
-    instInfo.ppEnabledExtensionNames    = instanceExt;
-
-    if (VKR_FAILED(vkCreateInstance(&instInfo, nullptr, &vkInstance_)))
+//------------------------------------------------------------------------------
+RESULT Render::Init()
+{
+    //-----------------------
+    if (HS_FAILED(CreateInstance()))
         return R_FAIL;
 
-    #if HS_DEBUG
-        VkDebugReportCallbackCreateInfoEXT createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-        createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-        createInfo.pfnCallback = ValidationCallback;
-
-        if (VKR_FAILED(CreateDebugReportCallbackEXT(vkInstance_, &createInfo, nullptr, &debugReportCallback_)))
-            return R_FAIL;
-    #endif
-
-    //-----------------------
     if (HS_FAILED(CreateSurface()))
         return R_FAIL;
 
-    //-----------------------
-    // Find physical device
-    uint physicalDeviceCount = 32;
-    static VkPhysicalDevice physicalDevices[32];
-    if (VKR_FAILED(vkEnumeratePhysicalDevices(vkInstance_, &physicalDeviceCount, physicalDevices)))
+    if (HS_FAILED(FindPhysicalDevice()))
         return R_FAIL;
 
-    hs_assert(physicalDeviceCount > 0 && physicalDeviceCount < HS_ARR_LEN(physicalDevices));
-
-    int bestDevice = 0;
-    // TODO Actually find the best device and check capabilities here
-    vkPhysicalDevice_ = physicalDevices[bestDevice];
-
-    vkGetPhysicalDeviceProperties(vkPhysicalDevice_, &vkPhysicalDeviceProperties_);
-
-    //-----------------------
-    // Queues
-    uint queueCount;
-    vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice_, &queueCount, nullptr);
-
-    auto queueProps = HS_ALLOCA(VkQueueFamilyProperties, queueCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice_, &queueCount, queueProps);
-
-    uint directQueueBits = (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
-    LOG_DBG("Enuerating device queue families, %d found", queueCount);
-
-    for (uint i = 0; i < queueCount; ++i)
-    {
-        VkBool32 presentSupport{};
-        presentSupport = vkGetPhysicalDeviceWin32PresentationSupportKHR(vkPhysicalDevice_, i);
-        //VKR_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice_, i, vkSurface_, &presentSupport));
-
-        #if HS_DEBUG
-            static char buff[512];
-            QueueFamiliesToString(queueProps[i].queueFlags, buff);
-            Log(LogLevel::Info, "\t%d: count %d, present %d, bits %s", i, queueProps[i].queueCount, presentSupport, buff);
-        #endif
-
-        if (directQueueFamilyIdx_ == VKR_INVALID
-            && (queueProps[i].queueFlags & directQueueBits) == directQueueBits
-            && queueProps[i].queueCount > 0
-            && presentSupport)
-        {
-            directQueueFamilyIdx_ = i;
-        }
-    }
-
-    hs_assert(directQueueFamilyIdx_ != VKR_INVALID);
-
-    VkDeviceQueueCreateInfo queues[1]{};
-    float prioritites[1]{ 1.0f };
-    queues[0].sType             = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queues[0].queueFamilyIndex  = directQueueFamilyIdx_;
-    queues[0].queueCount        = 1;
-    queues[0].pQueuePriorities  = prioritites;
-
-
-    //-----------------------
-    // Create Vulkan device
-    VkPhysicalDeviceFeatures features{};
-    vkGetPhysicalDeviceFeatures(vkPhysicalDevice_, &features);
-    // TODO check if the device has all required featues
-
-    VkPhysicalDeviceFeatures deviceFeatures = CreateRequiredFeatures();
-
-    const char* deviceExt[] = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
-    };
-
-    VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures{};
-    indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-    indexingFeatures.descriptorBindingSampledImageUpdateAfterBind   = VK_TRUE;
-    indexingFeatures.descriptorBindingPartiallyBound                = VK_TRUE;
-    indexingFeatures.descriptorBindingVariableDescriptorCount       = VK_TRUE;
-
-    VkDeviceCreateInfo deviceInfo{};
-    deviceInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceInfo.pNext                    = &indexingFeatures;
-    deviceInfo.queueCreateInfoCount     = 1;
-    deviceInfo.pQueueCreateInfos        = queues;
-    deviceInfo.enabledLayerCount        = instInfo.enabledLayerCount;
-    deviceInfo.ppEnabledLayerNames      = instInfo.ppEnabledLayerNames;
-    deviceInfo.enabledExtensionCount    = HS_ARR_LEN(deviceExt);
-    deviceInfo.ppEnabledExtensionNames  = deviceExt;
-    deviceInfo.pEnabledFeatures         = &deviceFeatures;
-
-    if (VKR_FAILED(vkCreateDevice(vkPhysicalDevice_, &deviceInfo, nullptr, &vkDevice_)))
+    if (HS_FAILED(CreateDevice()))
         return R_FAIL;
-
-    pfnSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetDeviceProcAddr(vkDevice_, "vkSetDebugUtilsObjectNameEXT");
-
-    vkGetDeviceQueue(vkDevice_, directQueueFamilyIdx_, 0, &vkDirectQueue_);
 
     //-----------------------
     // Allocator
@@ -1052,7 +1109,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     VkDescriptorSetLayoutBinding srvBindings[1]{};
     srvBindings[0].binding             = 0;
     srvBindings[0].descriptorType      = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    srvBindings[0].descriptorCount     = 500'000; // Minimum limit
+    srvBindings[0].descriptorCount     = 100'000; // Minimum limit
     srvBindings[0].stageFlags          = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
 
     VkDescriptorBindingFlags bindingFlags = VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
@@ -1114,7 +1171,7 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
     {
         VkDescriptorPoolSize poolSizes[1]{};
         poolSizes[0].type              = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        poolSizes[0].descriptorCount   = 500'000;
+        poolSizes[0].descriptorCount   = 100'000;
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1230,7 +1287,6 @@ RESULT Render::InitWin32(HWND hwnd, HINSTANCE hinst)
 
     return R_OK;
 }
-#endif
 
 //------------------------------------------------------------------------------
 void Render::RenderObject(VisualObject* object)

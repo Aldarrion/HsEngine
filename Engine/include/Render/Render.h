@@ -31,6 +31,10 @@ bool CheckResult(VkResult result, const char* file, int line, const char* fun);
 #define VKR_CHECK(x) VKR_SUCCEED(x)
 #define VKR_FAILED(x) !VKR_SUCCEED(x)
 
+#if HS_LINUX
+    struct GLFWwindow;
+#endif
+
 //------------------------------------------------------------------------------
 namespace hs
 {
@@ -162,8 +166,9 @@ public:
     #if HS_WINDOWS
         RESULT InitWin32(HWND hwnd, HINSTANCE hinst);
     #elif HS_LINUX
-        RESULT InitLinux();
+        RESULT InitLinux(GLFWwindow* window);
     #endif
+    RESULT Init();
     RESULT InitImgui();
 
     void ClearPipelineCache();
@@ -245,6 +250,8 @@ private:
         // Win32
         HINSTANCE   hinst_;
         HWND        hwnd_;
+    #elif HS_LINUX
+        GLFWwindow* wnd_;
     #endif
 
     uint                width_{};
@@ -357,7 +364,10 @@ private:
 
     Array<VisualObject*>            renderObjects_[RPT_COUNT];
 
+    RESULT CreateInstance();
     RESULT CreateSurface();
+    RESULT FindPhysicalDevice();
+    RESULT CreateDevice();
     RESULT CreateSwapchain();
 
     RESULT CreateMainRenderPass();

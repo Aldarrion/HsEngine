@@ -33,7 +33,6 @@ add_subdirectory(Extern/glfw)
 
 ## ImGui
 file(GLOB_RECURSE IMGUI_HEADERS "Extern/imgui/include/*.h")
-#file(GLOB_RECURSE IMGUI_SOURCES "Extern/imgui/src/*.cpp")
 set(IMGUI_SOURCES
     Extern/imgui/src/imgui_draw.cpp
     Extern/imgui/src/imgui_impl_vulkan.cpp
@@ -43,6 +42,8 @@ set(IMGUI_SOURCES
 
 if(WIN32)
     set(IMGUI_SOURCES ${IMGUI_SOURCES} Extern/imgui/src/imgui_impl_win32.cpp)
+elseif(UNIX)
+    set(IMGUI_SOURCES ${IMGUI_SOURCES} Extern/imgui/src/imgui_impl_glfw.cpp)
 endif()
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/Extern/imgui/include/imgui" PREFIX "ImGui" FILES ${IMGUI_HEADERS})
@@ -52,6 +53,8 @@ add_library(ImGui ${IMGUI_HEADERS} ${IMGUI_SOURCES})
 
 target_include_directories(ImGui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Extern/imgui/include/imgui")
 target_include_directories(ImGui PRIVATE "${VK_INCLUDE_DIR}")
+
+target_link_libraries(ImGui glfw)
 
 target_include_directories(ImGui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Extern/imgui/include")
 

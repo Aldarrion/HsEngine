@@ -51,6 +51,8 @@ void Log(LogLevel level, const char* formatString, ...)
 
     #if HS_WINDOWS
         OutputDebugStringA(buffer);
+    #else
+        printf("%s", buffer);
     #endif
 }
 

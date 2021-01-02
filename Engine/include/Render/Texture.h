@@ -36,7 +36,7 @@ private:
     VkFormat        format_;
     VkExtent3D      size_;
 
-    VkImageView     srv_;
+    VkImageView     srv_{};
     uint            bindlessIdx_;
     Type            type_;
 };

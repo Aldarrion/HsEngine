@@ -12,6 +12,11 @@
 #if HS_WINDOWS
     #include "Platform/hs_Windows.h"
     #include "imgui/imgui_impl_win32.h"
+#elif HS_LINUX
+    // TODO is the vulkan include needed here?
+    #include "Render/hs_Vulkan.h"
+    #include "GLFW/glfw3.h"
+    #include "imgui/imgui_impl_glfw.h"
 #endif
 
 #include "imgui/imgui.h"
@@ -25,25 +30,61 @@
 
 namespace hs
 {
+
+//------------------------------------------------------------------------------
+static bool g_isWindowActive = false;
+
+//------------------------------------------------------------------------------
+enum class WindowState
+{
+    Windowed,
+    BorderlessFs,
+    Count,
+};
+static WindowState g_WindowState = WindowState::Windowed;
+static uint g_WindowWidth = 1280;
+static uint g_WindowHeight = 720;
+static bool g_DisableSizeChange = false;
+
 #if HS_WINDOWS
-    //------------------------------------------------------------------------------
     HWND g_hwnd{};
+#elif HS_LINUX
+    GLFWwindow* g_wnd = nullptr;
+#endif
 
-    //------------------------------------------------------------------------------
-    static bool g_isWindowActive = false;
+//------------------------------------------------------------------------------
+static RESULT HsInitImgui()
+{
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    //------------------------------------------------------------------------------
-    enum class WindowState
-    {
-        Windowed,
-        BorderlessFs,
-        Count,
-    };
-    static WindowState g_WindowState = WindowState::Windowed;
-    static uint g_WindowWidth = 1280;
-    static uint g_WindowHeight = 720;
-    static bool g_DisableSizeChange = false;
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
 
+    #if HS_WINDOWS
+        // Setup Platform/Renderer backends
+        ImGui_ImplWin32_Init(g_hwnd);
+    #elif HS_LINUX
+        ImGui_ImplGlfw_InitForVulkan(g_wnd, true);
+    #endif
+
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
+static void HsDestroyImgui()
+{
+    #if HS_WINDOWS
+        ImGui_ImplWin32_Shutdown();
+    #elif HS_LINUX
+        ImGui_ImplGlfw_Shutdown();
+    #endif
+    ImGui::DestroyContext();
+}
+
+#if HS_WINDOWS
     //------------------------------------------------------------------------------
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
@@ -151,30 +192,6 @@ namespace hs
     }
 
     //------------------------------------------------------------------------------
-    static RESULT HsInitImguiWin32()
-    {
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void)io;
-
-        // Setup Dear ImGui style
-        ImGui::StyleColorsDark();
-
-        // Setup Platform/Renderer backends
-        ImGui_ImplWin32_Init(g_hwnd);
-
-        return R_OK;
-    }
-
-    //------------------------------------------------------------------------------
-    static void HsDestroyImgui()
-    {
-        ImGui_ImplWin32_Shutdown();
-        ImGui::DestroyContext();
-    }
-
-    //------------------------------------------------------------------------------
     static void ToggleFullscreen()
     {
         g_DisableSizeChange = false;
@@ -279,7 +296,7 @@ namespace hs
         }
         hs_assert(g_Engine);
 
-        if (HS_FAILED(g_Engine->InitWin32()))
+        if (HS_FAILED(g_Engine->Init()))
         {
             Log(LogLevel::Error, "Failed to init engine");
             return -1;
@@ -458,11 +475,165 @@ namespace hs
         return 0;
     }
 #elif HS_LINUX
-    int EngineMainLinux()
+    //------------------------------------------------------------------------------
+    static void GlfwErrorCallback(int error, const char* description)
     {
-        printf("Linux engine main\n");
+        LOG_ERR("GLFW error %d: %s", error, description);
+    }
+
+    //------------------------------------------------------------------------------
+    static RESULT InitWindow(int width, int height)
+    {
+        if (!glfwInit())
+            return R_FAIL;
+
+        glfwSetErrorCallback(&GlfwErrorCallback);
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+        g_wnd = glfwCreateWindow(width, height, "VkRender", nullptr, nullptr);
+        if (!g_wnd)
+        {
+            LOG_ERR("Failed to create GLFW window");
+            return R_FAIL;
+        }
+
+        return R_OK;
+    }
+
+    //------------------------------------------------------------------------------
+    int EngineMainLinux(int argc, char** argv)
+    {
+        Log(LogLevel::Info, "VkRenderer start");
+
+        uint width = g_WindowWidth;
+        uint height = g_WindowHeight;
+
+        //ParseCmdLine(cmdLine, width, height, g_WindowState);
+
+        // Window
+        if (HS_FAILED(InitWindow(width, height)))
+            return -1;
+
+        // Engine
+        if (HS_FAILED(CreateEngine()))
+        {
+            Log(LogLevel::Error, "Failed to create engine");
+            return -1;
+        }
+        hs_assert(g_Engine);
+
+        if (HS_FAILED(g_Engine->Init()))
+        {
+            Log(LogLevel::Error, "Failed to init engine");
+            return -1;
+        }
+
+        // Resource manager
+        if (HS_FAILED(CreateResourceManager()))
+        {
+            Log(LogLevel::Error, "Failed to create resource manager");
+            return -1;
+        }
+        hs_assert(g_ResourceManager);
+
+        if (HS_FAILED(g_ResourceManager->Init()))
+        {
+            Log(LogLevel::Error, "Failed to init resource manager");
+            return -1;
+        }
+
+        // Render
+        if (HS_FAILED(CreateRender(width, height)))
+        {
+            Log(LogLevel::Error, "Failed to create render");
+            return -1;
+        }
+        hs_assert(g_Render);
+
+        if (HS_FAILED(g_Render->InitLinux(g_wnd)))
+        {
+            Log(LogLevel::Error, "Failed to init render");
+            return -1;
+        }
+
+        // Imgui
+        if (HS_FAILED(HsInitImgui()))
+        {
+            Log(LogLevel::Error, "Failed to init Imgui for Win32");
+            return -1;
+        }
+
+        if (HS_FAILED(g_Render->InitImgui()))
+        {
+            Log(LogLevel::Error, "Failed to init render for Imgui");
+            return -1;
+        }
+
+        //// Input
+        //if (HS_FAILED(CreateInput()))
+        //{
+        //    Log(LogLevel::Error, "Failed to crete input");
+        //    return -1;
+        //}
+        //hs_assert(g_Input);
+
+        //if (HS_FAILED(g_Input->InitWin32(g_hwnd)))
+        //{
+        //    Log(LogLevel::Error, "Failed to init input");
+        //    return -1;
+        //}
+
+        // Game
+        if (HS_FAILED(CreateGame()))
+        {
+            Log(LogLevel::Error, "Failed to crete game");
+            return -1;
+        }
+        hs_assert(g_GameBase);
+
+        if (HS_FAILED(g_GameBase->Init()))
+        {
+            Log(LogLevel::Error, "Failed to init game");
+            return -1;
+        }
+
+        auto start = std::chrono::high_resolution_clock::now();
+        while (!glfwWindowShouldClose(g_wnd))
+        {
+            glfwPollEvents();
+
+            auto elapsed = std::chrono::high_resolution_clock::now() - start;
+            start = std::chrono::high_resolution_clock::now();
+
+            float dTime = elapsed.count() / (1000.0f * 1000 * 1000);
+            dTime = Min(dTime, 0.5f);
+
+            g_Engine->SetWindowActive(g_isWindowActive);
+
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            //g_Input->Update();
+            g_Engine->Update(dTime);
+            g_GameBase->Update();
+            g_Render->Update(dTime);
+
+            //g_Input->EndFrame();
+        }
+
+        // Cleanup
+        DestroyGame();
+        //DestroyInput();
+        DestroyRender();
+        DestroyResourceManager();
+        DestroyEngine();
+        glfwTerminate();
+        HsDestroyImgui();
+
         return 0;
-    }    
+    }
 #endif
 
 }

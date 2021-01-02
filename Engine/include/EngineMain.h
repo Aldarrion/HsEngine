@@ -12,7 +12,7 @@ namespace hs
     int EngineMainWin32(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int showCmd);
 #elif HS_LINUX
     //------------------------------------------------------------------------------
-    int EngineMainLinux();
+    int EngineMainLinux(int argc, char** argv);
 #endif
 
 }
