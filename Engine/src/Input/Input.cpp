@@ -8,6 +8,8 @@
 
 #if HS_WINDOWS
     #include "Platform/hs_Windows.h"
+#elif HS_LINUX
+    #include "GLFW/glfw3.h"
 #endif
 
 namespace hs
@@ -35,6 +37,29 @@ void DestroyInput()
     RESULT Input::InitWin32(HWND hwnd)
     {
         hwnd_ = hwnd;
+
+        return R_OK;
+    }
+#elif HS_LINUX
+    //------------------------------------------------------------------------------
+    static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_Input->KeyDown(key);
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            g_Input->KeyUp(key);
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    RESULT Input::InitLinux(GLFWwindow* window)
+    {
+        window_ = window;
+
+        glfwSetKeyCallback(window_, &KeyCallback);
 
         return R_OK;
     }
@@ -81,6 +106,10 @@ Vec2 Input::GetMousePos() const
                 return Vec2{ (float)cursorPos.x, (float)cursorPos.y };
             }
         }
+    #elif HS_LINUX
+        double xpos, ypos;
+        glfwGetCursorPos(window_, &xpos, &ypos);
+        return Vec2(static_cast<float>(xpos), static_cast<float>(ypos));
     #endif
 
     return Vec2{};
@@ -118,7 +147,21 @@ bool Input::GetState(int keyCode) const
     #if HS_WINDOWS
         return (GetKeyState(keyCode) & 0x8000) != 0;
     #else
+        auto lastState = glfwGetKey(window_, keyCode);
+        return lastState == GLFW_PRESS;
+    #endif
+}
+
+//------------------------------------------------------------------------------
+bool Input::GetState(MouseButton button) const
+{
+    if (!g_Engine->IsWindowActive())
         return false;
+    #if HS_WINDOWS
+        return (GetKeyState(button) & 0x8000) != 0;
+    #else
+        auto lastState = glfwGetMouseButton(window_, button);
+        return lastState == GLFW_PRESS;
     #endif
 }
 
@@ -180,30 +223,38 @@ void Input::CenterCursor()
             if (SetCursorPos(cursorPos.x, cursorPos.y) == 0)
                 Log(LogLevel::Error, "Could not set the cursor position, error: %d", GetLastError());
         }
+    #elif HS_LINUX
+        glfwSetCursorPos(window_, (int)g_Render->GetWidth() / 2, (int)g_Render->GetHeight() / 2);
     #endif
 }
 
 //------------------------------------------------------------------------------
 void Input::SetMouseMode(MouseMode mode)
 {
-    #if HS_WINDOWS
-        if (mouseMode_ != mode)
+    if (mouseMode_ != mode)
+    {
+        mouseMode_ = mode;
+        if (mouseMode_ == MouseMode::Relative)
         {
-            mouseMode_ = mode;
-            if (mouseMode_ == MouseMode::Relative)
-            {
-                CenterCursor();
+            #if HS_WINDOWS
                 int showCount = ShowCursor(false);
                 hs_assert(showCount < 0);
-            }
-            else
-            {
-                hs_assert(mouseMode_ == MouseMode::Absolute);
+            #elif HS_LINUX
+                glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            #endif
+            CenterCursor();
+        }
+        else
+        {
+            hs_assert(mouseMode_ == MouseMode::Absolute);
+            #if HS_WINDOWS
                 int showCount = ShowCursor(true);
                 hs_assert(showCount >= 0);
-            }
+            #elif HS_LINUX
+                glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            #endif
         }
-    #endif
+    }
 }
 
 //------------------------------------------------------------------------------

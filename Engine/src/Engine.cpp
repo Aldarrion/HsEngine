@@ -1,5 +1,9 @@
 #include "Engine.h"
 
+#if HS_LINUX
+    #include "GLFW/glfw3.h"
+#endif
+
 namespace hs
 {
 
@@ -23,16 +27,29 @@ void DestroyEngine()
     delete g_Engine;
 }
 
-//------------------------------------------------------------------------------
-RESULT Engine::Init()
-{
-    return R_OK;
-}
+#if HS_WINDOWS
+    //------------------------------------------------------------------------------
+    RESULT Engine::InitWin32()
+    {
+        return R_OK;
+    }
+#elif HS_LINUX
+    //------------------------------------------------------------------------------
+    RESULT Engine::InitLinux(GLFWwindow* window)
+    {
+        window_ = window;
+        return R_OK;
+    }
+#endif
 
 //------------------------------------------------------------------------------
 bool Engine::IsWindowActive() const
 {
-    return isWindowActive_;
+    #if HS_WINDOWS
+        return isWindowActive_;
+    #elif HS_LINUX
+        return glfwGetWindowAttrib(window_, GLFW_FOCUSED) != 0;
+    #endif
 }
 
 //------------------------------------------------------------------------------

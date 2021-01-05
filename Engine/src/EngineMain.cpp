@@ -296,7 +296,7 @@ static void HsDestroyImgui()
         }
         hs_assert(g_Engine);
 
-        if (HS_FAILED(g_Engine->Init()))
+        if (HS_FAILED(g_Engine->Init32()))
         {
             Log(LogLevel::Error, "Failed to init engine");
             return -1;
@@ -524,7 +524,7 @@ static void HsDestroyImgui()
         }
         hs_assert(g_Engine);
 
-        if (HS_FAILED(g_Engine->Init()))
+        if (HS_FAILED(g_Engine->InitLinux(g_wnd)))
         {
             Log(LogLevel::Error, "Failed to init engine");
             return -1;
@@ -571,19 +571,19 @@ static void HsDestroyImgui()
             return -1;
         }
 
-        //// Input
-        //if (HS_FAILED(CreateInput()))
-        //{
-        //    Log(LogLevel::Error, "Failed to crete input");
-        //    return -1;
-        //}
-        //hs_assert(g_Input);
+        // Input
+        if (HS_FAILED(CreateInput()))
+        {
+            Log(LogLevel::Error, "Failed to crete input");
+            return -1;
+        }
+        hs_assert(g_Input);
 
-        //if (HS_FAILED(g_Input->InitWin32(g_hwnd)))
-        //{
-        //    Log(LogLevel::Error, "Failed to init input");
-        //    return -1;
-        //}
+        if (HS_FAILED(g_Input->InitLinux(g_wnd)))
+        {
+            Log(LogLevel::Error, "Failed to init input");
+            return -1;
+        }
 
         // Game
         if (HS_FAILED(CreateGame()))
@@ -615,17 +615,17 @@ static void HsDestroyImgui()
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            //g_Input->Update();
+            g_Input->Update();
             g_Engine->Update(dTime);
             g_GameBase->Update();
             g_Render->Update(dTime);
 
-            //g_Input->EndFrame();
+            g_Input->EndFrame();
         }
 
         // Cleanup
         DestroyGame();
-        //DestroyInput();
+        DestroyInput();
         DestroyRender();
         DestroyResourceManager();
         DestroyEngine();

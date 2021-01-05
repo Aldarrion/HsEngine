@@ -11,6 +11,8 @@
     #include "Platform/hs_Windows.h"
 #endif
 
+struct GLFWwindow;
+
 namespace hs
 {
 
@@ -25,8 +27,8 @@ void DestroyInput();
 enum MouseButton
 {
     BTN_LEFT,
-    BTN_MIDDLE,
     BTN_RIGHT,
+    BTN_MIDDLE,
     BTN_COUNT
 };
 
@@ -51,6 +53,8 @@ class Input
 public:
     #if HS_WINDOWS
         RESULT InitWin32(HWND hwnd);
+    #elif HS_LINUX
+        RESULT InitLinux(GLFWwindow* window);
     #endif
 
     void Update();
@@ -61,8 +65,9 @@ public:
     bool IsKeyDown(int keyCode) const;
     bool IsKeyUp(int keyCode) const;
 
-    // For both keys and buttons
+    // Keys
     bool GetState(int keyCode) const;
+    bool GetState(MouseButton button) const;
 
     void KeyDown(int key);
     void KeyUp(int key);
@@ -79,8 +84,9 @@ public:
 
 private:
     #if HS_WINDOWS
-        // Win32
         HWND hwnd_;
+    #elif HS_LINUX
+        GLFWwindow* window_;
     #endif
 
     enum class ButtonState

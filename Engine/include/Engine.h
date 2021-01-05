@@ -4,6 +4,10 @@
 
 #include "Common/Enums.h"
 
+#if HS_LINUX
+    struct GLFWwindow;
+#endif
+
 namespace hs
 {
 
@@ -20,7 +24,11 @@ class Engine
 public:
     ~Engine() = default;
 
-    RESULT Init();
+    #if HS_WINDOWS
+        RESULT InitWin32();
+    #elif HS_LINUX
+        RESULT InitLinux(GLFWwindow* window);
+    #endif
 
     bool IsWindowActive() const;
     void SetWindowActive(bool isActive);
@@ -29,6 +37,11 @@ public:
     void Update(float dTime);
 
 private:
+    #if HS_WINDOWS
+    #elif HS_LINUX
+        GLFWwindow* window_{};
+    #endif
+
     float dTime_{};
     bool isWindowActive_{};
 };
