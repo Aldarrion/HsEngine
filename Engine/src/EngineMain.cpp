@@ -32,6 +32,9 @@ namespace hs
 {
 
 //------------------------------------------------------------------------------
+constexpr const char* WINDOW_TITLE = "VkRender";
+
+//------------------------------------------------------------------------------
 static bool g_isWindowActive = false;
 
 //------------------------------------------------------------------------------
@@ -51,6 +54,47 @@ static bool g_DisableSizeChange = false;
 #elif HS_LINUX
     GLFWwindow* g_wnd = nullptr;
 #endif
+
+//------------------------------------------------------------------------------
+void ParseCmdLine(char** commandLineArr, uint cmdLineCount, uint& width, uint& height, WindowState& windowStyle)
+{
+    constexpr const char* WINDOW_STR = "-window";
+    constexpr const char* FULLSCREEN_STR = "-fullscreen";
+
+    for (uint i = 0; i < cmdLineCount; ++i)
+    {
+        const char* commandLine = commandLineArr[i];
+        const char* windowStart = strstr(commandLine, WINDOW_STR);
+        if (windowStart)
+        {
+            windowStart += strlen(WINDOW_STR);
+            uint w, h;
+
+            int matched = sscanf(windowStart, "=%u,%u%*c", &w, &h);
+            if (matched == 2)
+            {
+                g_WindowWidth = width = w;
+                g_WindowHeight = height = h;
+                windowStyle = WindowState::Windowed;
+            }
+        }
+
+        const char* fullscreenStart = strstr(commandLine, FULLSCREEN_STR);
+        if (!windowStart && fullscreenStart)
+        {
+            windowStyle = WindowState::BorderlessFs;
+            #if HS_WINDOWS
+                width = GetSystemMetrics(SM_CXSCREEN);
+                height = GetSystemMetrics(SM_CYSCREEN);
+            #elif HS_LINUX
+                GLFWmonitor* primary = glfwGetPrimaryMonitor();
+                const GLFWvidmode* vidMode = glfwGetVideoMode(primary);
+                width = vidMode->width;
+                height = vidMode->height;
+            #endif
+        }
+    }
+}
 
 //------------------------------------------------------------------------------
 static RESULT HsInitImgui()
@@ -82,6 +126,18 @@ static void HsDestroyImgui()
         ImGui_ImplGlfw_Shutdown();
     #endif
     ImGui::DestroyContext();
+}
+
+//------------------------------------------------------------------------------
+static void Cleanup()
+{
+    DestroyGame();
+    DestroyInput();
+    DestroyRender();
+    DestroyResourceManager();
+    DestroyEngine();
+    glfwTerminate();
+    HsDestroyImgui();
 }
 
 #if HS_WINDOWS
@@ -165,7 +221,7 @@ static void HsDestroyImgui()
 
         g_hwnd = CreateWindowA(
             wCls.lpszClassName,
-            "PixelTrader",
+            WINDOW_TITLE,
             windowStyle,
             0, 0,
             rc.right - rc.left, rc.bottom - rc.top,
@@ -245,36 +301,6 @@ static void HsDestroyImgui()
     }
 
     //------------------------------------------------------------------------------
-    void ParseCmdLine(const char* commandLine, uint& width, uint& height, WindowState& windowStyle)
-    {
-        constexpr const char* WINDOW_STR = "-window";
-        constexpr const char* FULLSCREEN_STR = "-fullscreen";
-
-        const char* windowStart = strstr(commandLine, WINDOW_STR);
-        if (windowStart)
-        {
-            windowStart += strlen(WINDOW_STR);
-            uint w, h;
-
-            int matched = sscanf(windowStart, "=%u,%u%*c", &w, &h);
-            if (matched == 2)
-            {
-                g_WindowWidth = width = w;
-                g_WindowHeight = height = h;
-                windowStyle = WindowState::Windowed;
-            }
-        }
-
-        const char* fullscreenStart = strstr(commandLine, FULLSCREEN_STR);
-        if (!windowStart && fullscreenStart)
-        {
-            windowStyle = WindowState::BorderlessFs;
-            width = GetSystemMetrics(SM_CXSCREEN);
-            height = GetSystemMetrics(SM_CYSCREEN);
-        }
-    }
-
-    //------------------------------------------------------------------------------
     int EngineMainWin32(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int showCmd)
     {
         Log(LogLevel::Info, "VkRenderer start\n");
@@ -282,7 +308,7 @@ static void HsDestroyImgui()
         uint width = g_WindowWidth;
         uint height = g_WindowHeight;
 
-        ParseCmdLine(cmdLine, width, height, g_WindowState);
+        ParseCmdLine(cmdLine, 1, width, height, g_WindowState);
 
         // Window
         if (HS_FAILED(InitWindow(width, height, instance)))
@@ -464,13 +490,7 @@ static void HsDestroyImgui()
             }
         }
 
-        // Cleanup
-        DestroyGame();
-        DestroyInput();
-        DestroyRender();
-        DestroyResourceManager();
-        DestroyEngine();
-        HsDestroyImgui();
+        Cleanup();
 
         return 0;
     }
@@ -484,15 +504,19 @@ static void HsDestroyImgui()
     //------------------------------------------------------------------------------
     static RESULT InitWindow(int width, int height)
     {
-        if (!glfwInit())
-            return R_FAIL;
-
         glfwSetErrorCallback(&GlfwErrorCallback);
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-        g_wnd = glfwCreateWindow(width, height, "VkRender", nullptr, nullptr);
+        if (g_WindowState == WindowState::BorderlessFs)
+        {
+            g_wnd = glfwCreateWindow(width, height, WINDOW_TITLE, glfwGetPrimaryMonitor(), nullptr);
+        }
+        else
+        {
+            g_wnd = glfwCreateWindow(width, height, WINDOW_TITLE, nullptr, nullptr);
+        }
         if (!g_wnd)
         {
             LOG_ERR("Failed to create GLFW window");
@@ -510,7 +534,13 @@ static void HsDestroyImgui()
         uint width = g_WindowWidth;
         uint height = g_WindowHeight;
 
-        //ParseCmdLine(cmdLine, width, height, g_WindowState);
+        if (!glfwInit())
+        {
+            LOG_ERR("Failed to init GLFW");
+            return -1;
+        }
+
+        ParseCmdLine(argv, argc, width, height, g_WindowState);
 
         // Window
         if (HS_FAILED(InitWindow(width, height)))
@@ -623,14 +653,7 @@ static void HsDestroyImgui()
             g_Input->EndFrame();
         }
 
-        // Cleanup
-        DestroyGame();
-        DestroyInput();
-        DestroyRender();
-        DestroyResourceManager();
-        DestroyEngine();
-        glfwTerminate();
-        HsDestroyImgui();
+        Cleanup();
 
         return 0;
     }
