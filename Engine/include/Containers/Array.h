@@ -67,14 +67,18 @@ public:
     //------------------------------------------------------------------------------
     Array<T>& operator=(const Array<T>& other)
     {
+        if (this == &other)
+            return *this;
+
         for (int i = 0; i < count_; ++i)
             items_[i].~T();
-        free(items_);
+
+        if (capacity_ != other.capacity_)
+            items_ = (T*)realloc(sizeof(T) * other.capacity_);
 
         capacity_ = other.capacity_;
         count_ = other.count_;
 
-        items_ = (T*)malloc(sizeof(T) * capacity_);
         for (int i = 0; i < count_; ++i)
         {
             items_[i] = other.items_[i];
@@ -98,6 +102,9 @@ public:
     //------------------------------------------------------------------------------
     Array<T>& operator=(Array<T>&& other)
     {
+        if (this == &other)
+            return *this;
+
         for (int i = 0; i < count_; ++i)
             items_[i].~T();
         free(items_);
