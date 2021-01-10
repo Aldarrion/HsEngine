@@ -31,6 +31,7 @@ public:
     [[nodiscard]] const char* Data() const;
     [[nodiscard]] char* Data();
 
+    [[nodiscard]] bool IsEmpty() const;
     [[nodiscard]] uint Size() const;
 
     [[nodiscard]] ConstIter_t cbegin() const;
@@ -47,6 +48,33 @@ private:
 };
 
 //------------------------------------------------------------------------------
+class StringView
+{
+public:
+    using Iter_t = const char*;
+    using ConstIter_t = Iter_t;
+
+    StringView() = default;
+    template<uint N> explicit constexpr StringView(const char (&stringLiteral)[N]);
+
+    [[nodiscard]] const char* Data() const;
+
+    [[nodiscard]] bool IsEmpty() const;
+    [[nodiscard]] uint Size() const;
+
+    [[nodiscard]] ConstIter_t cbegin() const;
+    [[nodiscard]] ConstIter_t begin() const;
+    [[nodiscard]] ConstIter_t cend() const;
+    [[nodiscard]] ConstIter_t end() const;
+
+private:
+    const char* string_{};
+    uint size_{};
+};
+
+//------------------------------------------------------------------------------
+// String
+//------------------------------------------------------------------------------
 template<uint N>
 constexpr String::String(const char (&stringLiteral)[N])
 {
@@ -55,6 +83,12 @@ constexpr String::String(const char (&stringLiteral)[N])
     size_ = capacity_;
 
     memcpy(string_, stringLiteral, capacity_);
+}
+
+//------------------------------------------------------------------------------
+bool String::IsEmpty() const
+{
+    return size_ == 0;
 }
 
 //------------------------------------------------------------------------------
@@ -109,6 +143,58 @@ String::ConstIter_t String::end() const
 String::Iter_t String::end()
 {
     return string_ + size_;
+}
+
+//------------------------------------------------------------------------------
+// String view
+//------------------------------------------------------------------------------
+template<uint N>
+constexpr StringView::StringView(const char (&stringLiteral)[N])
+{
+    size_ = N - 1;
+    string_ = stringLiteral;
+}
+
+//------------------------------------------------------------------------------
+bool StringView::IsEmpty() const
+{
+    return size_ == 0;
+}
+
+//------------------------------------------------------------------------------
+uint StringView::Size() const
+{
+    return size_;
+}
+
+//------------------------------------------------------------------------------
+const char* StringView::Data() const
+{
+    return string_;
+}
+
+//------------------------------------------------------------------------------
+StringView::ConstIter_t StringView::cbegin() const
+{
+    return string_;
+}
+
+//------------------------------------------------------------------------------
+StringView::ConstIter_t StringView::begin() const
+{
+    return cbegin();
+}
+
+//------------------------------------------------------------------------------
+StringView::ConstIter_t StringView::cend() const
+{
+    return string_ + size_;
+}
+
+//------------------------------------------------------------------------------
+StringView::ConstIter_t StringView::end() const
+{
+    return cend();
 }
 
 }
