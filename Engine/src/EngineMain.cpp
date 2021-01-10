@@ -136,7 +136,9 @@ static void Cleanup()
     DestroyRender();
     DestroyResourceManager();
     DestroyEngine();
-    glfwTerminate();
+    #if HS_LINUX
+        glfwTerminate();
+    #endif
     HsDestroyImgui();
 }
 
@@ -308,7 +310,7 @@ static void Cleanup()
         uint width = g_WindowWidth;
         uint height = g_WindowHeight;
 
-        ParseCmdLine(cmdLine, 1, width, height, g_WindowState);
+        ParseCmdLine(&cmdLine, 1, width, height, g_WindowState);
 
         // Window
         if (HS_FAILED(InitWindow(width, height, instance)))
@@ -322,7 +324,7 @@ static void Cleanup()
         }
         hs_assert(g_Engine);
 
-        if (HS_FAILED(g_Engine->Init32()))
+        if (HS_FAILED(g_Engine->InitWin32()))
         {
             Log(LogLevel::Error, "Failed to init engine");
             return -1;
@@ -336,7 +338,7 @@ static void Cleanup()
         }
         hs_assert(g_ResourceManager);
 
-        if (HS_FAILED(g_ResourceManager->InitWin32()))
+        if (HS_FAILED(g_ResourceManager->Init()))
         {
             Log(LogLevel::Error, "Failed to init resource manager");
             return -1;
@@ -357,7 +359,7 @@ static void Cleanup()
         }
 
         // Imgui
-        if (HS_FAILED(HsInitImguiWin32()))
+        if (HS_FAILED(HsInitImgui()))
         {
             Log(LogLevel::Error, "Failed to init Imgui for Win32");
             return -1;
@@ -391,7 +393,7 @@ static void Cleanup()
         }
         hs_assert(g_GameBase);
 
-        if (HS_FAILED(g_GameBase->InitWin32()))
+        if (HS_FAILED(g_GameBase->Init()))
         {
             Log(LogLevel::Error, "Failed to init game");
             return -1;

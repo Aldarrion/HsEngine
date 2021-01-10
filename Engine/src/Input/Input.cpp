@@ -158,7 +158,8 @@ bool Input::GetState(MouseButton button) const
     if (!g_Engine->IsWindowActive())
         return false;
     #if HS_WINDOWS
-        return (GetKeyState(button) & 0x8000) != 0;
+        // TODO this is hacky (button + 1) but we will use GLFW for everything eventually anyways.
+        return (GetKeyState(button + 1) & 0x8000) != 0;
     #else
         auto lastState = glfwGetMouseButton(window_, button);
         return lastState == GLFW_PRESS;

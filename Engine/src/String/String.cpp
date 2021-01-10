@@ -3,6 +3,7 @@
 #include "Common/Logging.h"
 
 #include <cstdio>
+#include <cstdarg>
 
 namespace hs
 {
@@ -13,6 +14,8 @@ String String::FromFormat(uint maxLen, const char* formatString, ...)
     String s(maxLen);
 
     va_list args;
+    va_start(args, formatString);
+
     int len = vsnprintf(s.Data(), maxLen, formatString, args);
     if (len < 0)
     {
