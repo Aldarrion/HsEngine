@@ -1007,7 +1007,7 @@ constexpr inline IntersectionResult IsIntersecting(const Box2D& a, const Box2D& 
 //------------------------------------------------------------------------------
 constexpr inline bool IsIntersecting(const Circle& a, const Circle& b)
 {
-    return a.center_.DistanceSqr(b.center_) <= Sqr(a.radius_) + Sqr(b.radius_);
+    return a.center_.DistanceSqr(b.center_) <= Sqr(a.radius_ + b.radius_);
 }
 
 
