@@ -74,7 +74,7 @@ public:
             items_[i].~T();
 
         if (capacity_ != other.capacity_)
-            items_ = (T*)realloc(sizeof(T) * other.capacity_);
+            items_ = (T*)realloc(items_, sizeof(T) * other.capacity_);
 
         capacity_ = other.capacity_;
         count_ = other.count_;
