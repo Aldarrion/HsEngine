@@ -116,7 +116,7 @@ Vec2 Input::GetMousePos() const
 }
 
 //------------------------------------------------------------------------------
-bool Input::IsKeyDown(int keyCode) const
+bool Input::IsKeyDown(KeyCode keyCode) const
 {
     for (int i = 0; i < keysDown_.Count(); ++i)
     {
@@ -128,7 +128,7 @@ bool Input::IsKeyDown(int keyCode) const
 }
 
 //------------------------------------------------------------------------------
-bool Input::IsKeyUp(int keyCode) const
+bool Input::IsKeyUp(KeyCode keyCode) const
 {
     for (int i = 0; i < keysUp_.Count(); ++i)
     {
@@ -140,7 +140,7 @@ bool Input::IsKeyUp(int keyCode) const
 }
 
 //------------------------------------------------------------------------------
-bool Input::GetState(int keyCode) const
+bool Input::GetState(KeyCode keyCode) const
 {
     if (!g_Engine->IsWindowActive())
         return false;

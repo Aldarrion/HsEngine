@@ -32,6 +32,24 @@ enum MouseButton
     BTN_COUNT
 };
 
+enum KeyCode
+{
+    KC_SPACE = ' ',
+    KC_A = 'A',
+    KC_W = 'W',
+    KC_S = 'S',
+    KC_D = 'D',
+    KC_C = 'C',
+    KC_Q = 'Q',
+    KC_E = 'E',
+
+    #if HS_WINDOWS
+        KC_LSHIFT = VK_LSHIFT,
+    #elif HS_LINUX
+        KC_LSHIFT = GLFW_KEY_LEFT_SHIFT,
+    #endif
+};
+
 //------------------------------------------------------------------------------
 enum class MouseMode
 {
@@ -62,11 +80,11 @@ public:
 
     Vec2 GetMousePos() const;
 
-    bool IsKeyDown(int keyCode) const;
-    bool IsKeyUp(int keyCode) const;
+    bool IsKeyDown(KeyCode keyCode) const;
+    bool IsKeyUp(KeyCode keyCode) const;
 
     // Keys
-    bool GetState(int keyCode) const;
+    bool GetState(KeyCode keyCode) const;
     bool GetState(MouseButton button) const;
 
     void KeyDown(int key);

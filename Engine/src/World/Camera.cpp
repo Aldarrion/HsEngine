@@ -107,29 +107,29 @@ void Camera::UpdateFreeFly()
 
     if (isMoveMode)
     {
-        if (g_Input->GetState('W'))
+        if (g_Input->GetState(KC_W))
         {
             pos_ += forward_ * freeflySpeed_ * g_Engine->GetDTime();
         }
-        else if (g_Input->GetState('S'))
+        else if (g_Input->GetState(KC_S))
         {
             pos_ -= forward_ * freeflySpeed_ * g_Engine->GetDTime();
         }
 
-        if (g_Input->GetState('D'))
+        if (g_Input->GetState(KC_D))
         {
             pos_ += right_ * freeflySpeed_ * g_Engine->GetDTime();
         }
-        else if (g_Input->GetState('A'))
+        else if (g_Input->GetState(KC_A))
         {
             pos_ -= right_ * freeflySpeed_ * g_Engine->GetDTime();
         }
 
-        if (g_Input->GetState('Q'))
+        if (g_Input->GetState(KC_Q))
         {
             pos_ += Vec3::UP() * freeflySpeed_ * g_Engine->GetDTime();
         }
-        else if (g_Input->GetState('E'))
+        else if (g_Input->GetState(KC_E))
         {
             pos_ -= Vec3::UP() * freeflySpeed_ * g_Engine->GetDTime();
         }
