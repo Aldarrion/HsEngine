@@ -11,7 +11,7 @@
     #include "Platform/hs_Windows.h"
 #endif
 
-struct GLFWwindow;
+#include "GLFW/glfw3.h"
 
 namespace hs
 {
@@ -32,6 +32,7 @@ enum MouseButton
     BTN_COUNT
 };
 
+//------------------------------------------------------------------------------
 enum KeyCode
 {
     KC_SPACE = ' ',
@@ -83,15 +84,19 @@ public:
     bool IsKeyDown(KeyCode keyCode) const;
     bool IsKeyUp(KeyCode keyCode) const;
 
-    // Keys
     bool GetState(KeyCode keyCode) const;
     bool GetState(MouseButton button) const;
+    bool GetState(int gamepad, int gamepadButton) const;
+    float GetAxis(int gamepad, int axis) const;
 
     void KeyDown(int key);
     void KeyUp(int key);
 
     bool IsButtonDown(MouseButton button) const;
     bool IsButtonUp(MouseButton button) const;
+
+    bool IsButtonDown(int gamepad, int gamepadButton) const;
+    bool IsButtonUp(int gamepad, int gamepadButton) const;
 
     void ButtonDown(MouseButton button);
     void ButtonUp(MouseButton button);
@@ -114,14 +119,20 @@ private:
         Up
     };
 
+    static constexpr float THUMBSTICK_DEADZONE{ 0.1f };
+
     ButtonState buttons_[BTN_COUNT]{};
 
     Array<int> keysDown_;
     Array<int> keysUp_;
 
+    GLFWgamepadstate previousGamepads_[GLFW_JOYSTICK_LAST];
+    GLFWgamepadstate currentGamepads_[GLFW_JOYSTICK_LAST];
+
     MouseMode mouseMode_{};
     Vec2 mouseDelta_{};
 
+    RESULT Init();
     void CenterCursor();
 };
 

@@ -8,9 +8,9 @@
 
 #if HS_WINDOWS
     #include "Platform/hs_Windows.h"
-#elif HS_LINUX
-    #include "GLFW/glfw3.h"
 #endif
+
+#include "GLFW/glfw3.h"
 
 namespace hs
 {
@@ -32,28 +32,65 @@ void DestroyInput()
     delete g_Input;
 }
 
+//------------------------------------------------------------------------------
+//static void 
+
+//------------------------------------------------------------------------------
+static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+    {
+        g_Input->KeyDown(key);
+    }
+    else if (action == GLFW_RELEASE)
+    {
+        g_Input->KeyUp(key);
+    }
+}
+
+//------------------------------------------------------------------------------
+static void JoysticCallback(int joysticId, int event)
+{
+    if (event == GLFW_CONNECTED)
+    {
+        const char* name = glfwGetJoystickName(joysticId);
+        LOG_DBG("Gamepad %d \"%s\" connected", joysticId, name);
+    }
+    else if (event == GLFW_DISCONNECTED)
+    {
+        const char* name = glfwGetJoystickName(joysticId);
+        LOG_DBG("Gamepad %d \"%s\" disconnected", joysticId, name);
+    }
+}
+
+//------------------------------------------------------------------------------
+RESULT Input::Init()
+{
+    glfwSetJoystickCallback(&JoysticCallback);
+
+    for (int gamepadI = 0; gamepadI < GLFW_JOYSTICK_LAST; ++gamepadI)
+    {
+        if (glfwJoystickIsGamepad(gamepadI))
+        {
+            const char* name = glfwGetJoystickName(gamepadI);
+            LOG_DBG("Gamepad %d \"%s\" connected", gamepadI, name);
+        }
+    }
+
+    return R_OK;
+}
+
 #if HS_WINDOWS
     //------------------------------------------------------------------------------
     RESULT Input::InitWin32(HWND hwnd)
     {
         hwnd_ = hwnd;
 
-        return R_OK;
+        auto res = Init();
+
+        return res;
     }
 #elif HS_LINUX
-    //------------------------------------------------------------------------------
-    static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-    {
-        if (action == GLFW_PRESS)
-        {
-            g_Input->KeyDown(key);
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            g_Input->KeyUp(key);
-        }
-    }
-
     //------------------------------------------------------------------------------
     RESULT Input::InitLinux(GLFWwindow* window)
     {
@@ -61,13 +98,30 @@ void DestroyInput()
 
         glfwSetKeyCallback(window_, &KeyCallback);
 
-        return R_OK;
+        auto res = Init();
+
+        return res;
     }
 #endif
 
 //------------------------------------------------------------------------------
 void Input::Update()
 {
+    #if HS_WINDOWS
+        //glfwPollEvents();
+    #endif
+
+    for (int gamepadI = 0; gamepadI < GLFW_JOYSTICK_LAST; ++gamepadI)
+    {
+        memcpy(&previousGamepads_[gamepadI], &currentGamepads_[gamepadI], sizeof(GLFWgamepadstate));
+
+        GLFWgamepadstate state;
+        if (glfwJoystickIsGamepad(gamepadI) && glfwGetGamepadState(gamepadI, &state))
+            currentGamepads_[gamepadI] = state;
+        else
+            currentGamepads_[gamepadI] = {};
+    }
+
     if (mouseMode_ == MouseMode::Relative)
     {
         Vec2 mousePos = GetMousePos();
@@ -167,6 +221,30 @@ bool Input::GetState(MouseButton button) const
 }
 
 //------------------------------------------------------------------------------
+bool Input::GetState(int gamepad, int gamepadButton) const
+{
+    hs_assert(gamepad < GLFW_JOYSTICK_LAST);
+    hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
+
+    return currentGamepads_[gamepad].buttons[gamepadButton] == GLFW_PRESS;
+}
+
+//------------------------------------------------------------------------------
+float Input::GetAxis(int gamepad, int axis) const
+{
+    hs_assert(gamepad < GLFW_JOYSTICK_LAST);
+    hs_assert(axis < GLFW_GAMEPAD_AXIS_LAST);
+
+    float val = currentGamepads_[gamepad].axes[axis];
+    if (val < 0 && val > -THUMBSTICK_DEADZONE)
+        return 0;
+    else if (val > 0 && val < THUMBSTICK_DEADZONE)
+        return 0;
+
+    return val;
+}
+
+//------------------------------------------------------------------------------
 bool Input::IsButtonDown(MouseButton btn) const
 {
     hs_assert(btn < BTN_COUNT);
@@ -180,6 +258,26 @@ bool Input::IsButtonUp(MouseButton btn) const
     hs_assert(btn < BTN_COUNT);
 
     return buttons_[btn] == ButtonState::Up;
+}
+
+//------------------------------------------------------------------------------
+bool Input::IsButtonDown(int gamepad, int gamepadButton) const
+{
+    hs_assert(gamepad < GLFW_JOYSTICK_LAST);
+    hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
+
+    return currentGamepads_[gamepad].buttons[gamepadButton] == GLFW_PRESS
+        && previousGamepads_[gamepad].buttons[gamepadButton] == GLFW_RELEASE;
+}
+
+//------------------------------------------------------------------------------
+bool Input::IsButtonUp(int gamepad, int gamepadButton) const
+{
+    hs_assert(gamepad < GLFW_JOYSTICK_LAST);
+    hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
+
+    return currentGamepads_[gamepad].buttons[gamepadButton] == GLFW_RELEASE
+        && previousGamepads_[gamepad].buttons[gamepadButton] == GLFW_PRESS;
 }
 
 //------------------------------------------------------------------------------

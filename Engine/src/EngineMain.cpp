@@ -310,6 +310,12 @@ static void Cleanup()
         uint width = g_WindowWidth;
         uint height = g_WindowHeight;
 
+        if (!glfwInit())
+        {
+            LOG_ERR("Failed to init GLFW");
+            return -1;
+        }
+
         ParseCmdLine(&cmdLine, 1, width, height, g_WindowState);
 
         // Window
