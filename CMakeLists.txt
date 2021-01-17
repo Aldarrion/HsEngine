@@ -38,6 +38,7 @@ set(IMGUI_SOURCES
     Extern/imgui/src/imgui_impl_vulkan.cpp
     Extern/imgui/src/imgui_widgets.cpp
     Extern/imgui/src/imgui.cpp
+    Extern/imgui/src/imgui_tables.cpp
 )
 
 if(WIN32)

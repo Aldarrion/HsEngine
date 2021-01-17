@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Config.h"
+
 #include "Containers/Span.h"
 
 #include "Common/Types.h"
@@ -256,6 +258,22 @@ public:
         // Check for aliasing
         hs_assert((&item < items_ || &item >= items_ + capacity_) && "Inserting item from array to itself is not handled");
         EmplaceBack(std::move(item));
+    }
+
+    /*!
+    If the item is present in the array returs false, if not present adds it and returns true.
+    O(n) complexity where n is the number of elements in the array.
+    */
+    bool AddUnique(const T& item)
+    {
+        for (int i = 0; i < count_; ++i)
+        {
+            if (items_[i] == item)
+                return false;
+        }
+
+        Add(item);
+        return true;
     }
 
     //------------------------------------------------------------------------------
