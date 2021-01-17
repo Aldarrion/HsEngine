@@ -362,5 +362,10 @@ Vec2 Input::GetMouseDelta() const
     return mouseDelta_;
 }
 
+//------------------------------------------------------------------------------
+bool Input::IsGamepadConnected(int gamepadId)
+{
+    return glfwJoystickIsGamepad(gamepadId);
+}
 
 }

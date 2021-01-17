@@ -105,6 +105,8 @@ public:
 
     Vec2 GetMouseDelta() const;
 
+    bool IsGamepadConnected(int gamepadId);
+
 private:
     #if HS_WINDOWS
         HWND hwnd_;
