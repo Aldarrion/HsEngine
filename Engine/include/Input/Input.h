@@ -37,12 +37,22 @@ enum KeyCode
 {
     KC_SPACE = ' ',
     KC_A = 'A',
-    KC_W = 'W',
-    KC_S = 'S',
-    KC_D = 'D',
+    KC_B = 'B',
     KC_C = 'C',
-    KC_Q = 'Q',
+    KC_D = 'D',
     KC_E = 'E',
+    KC_F = 'F',
+    //...
+    KC_Q = 'Q',
+    KC_R = 'R',
+    KC_S = 'S',
+    KC_T = 'T',
+    KC_U = 'U',
+    KC_V = 'V',
+    KC_W = 'W',
+    KC_X = 'X',
+    KC_Y = 'Y',
+    KC_Z = 'Z',
 
     #if HS_WINDOWS
         KC_LSHIFT = VK_LSHIFT,
