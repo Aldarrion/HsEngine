@@ -154,7 +154,11 @@ struct Vec2
     //------------------------------------------------------------------------------
     void Normalize()
     {
-        float lenRec = 1.0f / Length();
+        const float len = Length();
+        if (!len)
+            return;
+
+        const float lenRec = 1.0f / len;
         x *= lenRec;
         y *= lenRec;
     }
@@ -162,7 +166,11 @@ struct Vec2
     //------------------------------------------------------------------------------
     Vec2 Normalized() const
     {
-        float lenRec = 1.0f / Length();
+        const float len = Length();
+        if (!len)
+            return *this;
+
+        float lenRec = 1.0f / len;
         return (*this) * lenRec;
     }
 
@@ -352,7 +360,11 @@ struct Vec3
     //------------------------------------------------------------------------------
     void Normalize()
     {
-        float lenRec = 1.0f / Length();
+        const float len = Length();
+        if (!len)
+            return;
+
+        const float lenRec = 1.0f / len;
         x *= lenRec;
         y *= lenRec;
         z *= lenRec;
@@ -361,7 +373,11 @@ struct Vec3
     //------------------------------------------------------------------------------
     Vec3 Normalized() const
     {
-        float lenRec = 1.0f / Length();
+        const float len = Length();
+        if (!len)
+            return *this;
+
+        const float lenRec = 1.0f / len;
         return Vec3{ x * lenRec, y * lenRec, z * lenRec };
     }
 
