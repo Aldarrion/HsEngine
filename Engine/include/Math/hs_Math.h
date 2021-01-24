@@ -952,7 +952,7 @@ struct Circle
 //------------------------------------------------------------------------------
 // Intersections
 //------------------------------------------------------------------------------
-constexpr inline bool IsIntersecting(const Box2D& a, const Box2D& b)
+[[nodiscard]] constexpr inline bool IsIntersecting(const Box2D& a, const Box2D& b)
 {
     if (a.max_.x < b.min_.x || a.min_.x > b.max_.x)
         return false;
@@ -960,6 +960,35 @@ constexpr inline bool IsIntersecting(const Box2D& a, const Box2D& b)
         return false;
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+[[nodiscard]] constexpr inline float DistancePointBoxSq(const Box2D& box, Vec2 point)
+{
+    float sqDist = 0.0f;
+    for (int i = 0; i < 2; i++)
+    {
+        // For each axis count any excess distance outside box extents
+        const float v = point[i];
+        if (v < box.min_[i])
+            sqDist += (box.min_[i] - v) * (box.min_[i] - v);
+        if (v > box.max_[i])
+            sqDist += (v - box.max_[i]) * (v - box.max_[i]);
+    }
+    return sqDist;
+}
+
+//------------------------------------------------------------------------------
+[[nodiscard]] constexpr inline bool IsIntersecting(const Box2D& box, const Circle& circle)
+{
+    const float distSq = DistancePointBoxSq(box, circle.center_);
+    return distSq <= Sqr(circle.radius_);
+}
+
+//------------------------------------------------------------------------------
+[[nodiscard]] constexpr inline bool IsIntersecting(const Circle& circle, const Box2D& box)
+{
+    return IsIntersecting(box, circle);
 }
 
 //------------------------------------------------------------------------------
@@ -973,7 +1002,7 @@ struct IntersectionResult
 
 //------------------------------------------------------------------------------
 //! Intersection of stationary AABB a and moving AABB b with velocity velocityB
-constexpr inline IntersectionResult IsIntersecting(const Box2D& a, const Box2D& b, Vec2 velocityB)
+[[nodiscard]] constexpr inline IntersectionResult IsIntersecting(const Box2D& a, const Box2D& b, Vec2 velocityB)
 {
     IntersectionResult result{};
 
@@ -1014,21 +1043,21 @@ constexpr inline IntersectionResult IsIntersecting(const Box2D& a, const Box2D& 
 
 //------------------------------------------------------------------------------
 //! Intersection of moving AABBs a and b with velocities velocityA and velocityB
-constexpr inline IntersectionResult IsIntersecting(const Box2D& a, const Box2D& b, Vec2 velocityA, Vec2 velocityB)
+[[nodiscard]] constexpr inline IntersectionResult IsIntersecting(const Box2D& a, const Box2D& b, Vec2 velocityA, Vec2 velocityB)
 {
     Vec2 totalVelocity = velocityB - velocityA;
     return IsIntersecting(a, b, totalVelocity);
 }
 
 //------------------------------------------------------------------------------
-constexpr inline bool IsIntersecting(const Circle& a, const Circle& b)
+[[nodiscard]] constexpr inline bool IsIntersecting(const Circle& a, const Circle& b)
 {
     return a.center_.DistanceSqr(b.center_) <= Sqr(a.radius_ + b.radius_);
 }
 
 
 //------------------------------------------------------------------------------
-inline Mat44 MakeTransform(const Vec3& pos, float rotation, Vec2 pivot)
+[[nodiscard]] inline Mat44 MakeTransform(const Vec3& pos, float rotation, Vec2 pivot)
 {
     Mat44 model = Mat44::RotationRoll(rotation);
     model.SetPosition(pos);
