@@ -971,9 +971,9 @@ struct Circle
         // For each axis count any excess distance outside box extents
         const float v = point[i];
         if (v < box.min_[i])
-            sqDist += (box.min_[i] - v) * (box.min_[i] - v);
+            sqDist += Sqr(box.min_[i] - v);
         if (v > box.max_[i])
-            sqDist += (v - box.max_[i]) * (v - box.max_[i]);
+            sqDist += Sqr(v - box.max_[i]);
     }
     return sqDist;
 }
