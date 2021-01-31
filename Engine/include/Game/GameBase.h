@@ -20,6 +20,7 @@ public:
 
     virtual RESULT Init() = 0;
     virtual RESULT OnWindowResized() = 0;
+    virtual void Free() = 0;
     virtual void Update() = 0;
 };
 

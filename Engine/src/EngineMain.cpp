@@ -9,6 +9,8 @@
 #include "Common/Types.h"
 #include "Common/hs_Assert.h"
 
+#include "sdl/SDL.h"
+
 #if HS_WINDOWS
     #include "Platform/hs_Windows.h"
     #include "imgui/imgui_impl_win32.h"
@@ -136,9 +138,8 @@ static void Cleanup()
     DestroyRender();
     DestroyResourceManager();
     DestroyEngine();
-    #if HS_LINUX
-        glfwTerminate();
-    #endif
+    SDL_Quit();
+    glfwTerminate();
     HsDestroyImgui();
 }
 
@@ -313,6 +314,12 @@ static void Cleanup()
         if (!glfwInit())
         {
             LOG_ERR("Failed to init GLFW");
+            return -1;
+        }
+
+        if (SDL_Init(SDL_INIT_AUDIO) != 0)
+        {
+            LOG_ERR("Failed to init SDL");
             return -1;
         }
 

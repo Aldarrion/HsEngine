@@ -91,12 +91,26 @@ target_include_directories(${PROJ_NAME} PUBLIC "${VK_INCLUDE_DIR}")
 target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Engine/include")
 target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Extern/stb/include")
 target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Extern/cjson/include")
+target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Extern/sdl/include")
 
 target_link_libraries(${PROJ_NAME} glfw)
 target_link_libraries(${PROJ_NAME} ImGui)
 target_link_libraries(${PROJ_NAME} CJson)
 target_link_libraries(${PROJ_NAME} "${VK_LIB}")
 target_link_libraries(${PROJ_NAME} "${VK_SHADERC_LIB}")
+
+## SDL
+if(WIN32)
+    set(SDL_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Extern/sdl/lib")
+    target_link_libraries(${PROJ_NAME} "${SDL_LIB_DIR}/SDL2.lib" "${SDL_LIB_DIR}/SDL2main.lib")
+
+    add_custom_command(TARGET ${PROJ_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Debug
+
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Release
+    )
+# TODO else() # Linux
+endif()
 
 if(WIN32)
     target_compile_definitions(${PROJ_NAME} PUBLIC HS_WINDOWS=1)
