@@ -86,61 +86,61 @@ constexpr String::String(const char (&stringLiteral)[N])
 }
 
 //------------------------------------------------------------------------------
-bool String::IsEmpty() const
+inline bool String::IsEmpty() const
 {
     return size_ == 0;
 }
 
 //------------------------------------------------------------------------------
-uint String::Size() const
+inline uint String::Size() const
 {
     return size_;
 }
 
 //------------------------------------------------------------------------------
-const char* String::Data() const
+inline const char* String::Data() const
 {
     return string_;
 }
 
 //------------------------------------------------------------------------------
-char* String::Data()
+inline char* String::Data()
 {
     return string_;
 }
 
 //------------------------------------------------------------------------------
-String::ConstIter_t String::cbegin() const
+inline String::ConstIter_t String::cbegin() const
 {
     return string_;
 }
 
 //------------------------------------------------------------------------------
-String::ConstIter_t String::begin() const
+inline String::ConstIter_t String::begin() const
 {
     return cbegin();
 }
 
 //------------------------------------------------------------------------------
-String::Iter_t String::begin()
+inline String::Iter_t String::begin()
 {
     return string_;
 }
 
 //------------------------------------------------------------------------------
-String::ConstIter_t String::cend() const
+inline String::ConstIter_t String::cend() const
 {
     return string_ + size_;
 }
 
 //------------------------------------------------------------------------------
-String::ConstIter_t String::end() const
+inline String::ConstIter_t String::end() const
 {
     return cend();
 }
 
 //------------------------------------------------------------------------------
-String::Iter_t String::end()
+inline String::Iter_t String::end()
 {
     return string_ + size_;
 }
@@ -156,43 +156,43 @@ constexpr StringView::StringView(const char (&stringLiteral)[N])
 }
 
 //------------------------------------------------------------------------------
-bool StringView::IsEmpty() const
+inline bool StringView::IsEmpty() const
 {
     return size_ == 0;
 }
 
 //------------------------------------------------------------------------------
-uint StringView::Size() const
+inline uint StringView::Size() const
 {
     return size_;
 }
 
 //------------------------------------------------------------------------------
-const char* StringView::Data() const
+inline const char* StringView::Data() const
 {
     return string_;
 }
 
 //------------------------------------------------------------------------------
-StringView::ConstIter_t StringView::cbegin() const
+inline StringView::ConstIter_t StringView::cbegin() const
 {
     return string_;
 }
 
 //------------------------------------------------------------------------------
-StringView::ConstIter_t StringView::begin() const
+inline StringView::ConstIter_t StringView::begin() const
 {
     return cbegin();
 }
 
 //------------------------------------------------------------------------------
-StringView::ConstIter_t StringView::cend() const
+inline StringView::ConstIter_t StringView::cend() const
 {
     return string_ + size_;
 }
 
 //------------------------------------------------------------------------------
-StringView::ConstIter_t StringView::end() const
+inline StringView::ConstIter_t StringView::end() const
 {
     return cend();
 }
