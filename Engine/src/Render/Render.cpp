@@ -1,5 +1,11 @@
 #include "Render/Render.h"
 
+#include "Game/DrawCanvas.h"
+#include "Game/SpriteRenderer.h"
+#include "Game/DebugShapeRenderer.h"
+
+#include "Gui/GuiRenderer.h"
+
 #include "Render/Allocator.h"
 #include "Render/Shader.h"
 #include "Render/Material.h"
@@ -9,10 +15,6 @@
 #include "Render/DynamicUniformBuffer.h"
 #include "Render/RenderPassContext.h"
 #include "Render/hs_Vulkan.h"
-
-#include "Game/DrawCanvas.h"
-#include "Game/SpriteRenderer.h"
-#include "Game/DebugShapeRenderer.h"
 
 #include "Resources/Serialization.h"
 #include "Input/Input.h"
@@ -324,7 +326,7 @@ RESULT Render::CreateInstance()
     instInfo.sType              = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instInfo.pApplicationInfo   = &appInfo;
 
-    #if HS_DEBUG
+    #if HS_RENDER_DEBUG
         const char* validationLayers[] =
         {
             "VK_LAYER_KHRONOS_validation",
@@ -361,7 +363,7 @@ RESULT Render::CreateInstance()
     if (VKR_FAILED(vkCreateInstance(&instInfo, nullptr, &vkInstance_)))
         return R_FAIL;
 
-    #if HS_DEBUG
+    #if HS_RENDER_DEBUG
         VkDebugReportCallbackCreateInfoEXT createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
         createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
@@ -1280,6 +1282,10 @@ RESULT Render::Init()
     if (debugShapeRenderer_ && HS_FAILED(debugShapeRenderer_->Init()))
         return R_FAIL;
 
+    guiRenderer_ = MakeUnique<GuiRenderer>();
+    if (guiRenderer_ && HS_FAILED(guiRenderer_->Init()))
+        return R_FAIL;
+
     state_.Reset();
 
     return R_OK;
@@ -1784,6 +1790,9 @@ void Render::Update(float dTime)
         if (debugShapeRenderer_)
             debugShapeRenderer_->Draw(ctx);
 
+        if (guiRenderer_)
+            guiRenderer_->Draw(ctx);
+
         ImGui::Render();
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), directCmdBuffers_[currentBBIdx_]);
 
@@ -2017,6 +2026,12 @@ SpriteRenderer* Render::GetSpriteRenderer() const
 DebugShapeRenderer* Render::GetDebugShapeRenderer() const
 {
     return debugShapeRenderer_.Get();
+}
+
+//------------------------------------------------------------------------------
+GuiRenderer* Render::GetGuiRenderer() const
+{
+    return guiRenderer_.Get();
 }
 
 }

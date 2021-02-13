@@ -67,6 +67,7 @@ struct RenderPassContext;
 class DrawCanvas;
 class SpriteRenderer;
 class DebugShapeRenderer;
+class GuiRenderer;
 
 class SerializationManager;
 
@@ -230,11 +231,9 @@ public:
     const Camera& GetCamera() const;
     Camera& GetCamera();
 
-    // Sprite renderer
     SpriteRenderer* GetSpriteRenderer() const;
-
-    // Debug shape renderer
     DebugShapeRenderer* GetDebugShapeRenderer() const;
+    GuiRenderer* GetGuiRenderer() const;
 
     void RenderObject(VisualObject* object);
     void RenderObjects(Span<VisualObject> objects);
@@ -361,6 +360,7 @@ private:
 
     UniquePtr<SpriteRenderer>       spriteRenderer_;
     UniquePtr<DebugShapeRenderer>   debugShapeRenderer_;
+    UniquePtr<GuiRenderer>          guiRenderer_;
 
     Array<VisualObject*>            renderObjects_[RPT_COUNT];
 

@@ -42,6 +42,8 @@ public:
 
     VertexBufferEntry BeginAlloc(uint size, uint align, void** data);
     void EndAlloc();
+    uint GetMaxSize() const;
+    uint GetRemainingBufferSize(uint align) const;
 
 private:
     constexpr static uint BUFFER_SIZE = 512 * 1024;

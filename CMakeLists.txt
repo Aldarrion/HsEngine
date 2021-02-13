@@ -105,9 +105,9 @@ if(WIN32)
     target_link_libraries(${PROJ_NAME} "${SDL_LIB_DIR}/SDL2.lib" "${SDL_LIB_DIR}/SDL2main.lib")
 
     add_custom_command(TARGET ${PROJ_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Debug
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Debug/
 
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Release
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Release/
     )
 # TODO else() # Linux
 endif()

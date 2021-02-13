@@ -19,3 +19,7 @@
     #undef far
 #endif
 
+#ifdef DrawText
+    #undef DrawText
+#endif
+

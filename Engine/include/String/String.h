@@ -8,6 +8,38 @@
 namespace hs
 {
 
+class String;
+
+//------------------------------------------------------------------------------
+class StringView
+{
+public:
+    using Iter_t = const char*;
+    using ConstIter_t = Iter_t;
+
+    StringView() = default;
+    explicit StringView(const String& string);
+
+    template<uint N>
+    explicit constexpr StringView(const char (&stringLiteral)[N]);
+
+
+    [[nodiscard]] const char* Data() const;
+
+    [[nodiscard]] bool IsEmpty() const;
+    [[nodiscard]] uint Size() const;
+    [[nodiscard]] uint Length() const;
+
+    [[nodiscard]] ConstIter_t cbegin() const;
+    [[nodiscard]] ConstIter_t begin() const;
+    [[nodiscard]] ConstIter_t cend() const;
+    [[nodiscard]] ConstIter_t end() const;
+
+private:
+    const char* string_{};
+    uint size_{};
+};
+
 //------------------------------------------------------------------------------
 class String
 {
@@ -19,7 +51,11 @@ public:
 
     String() = default;
     explicit String(uint reservedCapacity);
-    template<uint N> explicit constexpr String(const char (&stringLiteral)[N]);
+    explicit String(StringView strView);
+
+    template<uint N>
+    explicit constexpr String(const char (&stringLiteral)[N]);
+
 
     ~String();
 
@@ -33,6 +69,9 @@ public:
 
     [[nodiscard]] bool IsEmpty() const;
     [[nodiscard]] uint Size() const;
+    [[nodiscard]] uint Length() const;
+
+    void Append(StringView toAppend);
 
     [[nodiscard]] ConstIter_t cbegin() const;
     [[nodiscard]] ConstIter_t begin() const;
@@ -44,31 +83,6 @@ public:
 private:
     char* string_{};
     uint capacity_{};
-    uint size_{};
-};
-
-//------------------------------------------------------------------------------
-class StringView
-{
-public:
-    using Iter_t = const char*;
-    using ConstIter_t = Iter_t;
-
-    StringView() = default;
-    template<uint N> explicit constexpr StringView(const char (&stringLiteral)[N]);
-
-    [[nodiscard]] const char* Data() const;
-
-    [[nodiscard]] bool IsEmpty() const;
-    [[nodiscard]] uint Size() const;
-
-    [[nodiscard]] ConstIter_t cbegin() const;
-    [[nodiscard]] ConstIter_t begin() const;
-    [[nodiscard]] ConstIter_t cend() const;
-    [[nodiscard]] ConstIter_t end() const;
-
-private:
-    const char* string_{};
     uint size_{};
 };
 
@@ -93,6 +107,11 @@ inline bool String::IsEmpty() const
 
 //------------------------------------------------------------------------------
 inline uint String::Size() const
+{
+    return size_;
+}
+
+inline uint String::Length() const
 {
     return size_;
 }
@@ -148,6 +167,13 @@ inline String::Iter_t String::end()
 //------------------------------------------------------------------------------
 // String view
 //------------------------------------------------------------------------------
+inline StringView::StringView(const String& string)
+    : string_(string.Data())
+    , size_(string.Size())
+{
+}
+
+//------------------------------------------------------------------------------
 template<uint N>
 constexpr StringView::StringView(const char (&stringLiteral)[N])
 {
@@ -163,6 +189,12 @@ inline bool StringView::IsEmpty() const
 
 //------------------------------------------------------------------------------
 inline uint StringView::Size() const
+{
+    return size_;
+}
+
+//------------------------------------------------------------------------------
+inline uint StringView::Length() const
 {
     return size_;
 }

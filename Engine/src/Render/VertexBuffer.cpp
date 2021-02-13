@@ -127,5 +127,17 @@ void VertexBufferCache::EndAlloc()
     entries_.First().buffer_.Unmap();
 }
 
+//------------------------------------------------------------------------------
+uint VertexBufferCache::GetMaxSize() const
+{
+    return BUFFER_SIZE;
+}
+
+//------------------------------------------------------------------------------
+uint VertexBufferCache::GetRemainingBufferSize(uint align) const
+{
+    return BUFFER_SIZE - Align(entries_.First().begin_, align);
+}
+
 
 }

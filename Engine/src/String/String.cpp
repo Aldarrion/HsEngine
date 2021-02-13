@@ -36,6 +36,15 @@ String::String(uint reservedCapacity)
 }
 
 //------------------------------------------------------------------------------
+String::String(StringView strView)
+    : capacity_(strView.Size())
+    , size_(0)
+{
+    string_ = (char*)malloc(capacity_);
+    Append(strView);
+}
+
+//------------------------------------------------------------------------------
 String::~String()
 {
     size_ = 0;
@@ -95,6 +104,20 @@ String& String::operator=(String&& other)
     other.size_ = 0;
 
     return *this;
+}
+
+//------------------------------------------------------------------------------
+void String::Append(StringView toAppend)
+{
+    auto newSize = size_ + toAppend.Size();
+    if (newSize > capacity_)
+    {
+        capacity_ *= 2;
+        realloc(string_, capacity_);
+    }
+
+    memcpy(string_ + size_, toAppend.Data(), toAppend.Size());
+    size_ = newSize;
 }
 
 }

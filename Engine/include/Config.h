@@ -3,8 +3,10 @@
 //------------------------------------------------------------------------------
 #ifdef NDEBUG
     #define HS_DEBUG 0
+    #define HS_RENDER_DEBUG 0
 #else
     #define HS_DEBUG 1
+    #define HS_RENDER_DEBUG 1
 #endif
 
 //------------------------------------------------------------------------------
