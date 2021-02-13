@@ -52,8 +52,9 @@ RESULT Font::Init(const char* name)
 
         GlyphInfo info;
         info.size_ = Vec2(glyphWidth, glyphHeight);
-        info.uvSize_ = Vec2((float)glyphWidth / texture_->GetWidth(), (float)glyphHeight / texture_->GetHeight());
-        info.uvPos_ = Vec2(glyphPos.x / texture_->GetWidth(), 1 - ((glyphPos.y + glyphHeight) / texture_->GetHeight()));
+        // UV pos is the same as regular pos, bottom left of the letter
+        info.uvPos_ = Vec2(glyphPos.x / texture_->GetWidth(), ((glyphPos.y + glyphHeight) / texture_->GetHeight()));
+        info.uvSize_ = Vec2((float)glyphWidth / texture_->GetWidth(), (float)-glyphHeight / texture_->GetHeight());
 
         glyphs_.emplace(glyphs[i], info);
     }

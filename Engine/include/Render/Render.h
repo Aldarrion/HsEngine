@@ -312,7 +312,7 @@ private:
     // Descriptors
     VkDescriptorPool    bindlessPool_{};
     VkDescriptorSet     bindlessSet_{};
-    uint                lastFreeBindlessIndex_{};
+    uint                lastFreeBindlessIndex_{ 1 }; // 0 is invalid "null" descriptor
 
     VkDescriptorPool    immutableSamplerPool_{};
     VkDescriptorSet     immutableSamplerSet_{};

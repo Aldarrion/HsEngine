@@ -129,7 +129,8 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
         vert.texIdx_ = font->GetTexture()->GetBindlessIndex();
     };
 
-    float spaceWidth = font->GetSpaceWidth();
+    // TODO(pavel): Move this 5 away. It's the number of pixels per texel. It should come from the outside probably as a scale parameter.
+    float spaceWidth = font->GetSpaceWidth() * 5;
     int vertsToDraw = 0;
     for (char c : text)
     {
@@ -148,7 +149,8 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
             continue;
         }
 
-        const Vec2 size = glyphInfo->size_;
+        // TODO(pavel): Move this 5 away. It's the number of pixels per texel. It should come from the outside probably as a scale parameter.
+        const Vec2 size = glyphInfo->size_ * 5;
         const Vec2 uvPos = glyphInfo->uvPos_;
         const Vec2 uvSize = glyphInfo->uvSize_;
 
@@ -162,6 +164,7 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
 
         guiVerts_ += VERTS_PER_GLYPH;
         vertsToDraw += VERTS_PER_GLYPH;
+        pos.x += size.x;
     }
 
     vbCache->EndAlloc();
@@ -174,6 +177,7 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
 
     g_Render->SetDynamicUbo(0, constBuffer);
 
+    g_Render->SetVertexBuffer(0, guiVbEntry_);
     g_Render->SetVertexLayout(0, guiVertexLayout_);
 
     g_Render->SetShader<PS_VERT>(guiVert_);

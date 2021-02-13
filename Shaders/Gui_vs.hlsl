@@ -18,6 +18,8 @@ vs_out main(vertex vert)
     // Sceeenspace pos to NDC
     o.Pos.x = (vert.Pos.x / Gui.ScreenDimensions.x) * 2 - 1;
     o.Pos.y = (vert.Pos.y / Gui.ScreenDimensions.y) * 2 - 1;
+    o.Pos.z = 0.5;
+    o.Pos.w = 1;
 
     o.UV = vert.UV;
     o.Color = vert.Color;
