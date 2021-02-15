@@ -118,7 +118,7 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
     //    //guiVbEntry_ = g_Render->GetVertexCache()->BeginAlloc(0, sizeof(GuiVertex), (void**)&guiVerts_);
     //}
 
-    guiVbEntry_ = vbCache->BeginAlloc(0, sizeof(GuiVertex), (void**)&guiVerts_);
+    guiVbEntry_ = vbCache->BeginAlloc(VERTS_PER_GLYPH * sizeof(GuiVertex), sizeof(GuiVertex), (void**)&guiVerts_);
 
     auto SetVert = [](const Font* font, GuiVertex& vert, Vec2 pos, Vec2 uv)
     {

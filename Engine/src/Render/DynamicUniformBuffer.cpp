@@ -2,7 +2,6 @@
 
 #include "Render/Allocator.h"
 #include "Render/Render.h"
-#include "Math/hs_Math.h"
 #include "Common/Logging.h"
 
 namespace hs
@@ -94,7 +93,7 @@ DynamicUBOEntry DynamicUBOCache::BeginAlloc(uint size, void** data)
 
     entries_.First().begin_ = Align(entries_.First().begin_, size);
 
-    if (BUFFER_SIZE - entries_.First().begin_ < size)
+    if ((int)BUFFER_SIZE - (int)entries_.First().begin_ < (int)size)
     {
         if (entries_.Last().safeToUseFrame_ <= g_Render->GetCurrentFrame())
         {

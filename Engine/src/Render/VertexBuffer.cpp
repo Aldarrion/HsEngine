@@ -53,6 +53,7 @@ VkBuffer VertexBuffer::GetBuffer() const
     return buffer_;
 }
 
+//------------------------------------------------------------------------------
 uint VertexBuffer::GetSize() const
 {
     return size_;
@@ -88,7 +89,7 @@ VertexBufferEntry VertexBufferCache::BeginAlloc(uint size, uint align, void** da
 {
     entries_.First().begin_ = Align(entries_.First().begin_, align);
 
-    if (BUFFER_SIZE - entries_.First().begin_ < size)
+    if ((int)BUFFER_SIZE - (int)entries_.First().begin_ < (int)size)
     {
         if (entries_.Last().safeToUseFrame_ <= g_Render->GetCurrentFrame())
         {
