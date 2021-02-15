@@ -96,8 +96,8 @@ public:
 
     bool GetState(KeyCode keyCode) const;
     bool GetState(MouseButton button) const;
-    bool GetState(int gamepad, int gamepadButton) const;
-    float GetAxis(int gamepad, int axis) const;
+    bool GetState(uint gamepad, int gamepadButton) const;
+    float GetAxis(uint gamepad, int axis) const;
 
     void KeyDown(int key);
     void KeyUp(int key);
@@ -105,8 +105,8 @@ public:
     bool IsButtonDown(MouseButton button) const;
     bool IsButtonUp(MouseButton button) const;
 
-    bool IsButtonDown(int gamepad, int gamepadButton) const;
-    bool IsButtonUp(int gamepad, int gamepadButton) const;
+    bool IsButtonDown(uint gamepad, int gamepadButton) const;
+    bool IsButtonUp(uint gamepad, int gamepadButton) const;
 
     void ButtonDown(MouseButton button);
     void ButtonUp(MouseButton button);

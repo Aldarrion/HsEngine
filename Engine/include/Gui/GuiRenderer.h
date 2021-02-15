@@ -37,7 +37,7 @@ private:
     struct Text
     {
         Font* font_;
-        String text_;
+        StringView text_;
         Vec2 pos_;
     };
 

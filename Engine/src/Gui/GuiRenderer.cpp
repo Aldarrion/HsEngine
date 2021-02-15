@@ -84,8 +84,7 @@ RESULT GuiRenderer::Init()
 //------------------------------------------------------------------------------
 void GuiRenderer::AddText(Font* font, StringView text, Vec2 pos)
 {
-    // TODO(pavel): Could we save only the stringview here and not copy it to the string? We would need to ensure that the string will live long enough...
-    texts_.Add(Text{ font, String(text), pos });
+    texts_.Add(Text{ font, text, pos });
 }
 
 //------------------------------------------------------------------------------

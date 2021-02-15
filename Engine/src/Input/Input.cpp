@@ -221,7 +221,7 @@ bool Input::GetState(MouseButton button) const
 }
 
 //------------------------------------------------------------------------------
-bool Input::GetState(int gamepad, int gamepadButton) const
+bool Input::GetState(uint gamepad, int gamepadButton) const
 {
     hs_assert(gamepad < GLFW_JOYSTICK_LAST);
     hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
@@ -230,7 +230,7 @@ bool Input::GetState(int gamepad, int gamepadButton) const
 }
 
 //------------------------------------------------------------------------------
-float Input::GetAxis(int gamepad, int axis) const
+float Input::GetAxis(uint gamepad, int axis) const
 {
     hs_assert(gamepad < GLFW_JOYSTICK_LAST);
     hs_assert(axis < GLFW_GAMEPAD_AXIS_LAST);
@@ -261,7 +261,7 @@ bool Input::IsButtonUp(MouseButton btn) const
 }
 
 //------------------------------------------------------------------------------
-bool Input::IsButtonDown(int gamepad, int gamepadButton) const
+bool Input::IsButtonDown(uint gamepad, int gamepadButton) const
 {
     hs_assert(gamepad < GLFW_JOYSTICK_LAST);
     hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
@@ -271,7 +271,7 @@ bool Input::IsButtonDown(int gamepad, int gamepadButton) const
 }
 
 //------------------------------------------------------------------------------
-bool Input::IsButtonUp(int gamepad, int gamepadButton) const
+bool Input::IsButtonUp(uint gamepad, int gamepadButton) const
 {
     hs_assert(gamepad < GLFW_JOYSTICK_LAST);
     hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
