@@ -3,7 +3,7 @@
 #include "Render/Render.h"
 #include "Render/ShaderManager.h"
 #include "Render/VertexTypes.h"
-#include "Render/VertexBuffer.h"
+#include "Render/Buffer.h"
 #include "Input/Input.h"
 
 #include "Common/Logging.h"
@@ -31,7 +31,7 @@ RESULT DrawCanvas::Init()
 
     lineVertType_ = ShapeVertexLayout();
 
-    linesBuffer_ = MakeUnique<VertexBuffer>(MAX_LINE_VERTS * sizeof(ShapeVertex));
+    linesBuffer_ = MakeUnique<RenderBuffer>(RenderBufferType::Vertex, MAX_LINE_VERTS * sizeof(ShapeVertex));
     if (HS_FAILED(linesBuffer_->Init()))
         return R_FAIL;
 
@@ -103,7 +103,7 @@ void DrawCanvas::Draw(const RenderPassContext& ctx)
     linesBuffer_->Unmap();
 
     // Render
-    g_Render->SetVertexBuffer(0, VertexBufferEntry{ linesBuffer_->GetBuffer(), 0 });
+    g_Render->SetVertexBuffer(0, RenderBufferEntry{ linesBuffer_->GetBuffer(), 0 });
     g_Render->SetShader<PS_VERT>(lineVert_);
     g_Render->SetShader<PS_FRAG>(lineFrag_);
     g_Render->SetPrimitiveTopology(VkrPrimitiveTopology::LINE_STRIP);

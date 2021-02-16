@@ -3,8 +3,7 @@
 #include "Gui/Font.h"
 
 #include "Render/ShaderManager.h"
-#include "Render/VertexBuffer.h"
-#include "Render/DynamicUniformBuffer.h"
+#include "Render/RenderBufferCache.h"
 #include "Render/Texture.h"
 #include "Render/Render.h"
 
@@ -105,7 +104,7 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
     static constexpr uint VERTS_PER_GLYPH = 6; // Two triangles
     static constexpr uint BYTES_PER_GLYPH = VERTS_PER_GLYPH * sizeof(GuiVertex);
 
-    VertexBufferCache* vbCache = g_Render->GetVertexCache();
+    RenderBufferCache* vbCache = g_Render->GetVertexCache();
     uint remainingSize = vbCache->GetRemainingBufferSize(sizeof(GuiVertex));
     uint remainingGlyphs = remainingSize / BYTES_PER_GLYPH;
     uint glyphsToRender = text.Length();
@@ -170,7 +169,7 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
 
     // Draw
     sh::GuiData* guiData;
-    DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::GuiData), (void**)&guiData);
+    RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::GuiData), sizeof(sh::GuiData), (void**)&guiData);
     guiData->ScreenDimensions = Vec2(g_Render->GetWidth(), g_Render->GetHeight());
     g_Render->GetUBOCache()->EndAlloc();
 

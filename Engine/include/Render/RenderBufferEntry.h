@@ -6,13 +6,12 @@
 namespace hs
 {
 
-class VertexBuffer;
-
 //------------------------------------------------------------------------------
-struct VertexBufferEntry
+struct RenderBufferEntry
 {
     VkBuffer buffer_{};
     uint offset_{};
+    uint size_{};
 };
 
 }

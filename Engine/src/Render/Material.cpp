@@ -3,8 +3,8 @@
 #include "Render/Render.h"
 #include "Render/Texture.h"
 #include "Render/ShaderManager.h"
-#include "Render/VertexBuffer.h"
-#include "Render/DynamicUniformBuffer.h"
+#include "Render/Buffer.h"
+#include "Render/RenderBufferCache.h"
 #include "Render/VertexTypes.h"
 #include "Input/Input.h"
 
@@ -93,7 +93,7 @@ uint PosColVertLayout()
 void SetSceneData()
 {
     void* mapped;
-    DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), &mapped);
+    RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), sizeof(sh::SceneData), &mapped);
     auto ubo = (sh::SceneData*)mapped;
 
     Mat44 camMat = g_Render->GetCamera().ToCamera();
@@ -136,7 +136,7 @@ void SpriteMaterial::DrawSprite(const RenderPassContext& ctx, const SpriteDrawDa
 {
     {
         SpriteVertex* mapped{};
-        VertexBufferEntry vbEntry = g_Render->GetVertexCache()->BeginAlloc(6 * sizeof(SpriteVertex), sizeof(SpriteVertex), (void**)&mapped);
+        RenderBufferEntry vbEntry = g_Render->GetVertexCache()->BeginAlloc(6 * sizeof(SpriteVertex), sizeof(SpriteVertex), (void**)&mapped);
 
         Vec3 vertPos = Vec3::ZERO();
 
@@ -201,7 +201,7 @@ void SpriteMaterial::DrawSprite(const RenderPassContext& ctx, const SpriteDrawDa
 
     {
         void* mapped;
-        DynamicUBOEntry uniformBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SpriteData), &mapped);
+        RenderBufferEntry uniformBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SpriteData), sizeof(sh::SpriteData), &mapped);
 
         auto ubo = (sh::SpriteData*)mapped;
             ubo->World = data.world_;
@@ -261,7 +261,7 @@ void DebugShapeMaterial::DrawShape(const RenderPassContext& ctx, Span<const Vec3
 {
     {
         DebugShapeVertex* mapped{};
-        VertexBufferEntry vbEntry = g_Render->GetVertexCache()->BeginAlloc(verts.Count() * sizeof(DebugShapeVertex), sizeof(DebugShapeVertex), (void**)&mapped);
+        RenderBufferEntry vbEntry = g_Render->GetVertexCache()->BeginAlloc(verts.Count() * sizeof(DebugShapeVertex), sizeof(DebugShapeVertex), (void**)&mapped);
 
         for (uint i = 0; i < verts.Count(); ++i)
         {
@@ -374,7 +374,7 @@ void PhongMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
     };
 
     SceneData* ubo{};
-    DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(SceneData), (void**)&ubo);
+    RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(SceneData), sizeof(SceneData), (void**)&ubo);
 
     ubo->Projection = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
     ubo->ViewPos    = g_Render->GetCamera().Position().ToVec4Pos();
@@ -448,7 +448,7 @@ void SkyboxMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData
     };
 
     void* mapped;
-    DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(SceneData), &mapped);
+    RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(SceneData), sizeof(SceneData), &mapped);
     auto ubo = (SceneData*)mapped;
 
     Mat44 camMat = g_Render->GetCamera().ToCamera();
@@ -495,7 +495,7 @@ void PBRMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
     // Scene data
     {
         sh::SceneData* scene{};
-        DynamicUBOEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), (void**)&scene);
+        RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), sizeof(sh::SceneData), (void**)&scene);
 
         scene->VP       = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
         scene->ViewPos  = g_Render->GetCamera().Position().ToVec4Pos();
@@ -507,7 +507,7 @@ void PBRMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
     // Instance data
     {
         sh::InstanceData* inst{};
-        DynamicUBOEntry instCBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::InstanceData), (void**)&inst);
+        RenderBufferEntry instCBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::InstanceData), sizeof(sh::InstanceData), (void**)&inst);
 
         inst->World = drawData.transform_;
 
@@ -518,7 +518,7 @@ void PBRMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
     // PBR data
     {
         sh::PBRData* pbr{};
-        DynamicUBOEntry pbrConstBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::PBRData), (void**)&pbr);
+        RenderBufferEntry pbrConstBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::PBRData), sizeof(sh::PBRData), (void**)&pbr);
 
         pbr->Albedo = albedo_;
         pbr->Roughness = roughness_;

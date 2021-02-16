@@ -11,8 +11,8 @@
 #include "Render/Material.h"
 #include "Render/Texture.h"
 #include "Render/ShaderManager.h"
-#include "Render/VertexBuffer.h"
-#include "Render/DynamicUniformBuffer.h"
+#include "Render/Buffer.h"
+#include "Render/RenderBufferCache.h"
 #include "Render/RenderPassContext.h"
 #include "Render/hs_Vulkan.h"
 
@@ -1239,11 +1239,11 @@ RESULT Render::Init()
 
     //-----------------------
     // Caches
-    uboCache_ = MakeUnique<DynamicUBOCache>();
+    uboCache_ = MakeUnique<RenderBufferCache>(RenderBufferType::Uniform);
     if (HS_FAILED(uboCache_->Init()))
         return R_FAIL;
 
-    vbCache_ = MakeUnique<VertexBufferCache>();
+    vbCache_ = MakeUnique<RenderBufferCache>(RenderBufferType::Vertex);
     if (HS_FAILED(vbCache_->Init()))
         return R_FAIL;
 
@@ -1640,7 +1640,7 @@ RESULT Render::PrepareForDraw(const RenderPassContext& ctx)
     // Fill bindless UBO
     {
         BindingUBO* ubo;
-        state_.bindlessUBO_ = uboCache_->BeginAlloc(sizeof(BindingUBO), (void**)&ubo);
+        state_.bindlessUBO_ = uboCache_->BeginAlloc(sizeof(BindingUBO), sizeof(BindingUBO), (void**)&ubo);
 
         for (uint i = 0; i < SRV_SLOT_COUNT; ++i)
         {
@@ -1656,7 +1656,7 @@ RESULT Render::PrepareForDraw(const RenderPassContext& ctx)
     buffInfo[0].range  = state_.bindlessUBO_.size_;
 
     uint dynOffsets[DYNAMIC_UBO_COUNT + 1]{};
-    dynOffsets[0] = state_.bindlessUBO_.dynOffset_;
+    dynOffsets[0] = state_.bindlessUBO_.offset_;
 
     VkWriteDescriptorSet UBOWrites[DYNAMIC_UBO_COUNT + 1]{};
     UBOWrites[0].sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1677,7 +1677,7 @@ RESULT Render::PrepareForDraw(const RenderPassContext& ctx)
             buffInfo[i + 1].offset = 0;
             buffInfo[i + 1].range  = state_.dynamicUBOs_[i].size_;
 
-            dynOffsets[i + 1] = state_.dynamicUBOs_[i].dynOffset_;
+            dynOffsets[i + 1] = state_.dynamicUBOs_[i].offset_;
 
             ++writeCount;
             UBOWrites[i + 1].sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1861,13 +1861,13 @@ const VkPhysicalDeviceProperties& Render::GetPhysDevProps() const
 }
 
 //------------------------------------------------------------------------------
-DynamicUBOCache* Render::GetUBOCache() const
+RenderBufferCache* Render::GetUBOCache() const
 {
     return uboCache_.Get();
 }
 
 //------------------------------------------------------------------------------
-VertexBufferCache* Render::GetVertexCache() const
+RenderBufferCache* Render::GetVertexCache() const
 {
     return vbCache_.Get();
 }
@@ -1912,7 +1912,7 @@ void Render::SetTexture(uint slot, Texture* texture)
 }
 
 //------------------------------------------------------------------------------
-void Render::SetVertexBuffer(uint slot, const VertexBufferEntry& entry)
+void Render::SetVertexBuffer(uint slot, const RenderBufferEntry& entry)
 {
     hs_assert(slot < RenderState::MAX_VERT_BUFF);
 
@@ -1933,7 +1933,7 @@ void Render::SetVertexLayout(uint slot, uint layoutHandle)
 }
 
 //------------------------------------------------------------------------------
-void Render::SetDynamicUbo(uint slot, const DynamicUBOEntry& entry)
+void Render::SetDynamicUbo(uint slot, const RenderBufferEntry& entry)
 {
     hs_assert(slot < DYNAMIC_UBO_COUNT + 1);
 

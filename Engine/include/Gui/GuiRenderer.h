@@ -2,7 +2,7 @@
 
 #include "Config.h"
 
-#include "Render/VertexBufferEntry.h"
+#include "Render/RenderBufferEntry.h"
 
 #include "String/String.h"
 
@@ -45,7 +45,7 @@ private:
 
     const RenderPassContext* ctx_;
 
-    VertexBufferEntry guiVbEntry_;
+    RenderBufferEntry guiVbEntry_;
     GuiVertex* guiVerts_;
 
     Shader* guiVert_;

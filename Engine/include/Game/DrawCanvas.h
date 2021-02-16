@@ -15,6 +15,7 @@ namespace hs
 
 //------------------------------------------------------------------------------
 struct RenderPassContext;
+class RenderBuffer;
 
 //------------------------------------------------------------------------------
 enum class DrawMode
@@ -33,7 +34,7 @@ public:
     void Draw(const RenderPassContext& ctx);
 
 private:
-    UniquePtr<VertexBuffer> linesBuffer_{};
+    UniquePtr<RenderBuffer> linesBuffer_{};
 
     Shader*         lineVert_{};
     Shader*         lineFrag_{};

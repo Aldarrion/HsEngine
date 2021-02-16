@@ -5,8 +5,7 @@
 #include "World/Camera.h"
 
 #include "Render/RenderPassContext.h"
-#include "Render/VertexBufferEntry.h"
-#include "Render/DynamicUniformBufferEntry.h"
+#include "Render/RenderBufferEntry.h"
 #include "Render/VkTypes.h"
 
 #include "Containers/Hash.h"
@@ -59,9 +58,7 @@ class Shader;
 class Material;
 class Texture;
 class ShaderManager;
-class VertexBuffer;
-class DynamicUBOCache;
-class VertexBufferCache;
+class RenderBufferCache;
 struct RenderPassContext;
 
 class DrawCanvas;
@@ -137,9 +134,9 @@ struct RenderState
 
     Shader*                 shaders_[PS_COUNT]{};
     uint                    fsTextures_[SRV_SLOT_COUNT]{};
-    DynamicUBOEntry         dynamicUBOs_[DYNAMIC_UBO_COUNT]{};
+    RenderBufferEntry       dynamicUBOs_[DYNAMIC_UBO_COUNT]{};
 
-    DynamicUBOEntry         bindlessUBO_{};
+    RenderBufferEntry       bindlessUBO_{};
 
     VkBuffer                vertexBuffers_[MAX_VERT_BUFF];
     VkDeviceSize            vbOffsets_[MAX_VERT_BUFF];
@@ -181,10 +178,10 @@ public:
         state_.shaders_[stage] = shader;
     }
     void SetTexture(uint slot, Texture* texture);
-    void SetVertexBuffer(uint slot, const VertexBufferEntry& entry);
+    void SetVertexBuffer(uint slot, const RenderBufferEntry& entry);
     void SetVertexLayout(uint slot, uint layoutHandle);
     void SetPrimitiveTopology(VkrPrimitiveTopology primitiveTopology);
-    void SetDynamicUbo(uint slot, const DynamicUBOEntry& entry);
+    void SetDynamicUbo(uint slot, const RenderBufferEntry& entry);
     void SetDepthState(uint state);
 
     // Drawing
@@ -212,8 +209,8 @@ public:
 
     const VkPhysicalDeviceProperties& GetPhysDevProps() const;
 
-    DynamicUBOCache* GetUBOCache() const;
-    VertexBufferCache* GetVertexCache() const;
+    RenderBufferCache* GetUBOCache() const;
+    RenderBufferCache* GetVertexCache() const;
 
     uint GetWidth() const;
     uint GetHeight() const;
@@ -332,8 +329,8 @@ private:
     std::unordered_map<PipelineKey, VkPipeline, FibonacciHash<PipelineKey>> pipelineCache_;
 
     // Caches
-    UniquePtr<DynamicUBOCache>    uboCache_;
-    UniquePtr<VertexBufferCache>  vbCache_;
+    UniquePtr<RenderBufferCache>    uboCache_;
+    UniquePtr<RenderBufferCache>    vbCache_;
 
     // Allocator
     VmaAllocator        allocator_;
