@@ -113,8 +113,8 @@ SpriteMaterial::~SpriteMaterial() = default;
 RESULT SpriteMaterial::Init()
 {
     //
-    vs_ = g_Render->GetShaderManager()->GetOrCreateShader("Sprite_vs.hlsl");
-    fs_ = g_Render->GetShaderManager()->GetOrCreateShader("Sprite_fs.hlsl");
+    vs_ = g_Render->GetShaderManager()->GetOrCreateShader("Sprite_vs");
+    fs_ = g_Render->GetShaderManager()->GetOrCreateShader("Sprite_fs");
 
     if (!vs_ || !fs_)
         return R_FAIL;
@@ -231,8 +231,8 @@ DebugShapeMaterial::~DebugShapeMaterial() = default;
 //------------------------------------------------------------------------------
 RESULT DebugShapeMaterial::Init()
 {
-    shapeVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Shape_vs.hlsl");
-    shapeFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Shape_fs.hlsl");
+    shapeVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Shape_vs");
+    shapeFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Shape_fs");
 
     if (!shapeVert_ || !shapeFrag_)
         return R_FAIL;
@@ -328,8 +328,8 @@ RESULT TexturedTriangleMaterial::Init()
             return R_FAIL; // TODO release resources
     }
 
-    triangleVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Triangle_vs.hlsl");
-    triangleFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Triangle_fs.hlsl");
+    triangleVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Triangle_vs");
+    triangleFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Triangle_fs");
 
     if (!triangleVert_ || !triangleFrag_)
         return R_FAIL;
@@ -354,8 +354,8 @@ void TexturedTriangleMaterial::Draw(const RenderPassContext& ctx, const DrawData
 //------------------------------------------------------------------------------
 RESULT PhongMaterial::Init()
 {
-    phongVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Phong_vs.hlsl");
-    phongFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Phong_fs.hlsl");
+    phongVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Phong_vs");
+    phongFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Phong_fs");
 
     if (!phongVert_ || !phongFrag_)
         return R_FAIL;
@@ -426,11 +426,11 @@ RESULT SkyboxMaterial::Init()
             return R_FAIL; // TODO release resources
     }
 
-    skyboxVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Skybox_vs.hlsl");
+    skyboxVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Skybox_vs");
     if (!skyboxVert_)
         return R_FAIL;
 
-    skyboxFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Skybox_fs.hlsl");
+    skyboxFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Skybox_fs");
     if (!skyboxFrag_)
         return R_FAIL;
 
@@ -480,8 +480,8 @@ void SkyboxMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData
 //------------------------------------------------------------------------------
 RESULT PBRMaterial::Init()
 {
-    pbrVert_ = g_Render->GetShaderManager()->GetOrCreateShader("PBR_vs.hlsl");
-    pbrFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("PBR_fs.hlsl");
+    pbrVert_ = g_Render->GetShaderManager()->GetOrCreateShader("PBR_vs");
+    pbrFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("PBR_fs");
 
     if (!pbrVert_ || !pbrFrag_)
         return R_FAIL;

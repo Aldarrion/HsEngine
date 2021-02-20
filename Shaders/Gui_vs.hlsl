@@ -13,7 +13,7 @@ ConstantBuffer<GuiData> Gui       : register(b1, space2);
 
 vs_out main(vertex vert)
 {
-    vs_out o = vs_out(0);
+    vs_out o = (vs_out)0;
 
     // Sceeenspace pos to NDC
     o.Pos.x = (vert.Pos.x / Gui.ScreenDimensions.x) * 2 - 1;

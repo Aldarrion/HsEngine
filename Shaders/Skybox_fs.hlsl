@@ -15,7 +15,7 @@ struct ps_in
     float4 SkyboxCoord : TEXCOORD0;
 };
 
-float4 main(ps_in input)
+float4 main(ps_in input) : SV_Target
 {
     float4 col = AllTextures[BindingIdx(0)].Sample(SamplerSkybox, input.SkyboxCoord.xyz);
     return col;

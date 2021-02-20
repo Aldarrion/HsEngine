@@ -16,7 +16,7 @@ struct ps_in
     float2 UV : TEXCOORD0;
 };
 
-float4 main(ps_in input)
+float4 main(ps_in input) : SV_Target
 {
     float4 outColor = float4(input.Color, 1);
     outColor = outColor * AllTextures[BindingIdx(1)].Sample(PointSampler, input.UV);

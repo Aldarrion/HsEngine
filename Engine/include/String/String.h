@@ -11,6 +11,22 @@ namespace hs
 class String;
 
 //------------------------------------------------------------------------------
+template<class StringT>
+bool StringEquals(const StringT& a, const StringT& b)
+{
+    if (a.Length() != b.Length())
+        return false;
+
+    for (int i = 0, len = a.Length(); i < len; ++i)
+    {
+        if (a.Data()[i] != b.Data()[i])
+            return false;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 class StringView
 {
 public:
@@ -19,9 +35,10 @@ public:
 
     StringView() = default;
     explicit StringView(const String& string);
+    explicit StringView(const char* cstr);
 
-    template<uint N>
-    explicit constexpr StringView(const char (&stringLiteral)[N]);
+    //template<uint N>
+    //explicit constexpr StringView(const char (&stringLiteral)[N]);
 
 
     [[nodiscard]] const char* Data() const;
@@ -52,9 +69,10 @@ public:
     String() = default;
     explicit String(uint reservedCapacity);
     explicit String(StringView strView);
+    explicit String(const char* cstr);
 
-    template<uint N>
-    explicit constexpr String(const char (&stringLiteral)[N]);
+    //template<uint N>
+    //explicit constexpr String(const char (&stringLiteral)[N]);
 
 
     ~String();
@@ -73,6 +91,8 @@ public:
 
     void Append(StringView toAppend);
 
+    [[nodiscard]] bool operator==(const String& other);
+
     [[nodiscard]] ConstIter_t cbegin() const;
     [[nodiscard]] ConstIter_t begin() const;
     [[nodiscard]] Iter_t begin();
@@ -89,15 +109,23 @@ private:
 //------------------------------------------------------------------------------
 // String
 //------------------------------------------------------------------------------
-template<uint N>
-constexpr String::String(const char (&stringLiteral)[N])
+inline String::String(const char* cstr)
 {
-    capacity_ = N - 1;
+    capacity_ = strlen(cstr);
     string_ = (char*)malloc(capacity_);
     size_ = capacity_;
 
-    memcpy(string_, stringLiteral, capacity_);
+    memcpy(string_, cstr, capacity_);
 }
+//template<uint N>
+//constexpr String::String(const char (&stringLiteral)[N])
+//{
+//    capacity_ = N - 1;
+//    string_ = (char*)malloc(capacity_);
+//    size_ = capacity_;
+//
+//    memcpy(string_, stringLiteral, capacity_);
+//}
 
 //------------------------------------------------------------------------------
 inline bool String::IsEmpty() const
@@ -126,6 +154,13 @@ inline const char* String::Data() const
 inline char* String::Data()
 {
     return string_;
+}
+
+//------------------------------------------------------------------------------
+inline bool String::operator==(const String& other)
+{
+    const bool res = StringEquals(*this, other);
+    return res;
 }
 
 //------------------------------------------------------------------------------
@@ -174,12 +209,17 @@ inline StringView::StringView(const String& string)
 }
 
 //------------------------------------------------------------------------------
-template<uint N>
-constexpr StringView::StringView(const char (&stringLiteral)[N])
+inline StringView::StringView(const char* cstr)
+    : string_(cstr)
+    , size_(strlen(cstr))
 {
-    size_ = N - 1;
-    string_ = stringLiteral;
 }
+//template<uint N>
+//constexpr StringView::StringView(const char (&stringLiteral)[N])
+//{
+//    size_ = N - 1;
+//    string_ = stringLiteral;
+//}
 
 //------------------------------------------------------------------------------
 inline bool StringView::IsEmpty() const

@@ -69,8 +69,8 @@ GuiRenderer::~GuiRenderer() = default;
 //------------------------------------------------------------------------------
 RESULT GuiRenderer::Init()
 {
-    guiVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Gui_vs.hlsl");
-    guiFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Gui_fs.hlsl");
+    guiVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Gui_vs");
+    guiFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Gui_fs");
 
     if (!guiVert_ || !guiFrag_)
         return R_FAIL;

@@ -15,7 +15,7 @@ vs_out main(vertex vert)
 {
     vs_out o;
 
-    o.Pos = vert.Pos * Sprite.World * Scene.VP;
+    o.Pos = mul(mul(Scene.VP, Sprite.World), vert.Pos);
     o.UV = vert.UV;
     o.Color = vert.Color;
 

@@ -6,6 +6,11 @@
 
 #include "Render/hs_Shaderc.h"
 
+
+#pragma warning(push)
+#pragma warning(disable : 4530)
+#include <fstream>
+#pragma warning(pop)
 #include <cstdio>
 
 namespace hs
@@ -14,7 +19,8 @@ namespace hs
 //------------------------------------------------------------------------------
 static constexpr const char* FRAG_EXT = "fs";
 static constexpr const char* VERT_EXT = "vs";
-constexpr const char* PATH_PREFIX = "../Engine/Shaders/%s";
+static constexpr const char* PATH_PREFIX = "../Engine/Shaders/%s";
+static constexpr const char* SHADER_BIN_DIR = "Shaders";
 
 //------------------------------------------------------------------------------
 const char* ShadercStatusToString(shaderc_compilation_status status)
@@ -35,9 +41,12 @@ const char* ShadercStatusToString(shaderc_compilation_status status)
 }
 
 //------------------------------------------------------------------------------
-RESULT ReadFile(const char* file, char** buffer, size_t& size)
+RESULT ReadFile(const char* file, bool binary, char** buffer, size_t& size)
 {
-    FILE* f = fopen(file, "r");
+    const char* mode = "r";
+    if (binary)
+        mode = "rb";
+    FILE* f = fopen(file, mode);
     if (!f)
     {
         Log(LogLevel::Error, "Failed to open file %s", file);
@@ -87,7 +96,7 @@ shaderc_include_result* ShaderIncludeResolver(
 
     char* buffer{};
     size_t size{};
-    if (HS_FAILED(ReadFile(filePath, &buffer, size)))
+    if (HS_FAILED(ReadFile(filePath, false, &buffer, size)))
         return nullptr;
 
     result->content = buffer;
@@ -143,7 +152,7 @@ RESULT ShaderManager::CompileShader(const char* file, PipelineStage type, Shader
 
     char* buffer{};
     size_t size{};
-    if (HS_FAILED(ReadFile(file, &buffer, size)))
+    if (HS_FAILED(ReadFile(file, false, &buffer, size)))
         return R_FAIL;
 
     shaderc_shader_kind kind = type == PipelineStage::PS_VERT ? shaderc_glsl_vertex_shader : shaderc_glsl_fragment_shader;
@@ -197,15 +206,34 @@ RESULT ShaderManager::CompileShader(const char* file, PipelineStage type, Shader
 }
 
 //------------------------------------------------------------------------------
-RESULT ShaderManager::CreateShader(const char* name, Shader* shader)
+RESULT ShaderManager::CreateShader(const char* name, PipelineStage type, Shader* shader)
 {
     hs_assert(shader);
 
-    const uint nameLen = (uint)strlen(name);
-    if (nameLen < 9)
-        Log(LogLevel::Error, "Invalid shader name: %s, name must end with valid pipeline stage extension such as _ps.hlsl or _vs.hlsl", name);
+    constexpr uint BUFF_LEN = 1024;
+    static char path[BUFF_LEN];
+    int written = snprintf(path, BUFF_LEN, PATH_PREFIX, name);
 
-    const char* ext = name + nameLen - 7;
+    hs_assert(written > 0);
+
+    if (CompileShader(path, type, *shader) != R_OK)
+        return R_FAIL;
+
+    return R_OK;
+}
+
+//------------------------------------------------------------------------------
+Shader* ShaderManager::GetOrCreateShader(const char* name)
+{
+    auto val = cache_.find(name);
+    if (val != cache_.end())
+        return val->second;
+
+    const uint nameLen = (uint)strlen(name);
+    if (nameLen < 4)
+        Log(LogLevel::Error, "Invalid shader name: %s, name must end with valid pipeline stage extension such as _ps or _vs", name);
+
+    const char* ext = name + nameLen - 2;
 
     PipelineStage stage;
     if (strncmp(ext, FRAG_EXT, 2) == 0)
@@ -219,43 +247,25 @@ RESULT ShaderManager::CreateShader(const char* name, Shader* shader)
     else
     {
         Log(LogLevel::Error, "Invalid shader stage extension %s", ext);
-        return R_FAIL;
-    }
-
-    shader->id_ = ++shaderId_[stage]; // Pre increment to start with id 1
-
-    constexpr uint BUFF_LEN = 1024;
-    constexpr const uint PATH_PREFIX_LEN = 11;
-    if (nameLen > BUFF_LEN - 1 - PATH_PREFIX_LEN)
-    {
-        Log(LogLevel::Error, "Shader path too long (%d) %s", nameLen, name);
-        return R_FAIL;
-    }
-
-    static char path[BUFF_LEN];
-    snprintf(path, BUFF_LEN, PATH_PREFIX, name);
-
-    if (CompileShader(path, stage, *shader) != R_OK)
-        return R_FAIL;
-
-    return R_OK;
-}
-
-//------------------------------------------------------------------------------
-Shader* ShaderManager::GetOrCreateShader(const char* name)
-{
-    auto val = cache_.find(name);
-    if (val != cache_.end())
-        return val->second;
-
-    // Shader not found in cache, create it and add to cache
-    Shader* shader = new Shader();
-    if (CreateShader(name, shader) != R_OK)
-    {
-        delete shader;
         return nullptr;
     }
 
+    // Shader not found in cache, create it and add to cache
+    Shader* shader = new Shader();
+    if (LoadShader(name, shader) != R_OK)
+    {
+        char srcFileName[256];
+        sprintf(srcFileName, "%s.hlsl", name);
+
+        if (CreateShader(srcFileName, stage, shader) != R_OK)
+        {
+            delete shader;
+            return nullptr;
+        }
+    }
+
+    shader->type_ = stage;
+    shader->id_ = ++shaderId_[stage]; // Pre increment to start with id 1
     cache_.emplace(name, shader);
 
     return shader;
@@ -270,7 +280,7 @@ RESULT ShaderManager::ReloadShaders()
     Shader s;
     for (const auto& it : cache_)
     {
-        if (CreateShader(it.first, &s) != R_OK)
+        if (CreateShader(it.first, it.second->type_, &s) != R_OK)
         {
             reloadFailed = true;
             continue;
@@ -290,6 +300,32 @@ RESULT ShaderManager::ReloadShaders()
         Log(LogLevel::Info, "Shader realod done");
         return R_OK;
     }
+}
+
+//------------------------------------------------------------------------------
+RESULT ShaderManager::LoadShader(const char* name, Shader* shader)
+{
+    char filePath[256];
+    sprintf(filePath, "%s/%s.spv", SHADER_BIN_DIR, name);
+
+    char* shaderBytecode;
+    size_t fileSize;
+    if (HS_FAILED(ReadFile(filePath, true, &shaderBytecode, fileSize)))
+        return R_FAIL;
+
+    VkShaderModuleCreateInfo shaderInfo{};
+    shaderInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shaderInfo.codeSize = fileSize;
+    shaderInfo.pCode    = (uint*)shaderBytecode;
+
+    if (HS_FAILED(vkCreateShaderModule(g_Render->GetDevice(), &shaderInfo, nullptr, &shader->vkShader_)))
+    {
+        free(shaderBytecode);
+        LOG_ERR("Failed to create shader module");
+        return R_FAIL;
+    }
+
+    return R_OK;
 }
 
 }

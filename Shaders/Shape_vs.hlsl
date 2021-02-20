@@ -26,7 +26,7 @@ vs_out main(vertex vert)
 
     vs_out o;
 
-    o.Pos = vert.Pos * View.VP;
+    o.Pos = mul(vert.Pos, View.VP);
 
     o.Color = ToLinear(vert.Color);
 

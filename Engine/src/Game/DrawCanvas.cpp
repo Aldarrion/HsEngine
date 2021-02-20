@@ -23,8 +23,8 @@ DrawCanvas::~DrawCanvas()
 //------------------------------------------------------------------------------
 RESULT DrawCanvas::Init()
 {
-    lineVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Shape_vs.hlsl");
-    lineFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Shape_fs.hlsl");
+    lineVert_ = g_Render->GetShaderManager()->GetOrCreateShader("Shape_vs");
+    lineFrag_ = g_Render->GetShaderManager()->GetOrCreateShader("Shape_fs");
 
     if (!lineVert_ || !lineVert_)
         return R_FAIL;

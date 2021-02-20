@@ -27,7 +27,7 @@ static const float3 CubeVerts[] =
     float3(-1.0, 1.0, 1.0),
 };
 
-static const float3 CubeNormals[] = 
+static const float3 CubeNormals[] =
 {
     float3(0.0, 1.0, 0.0),
     float3(0.0, 1.0, 0.0),
@@ -55,7 +55,7 @@ static const float3 CubeNormals[] =
     float3(0.0, 0.0, 1.0),
 };
 
-static const float3 CubeColors[] = 
+static const float3 CubeColors[] =
 {
     float3(0.2, 1.0, 0.0),
     float3(0.2, 1.0, 0.0),
@@ -83,7 +83,7 @@ static const float3 CubeColors[] =
     float3(1.0, 0.2, 0.0),
 };
 
-static const uint CubeIndices[] = 
+static const uint CubeIndices[] =
 {
     3, 1, 0,
     2, 1, 3,
@@ -129,11 +129,11 @@ vs_out main(uint vertID : SV_VERTEXID)
         0, 0, 0, 1
     };
 
-    vs_out o = vs_out(0);
+    vs_out o = (vs_out)0;
 
     float4 pos = float4(CubeVerts[CubeIndices[vertID]], 1);
-    o.Pos = pos * model * View.VP;
-    o.WorldPos = (pos * model).xyz;
+    o.Pos = mul(pos, mul(model, View.VP));
+    o.WorldPos = mul(pos, model).xyz;
 
     o.Color = CubeColors[CubeIndices[vertID]];
     o.Normal = normalize(CubeNormals[CubeIndices[vertID]]);

@@ -1,12 +1,15 @@
 #pragma once
 
 #include "Config.h"
-#include "Common/Enums.h"
 
+#include "Render/VkTypes.h"
+
+#include "String/String.h"
 #include "Containers/Array.h"
 #include "Containers/Hash.h"
 
-#include "Render/VkTypes.h"
+#include "Common/Enums.h"
+
 #include <unordered_map>
 
 struct shaderc_compiler;
@@ -39,7 +42,8 @@ private:
     uint16 shaderId_[PS_COUNT]{};
 
     RESULT CompileShader(const char* file, PipelineStage type, Shader& shader) const;
-    RESULT CreateShader(const char* name, Shader* shader);
+    RESULT CreateShader(const char* name, PipelineStage type, Shader* shader);
+    RESULT LoadShader(const char* name, Shader* shader);
 };
 
 }

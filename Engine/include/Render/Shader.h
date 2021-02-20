@@ -11,6 +11,7 @@ class Shader
 {
 public:
     VkShaderModule vkShader_;
+    PipelineStage type_;
     uint16 id_;
 };
 

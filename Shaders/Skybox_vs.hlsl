@@ -26,7 +26,7 @@ static const float3 CubeVerts[] =
     float3(-1.0, 1.0, 1.0),
 };
 
-static const uint CubeIndices[] = 
+static const uint CubeIndices[] =
 {
     3, 1, 0,
     2, 1, 3,
@@ -63,12 +63,12 @@ ConstantBuffer<Vec> View : register(b1, space2);
 
 vs_out main(uint vertID : SV_VERTEXID)
 {
-    vs_out o = vs_out(0);
+    vs_out o = (vs_out)0;
 
     float4 pos = float4(CubeVerts[CubeIndices[vertID]], 1);
     o.SkyboxCoord = pos;
 
-    o.Pos = pos * View.VP;
+    o.Pos = mul(pos, View.VP);
 
     return o;
 }

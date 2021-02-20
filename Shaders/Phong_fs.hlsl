@@ -13,11 +13,11 @@ struct ps_in
     float3 FragPos : POSITION;
 };
 
-float4 main(ps_in input)
+float4 main(ps_in input) : SV_Target
 {
     float3 lightDir = normalize(float3(2, -1, 5));
 
-    float4 outCol = float4(0);
+    float4 outCol = float4(0, 0, 0, 0);
 
     float3 toLight = -lightDir;
 

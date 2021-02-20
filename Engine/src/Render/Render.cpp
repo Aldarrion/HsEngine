@@ -470,15 +470,17 @@ RESULT Render::CreateDevice()
         VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
     };
 
-    VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures{};
-    indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-    indexingFeatures.descriptorBindingSampledImageUpdateAfterBind   = VK_TRUE;
-    indexingFeatures.descriptorBindingPartiallyBound                = VK_TRUE;
-    indexingFeatures.descriptorBindingVariableDescriptorCount       = VK_TRUE;
+    VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures{};
+    descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+    descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind      = VK_TRUE;
+    descriptorIndexingFeatures.descriptorBindingPartiallyBound                   = VK_TRUE;
+    descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount          = VK_TRUE;
+    descriptorIndexingFeatures.runtimeDescriptorArray                            = VK_TRUE;
+    descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing         = VK_TRUE;
 
     VkDeviceCreateInfo deviceInfo{};
     deviceInfo.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceInfo.pNext                    = &indexingFeatures;
+    deviceInfo.pNext                    = &descriptorIndexingFeatures;
     deviceInfo.queueCreateInfoCount     = 1;
     deviceInfo.pQueueCreateInfos        = queues;
     deviceInfo.enabledExtensionCount    = HS_ARR_LEN(deviceExt);

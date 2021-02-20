@@ -78,7 +78,7 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
 #define R1(c) return float4(c, c, c, 1.0)
 
 //------------------------------------------------------------------------------
-float4 main(ps_in input)
+float4 main(ps_in input) : SV_Target
 {
     float3 N = normalize(input.Normal);
     float3 V = normalize(Scene.ViewPos.xyz - input.FragPos);
@@ -98,7 +98,7 @@ float4 main(ps_in input)
         float3 radiance = LightColors[i] * attenuation;
 
         // Fresnel
-        float3 F0   = float3(0.04); // Average value for all dielectrics
+        float3 F0   = float3(0.04, 0.04, 0.04); // Average value for all dielectrics
         F0          = lerp(F0, PBR.Albedo, PBR.Metallic);
         float3 F    = FresnelShlick(max(dot(H, V), 0.0), F0);
 
@@ -114,7 +114,7 @@ float4 main(ps_in input)
         float3 specular = num / max(denom, 0.001); // Avoid division by zero
 
         float3 kS = F;
-        float3 kD = float3(1.0) - kS;
+        float3 kD = float3(1, 1, 1) - kS;
 
         // Metallic surfaces don't have a diffuse term, the light energy is absorbed instead
         kD *= 1.0 - PBR.Metallic;
@@ -122,7 +122,7 @@ float4 main(ps_in input)
         Lo += (kD * PBR.Albedo / HS_PI + specular) * radiance * NdotL;
     }
 
-    float3 ambient = float3(0.03) * PBR.Albedo * PBR.AO;
+    float3 ambient = float3(0.03, 0.03, 0.03) * PBR.Albedo * PBR.AO;
     float3 color = ambient + Lo;
 
     return float4(color, 1.0);

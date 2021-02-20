@@ -119,11 +119,11 @@ ConstantBuffer<InstanceData>    Instance    : register(b2, space2);
 
 vs_out main(uint vertID : SV_VERTEXID)
 {
-    vs_out o = vs_out(0);
+    vs_out o = (vs_out)0;
 
     float4 pos = float4(CubeVerts[CubeIndices[vertID]], 1);
-    o.Pos = pos * Instance.World * Scene.VP;
-    o.WorldPos = (pos * Instance.World).xyz;
+    o.Pos = mul(pos, mul(Instance.World, Scene.VP));
+    o.WorldPos = mul(pos, Instance.World).xyz;
 
     //o.Color = CubeColors[CubeIndices[vertID]];
     o.Normal = normalize(CubeNormals[CubeIndices[vertID]]);
