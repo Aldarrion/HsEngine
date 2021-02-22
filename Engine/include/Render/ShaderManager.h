@@ -29,6 +29,7 @@ public:
     ~ShaderManager();
 
     Shader* GetOrCreateShader(const char* name);
+    RESULT CompileShaders();
     RESULT ReloadShaders();
 
 private:
@@ -41,9 +42,7 @@ private:
 
     uint16 shaderId_[PS_COUNT]{};
 
-    RESULT CompileShader(const char* file, PipelineStage type, Shader& shader) const;
-    RESULT CreateShader(const char* name, PipelineStage type, Shader* shader);
-    RESULT LoadShader(const char* name, Shader* shader);
+    RESULT LoadShader(const char* name, PipelineStage type, Shader* shader);
 };
 
 }

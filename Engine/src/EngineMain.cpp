@@ -453,7 +453,7 @@ static void Cleanup()
                     case WM_KEYUP:
                     {
                         if (msg.wParam == VK_F5)
-                            (void)g_Render->ReloadShaders();
+                            (void)g_Render->CompileShaders();
                         g_Input->KeyUp(msg.wParam);
                         break;
                     }

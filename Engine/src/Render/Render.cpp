@@ -855,13 +855,13 @@ void Render::DestroyFrameBuffer(VkFramebuffer* frameBufferArr)
 }
 
 //------------------------------------------------------------------------------
-RESULT Render::ReloadShaders()
+RESULT Render::CompileShaders()
 {
     hs_assert(shaderManager_);
 
     ClearPipelineCache();
 
-    return shaderManager_->ReloadShaders();
+    return shaderManager_->CompileShaders();
 }
 
 //------------------------------------------------------------------------------

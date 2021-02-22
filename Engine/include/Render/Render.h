@@ -160,7 +160,7 @@ class Render
 
 public:
     RESULT OnWindowResized(uint width, uint height);
-    RESULT ReloadShaders();
+    RESULT CompileShaders();
     #if HS_WINDOWS
         RESULT InitWin32(HWND hwnd, HINSTANCE hinst);
     #elif HS_LINUX
