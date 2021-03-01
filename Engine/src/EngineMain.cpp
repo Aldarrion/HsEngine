@@ -34,9 +34,6 @@ namespace hs
 {
 
 //------------------------------------------------------------------------------
-constexpr const char* WINDOW_TITLE = "VkRender";
-
-//------------------------------------------------------------------------------
 static bool g_isWindowActive = false;
 
 //------------------------------------------------------------------------------
@@ -200,7 +197,7 @@ static void Cleanup()
     }
 
     //------------------------------------------------------------------------------
-    static RESULT InitWindow(int width, int height, HINSTANCE instance)
+    static RESULT InitWindow(int width, int height, HINSTANCE instance, const char* gameName)
     {
         WNDCLASSA wCls{};
         wCls.style = CS_HREDRAW | CS_VREDRAW;
@@ -224,7 +221,7 @@ static void Cleanup()
 
         g_hwnd = CreateWindowA(
             wCls.lpszClassName,
-            WINDOW_TITLE,
+            gameName,
             windowStyle,
             0, 0,
             rc.right - rc.left, rc.bottom - rc.top,
@@ -304,7 +301,7 @@ static void Cleanup()
     }
 
     //------------------------------------------------------------------------------
-    int EngineMainWin32(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int showCmd)
+    int EngineMainWin32(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, const char* gameName)
     {
         Log(LogLevel::Info, "VkRenderer start\n");
 
@@ -326,7 +323,7 @@ static void Cleanup()
         ParseCmdLine(&cmdLine, 1, width, height, g_WindowState);
 
         // Window
-        if (HS_FAILED(InitWindow(width, height, instance)))
+        if (HS_FAILED(InitWindow(width, height, instance, gameName)))
             return -1;
 
         // Engine
@@ -517,7 +514,7 @@ static void Cleanup()
     }
 
     //------------------------------------------------------------------------------
-    static RESULT InitWindow(int width, int height)
+    static RESULT InitWindow(int width, int height, const char* gameName)
     {
         glfwSetErrorCallback(&GlfwErrorCallback);
 
@@ -526,11 +523,11 @@ static void Cleanup()
 
         if (g_WindowState == WindowState::BorderlessFs)
         {
-            g_wnd = glfwCreateWindow(width, height, WINDOW_TITLE, glfwGetPrimaryMonitor(), nullptr);
+            g_wnd = glfwCreateWindow(width, height, gameName, glfwGetPrimaryMonitor(), nullptr);
         }
         else
         {
-            g_wnd = glfwCreateWindow(width, height, WINDOW_TITLE, nullptr, nullptr);
+            g_wnd = glfwCreateWindow(width, height, gameName, nullptr, nullptr);
         }
         if (!g_wnd)
         {
@@ -542,7 +539,7 @@ static void Cleanup()
     }
 
     //------------------------------------------------------------------------------
-    int EngineMainLinux(int argc, char** argv)
+    int EngineMainLinux(int argc, char** argv, const char* gameName)
     {
         Log(LogLevel::Info, "VkRenderer start");
 
@@ -558,7 +555,7 @@ static void Cleanup()
         ParseCmdLine(argv, argc, width, height, g_WindowState);
 
         // Window
-        if (HS_FAILED(InitWindow(width, height)))
+        if (HS_FAILED(InitWindow(width, height, gameName)))
             return -1;
 
         // Engine
