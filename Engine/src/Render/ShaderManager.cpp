@@ -132,7 +132,7 @@ Shader* ShaderManager::GetOrCreateShader(const char* name)
 //------------------------------------------------------------------------------
 RESULT ShaderManager::CompileShaders()
 {
-    LOG_DBG("Compiling shaders");
+    LOG_DBG("------------------- Compiling shaders -------------------");
     #if HS_WINDOWS
         char dir[512];
         sprintf(dir, "%s", __FILE__);
@@ -158,12 +158,14 @@ RESULT ShaderManager::CompileShaders()
         while (fgets(line, sizeof(line), compileOut))
             OutputDebugStringA(line);
 
-        _pclose(compileOut);
+        const int compileResult = _pclose(compileOut);
+        if (compileResult == -1)
+            LOG_ERR("Failed to close compile script");
     #else
         HS_NOT_IMPLEMENTED
     #endif
 
-    LOG_DBG("Shader compile done");
+    LOG_DBG("DONE shader compile");
 
     const RESULT reloadRes = ReloadShaders();
     return reloadRes;
@@ -172,8 +174,6 @@ RESULT ShaderManager::CompileShaders()
 //------------------------------------------------------------------------------
 RESULT ShaderManager::ReloadShaders()
 {
-    // TODO check timestamps of files to avoid reloading all the shaders
-
     Log(LogLevel::Info, "Reloading shaders");
 
     bool reloadFailed = false;
@@ -197,7 +197,7 @@ RESULT ShaderManager::ReloadShaders()
     }
     else
     {
-        Log(LogLevel::Info, "Shader realod done");
+        Log(LogLevel::Info, "DONE shader reload");
         return R_OK;
     }
 }
