@@ -466,11 +466,10 @@ RESULT Render::CreateDevice()
     VkPhysicalDeviceFeatures deviceFeatures = CreateRequiredFeatures();
 
     const char* deviceExt[] = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures{};
+    VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
     descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
     descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind      = VK_TRUE;
     descriptorIndexingFeatures.descriptorBindingPartiallyBound                   = VK_TRUE;

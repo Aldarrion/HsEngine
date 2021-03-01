@@ -237,7 +237,8 @@ public:
     void RenderObjects(Span<VisualObject*> objects);
 
 private:
-    static constexpr auto VK_VERSION = VK_API_VERSION_1_1;
+    // Vulkan 1.2 should be widely supported if drivers are up to date
+    static constexpr auto VK_VERSION = VK_API_VERSION_1_2;
     static constexpr uint VKR_INVALID = -1;
 
     static constexpr uint BB_IMG_COUNT = 2;
