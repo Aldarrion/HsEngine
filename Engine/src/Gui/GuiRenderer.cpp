@@ -117,7 +117,16 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
     //    //guiVbEntry_ = g_Render->GetVertexCache()->BeginAlloc(0, sizeof(GuiVertex), (void**)&guiVerts_);
     //}
 
-    guiVbEntry_ = vbCache->BeginAlloc(VERTS_PER_GLYPH * sizeof(GuiVertex), sizeof(GuiVertex), (void**)&guiVerts_);
+    int glyphCount = 0;
+    for (char c : text)
+    {
+        if (c != ' ')
+        {
+            ++glyphCount;
+        }
+    }
+
+    guiVbEntry_ = vbCache->BeginAlloc(glyphCount * VERTS_PER_GLYPH * sizeof(GuiVertex), sizeof(GuiVertex), (void**)&guiVerts_);
 
     auto SetVert = [](const Font* font, GuiVertex& vert, Vec2 pos, Vec2 uv)
     {
@@ -172,15 +181,15 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
     RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::GuiData), sizeof(sh::GuiData), (void**)&guiData);
     guiData->ScreenDimensions = Vec2(g_Render->GetWidth(), g_Render->GetHeight());
     g_Render->GetUBOCache()->EndAlloc();
-
+    
     g_Render->SetDynamicUbo(0, constBuffer);
-
+    
     g_Render->SetVertexBuffer(0, guiVbEntry_);
     g_Render->SetVertexLayout(0, guiVertexLayout_);
-
+    
     g_Render->SetShader<PS_VERT>(guiVert_);
     g_Render->SetShader<PS_FRAG>(guiFrag_);
-
+    
     g_Render->Draw(*ctx_, vertsToDraw, 0);
 }
 
