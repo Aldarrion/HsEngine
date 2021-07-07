@@ -105,8 +105,10 @@ if(WIN32)
     target_link_libraries(${PROJ_NAME} "${SDL_LIB_DIR}/SDL2.lib" "${SDL_LIB_DIR}/SDL2main.lib")
 
     add_custom_command(TARGET ${PROJ_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Debug/
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Debug/
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Release/
 
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Debug/
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL_LIB_DIR}/SDL2.dll" ${CMAKE_BINARY_DIR}/Release/
     )
 # TODO else() # Linux
@@ -159,4 +161,25 @@ endif()
 
 include(CMakeCommon.cmake)
 SetupCompiler(${PROJ_NAME})
+
+###############################################################################
+# Unit tests
+
+set(TEST_PROJ_NAME UnitTests)
+
+file(GLOB_RECURSE TEST_HEADERS "UnitTests/include/*.h")
+file(GLOB_RECURSE TEST_SOURCES "UnitTests/src/*.cpp")
+
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/UnitTests/include" PREFIX "UnitTests" FILES ${TEST_HEADERS})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/UnitTests/src" PREFIX "UnitTests" FILES ${TEST_SOURCES})
+
+add_executable(UnitTests ${TEST_HEADERS} ${TEST_SOURCES} ${EDITORCONFIG})
+
+target_include_directories(${TEST_PROJ_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Game/include")
+
+target_link_libraries(${TEST_PROJ_NAME} HiddenEngine)
+
+set_property(TARGET ${TEST_PROJ_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/UnitTests/Data")
+
+SetupCompiler(${TEST_PROJ_NAME})
 
