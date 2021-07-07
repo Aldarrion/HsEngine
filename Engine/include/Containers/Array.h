@@ -348,6 +348,12 @@ public:
     }
 
     //------------------------------------------------------------------------------
+    uint64 Capacity() const
+    {
+        return memory_.Capacity();
+    }
+
+    //------------------------------------------------------------------------------
     [[nodiscard]] bool IsEmpty() const
     {
         return memory_.Count() == 0;
@@ -605,11 +611,6 @@ public:
 
 private:
     MemoryPolicy memory_;
-
-    uint64 Capacity() const
-    {
-        return memory_.Capacity();
-    }
 };
 
 //------------------------------------------------------------------------------

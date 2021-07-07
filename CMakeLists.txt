@@ -175,7 +175,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/UnitTests/src" PREFIX "UnitTests"
 
 add_executable(UnitTests ${TEST_HEADERS} ${TEST_SOURCES} ${EDITORCONFIG})
 
-target_include_directories(${TEST_PROJ_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Game/include")
+target_include_directories(${TEST_PROJ_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/UnitTests/include")
 
 target_link_libraries(${TEST_PROJ_NAME} HiddenEngine)
 
