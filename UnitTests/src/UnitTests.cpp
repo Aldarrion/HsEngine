@@ -5,7 +5,12 @@ namespace hsTest
 
 //------------------------------------------------------------------------------
 TestCollection g_TestCollection;
-int g_ErrorCount{};
+
+//------------------------------------------------------------------------------
+void TestResult::AddFail()
+{
+    ++failCount_;
+}
 
 //------------------------------------------------------------------------------
 void TestCollection::Add(Test* test)
@@ -28,26 +33,30 @@ void TestCollection::RunTests()
     printf("Running unit tests\n\n");
 
     Test* test = first_;
+    int failCount = 0;
     while (test)
     {
-        int errorCount = g_ErrorCount;
-        test->Run();
+        TestResult result(test);
+
+        test->Run(result);
+
+        failCount += result.GetFailCount();
 
         // No new errors, we must have succeeded
-        if (errorCount == g_ErrorCount)
+        if (result.GetFailCount() == 0)
             printf("SUCCESS: %s\n", test->GetName());
 
         test = test->GetNext();
     }
 
     printf("\n------------------------------------------------------------------------------\n");
-    if (g_ErrorCount == 0)
+    if (failCount == 0)
     {
         printf("Success, all tests passed!\n");
     }
     else
     {
-        printf("Fail, %d errors!\n", g_ErrorCount);
+        printf("Fail, %d errors!\n", failCount);
     }
 }
 
