@@ -90,7 +90,7 @@ struct ContainerDef
 
     uint GetIdx(const char* prop) const
     {
-        for (uint i = 0; i < props_.Count(); ++i)
+        for (int i = 0; i < props_.Count(); ++i)
         {
             if (strcmp(props_[i].name_, prop) == 0)
             {
@@ -126,7 +126,7 @@ struct PropertyContainer
     //------------------------------------------------------------------------------
     const PropertyValue& GetValue(uint idx) const
     {
-        for (uint i = 0; i < Properties.Count(); ++i)
+        for (int i = 0; i < Properties.Count(); ++i)
         {
             if (Properties[i].Idx == idx)
             {
@@ -134,7 +134,7 @@ struct PropertyContainer
             }
         }
 
-        hs_assert(!"Property at given index not found");
+        HS_ASSERT(!"Property at given index not found");
         static auto empty = PropertyValue{};
         return empty;
     };
@@ -142,7 +142,7 @@ struct PropertyContainer
     //------------------------------------------------------------------------------
     void Remove(uint idx)
     {
-        for (uint i = 0; i < Properties.Count(); ++i)
+        for (int i = 0; i < Properties.Count(); ++i)
         {
             if (Properties[i].Idx == idx)
             {
@@ -155,7 +155,7 @@ struct PropertyContainer
     //------------------------------------------------------------------------------
     void Insert(const PropertyPair& property)
     {
-        uint i = 0;
+        int i = 0;
         for (; i < Properties.Count(); ++i)
         {
             if (Properties[i].Idx > property.Idx)
@@ -223,7 +223,7 @@ struct CameraDef : DefBase
             }
             default:
             {
-                hs_assert(false);
+                HS_ASSERT(false);
                 break;
             }
         }

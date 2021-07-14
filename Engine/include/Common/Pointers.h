@@ -74,7 +74,7 @@ public:
     //------------------------------------------------------------------------------
     void Reset(T* newPtr = nullptr)
     {
-        hs_assert((!ptr_ || newPtr != ptr_) && "UniquePtr Reset self-assignment");
+        HS_ASSERT((!ptr_ || newPtr != ptr_) && "UniquePtr Reset self-assignment");
 
         delete ptr_;
         ptr_ = newPtr;
@@ -83,14 +83,14 @@ public:
     //------------------------------------------------------------------------------
     T& operator*() const
     {
-        hs_assert(ptr_);
+        HS_ASSERT(ptr_);
         return *ptr_;
     }
 
     //------------------------------------------------------------------------------
     T* operator->() const
     {
-        hs_assert(ptr_);
+        HS_ASSERT(ptr_);
         return ptr_;
     }
 

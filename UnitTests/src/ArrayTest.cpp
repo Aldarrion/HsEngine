@@ -6,7 +6,7 @@ using namespace hsTest;
 using namespace hs;
 
 //------------------------------------------------------------------------------
-DEF_TEST(Array_Add_InsertsAtTheEnd)
+TEST_DEF(Array_Add_InsertsAtTheEnd)
 {
     Array<int> a;
     a.Add(0);
@@ -19,7 +19,7 @@ DEF_TEST(Array_Add_InsertsAtTheEnd)
 }
 
 //------------------------------------------------------------------------------
-DEF_TEST(Array_Insert_Works)
+TEST_DEF(Array_Insert_Works)
 {
     Array<int> a;
     a.Insert(0, 0);
@@ -42,7 +42,7 @@ DEF_TEST(Array_Insert_Works)
 }
 
 //------------------------------------------------------------------------------
-DEF_TEST(Array_RemoveElements_Works)
+TEST_DEF(Array_RemoveElements_Works)
 {
     Array<int> a;
     a.Add(0);
@@ -62,7 +62,7 @@ DEF_TEST(Array_RemoveElements_Works)
 }
 
 //------------------------------------------------------------------------------
-DEF_TEST(Array_FirstLast_Work)
+TEST_DEF(Array_FirstLast_Work)
 {
     Array<int> a;
     a.Add(0);
@@ -74,7 +74,7 @@ DEF_TEST(Array_FirstLast_Work)
 }
 
 //------------------------------------------------------------------------------
-DEF_TEST(Array_Data_ReturnPtrToFirst)
+TEST_DEF(Array_Data_ReturnPtrToFirst)
 {
     Array<int> a;
     a.Add(0);
@@ -87,7 +87,7 @@ DEF_TEST(Array_Data_ReturnPtrToFirst)
 }
 
 //------------------------------------------------------------------------------
-DEF_TEST(Array_Clear_RemovesElements)
+TEST_DEF(Array_Clear_RemovesElements)
 {
     Array<int> a;
     a.Add(0);
@@ -101,7 +101,7 @@ DEF_TEST(Array_Clear_RemovesElements)
 }
 
 //------------------------------------------------------------------------------
-DEF_TEST(Array_CopyOperations_MakeCopy)
+TEST_DEF(Array_CopyOperations_MakeCopy)
 {
     Array<int> a;
     a.Add(0);
@@ -121,7 +121,7 @@ DEF_TEST(Array_CopyOperations_MakeCopy)
 }
 
 //------------------------------------------------------------------------------
-DEF_TEST(Array_MoveOperations_Work)
+TEST_DEF(Array_MoveOperations_Work)
 {
     Array<int> a;
     a.Add(0);
@@ -138,5 +138,32 @@ DEF_TEST(Array_MoveOperations_Work)
     TEST_TRUE(b.First() == 0);
     TEST_TRUE(b.Last() == 6);
     TEST_TRUE(b.Count() == 7);
+}
+
+//------------------------------------------------------------------------------
+TEST_DEF(Array_MoveOnlyType_Works)
+{
+    struct MoveOnly
+    {
+        int x_;
+
+        MoveOnly(int x) : x_(x) {}
+        MoveOnly(const MoveOnly&) = delete;
+        MoveOnly(MoveOnly&&) = default;
+
+        MoveOnly& operator=(const MoveOnly&) = delete;
+        MoveOnly& operator=(MoveOnly&&) = default;
+    };
+
+    MoveOnly mo(3);
+
+    Array<MoveOnly> a;
+    a.Add(MoveOnly(1));
+    a.Add(MoveOnly(2));
+    a.Add(std::move(mo));
+
+    TEST_TRUE(a.Count() == 3);
+    TEST_TRUE(a.First().x_ == 1);
+    TEST_TRUE(a.Last().x_ == 3);
 }
 

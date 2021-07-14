@@ -99,7 +99,7 @@ void GuiRenderer::Draw(const RenderPassContext& ctx)
 //------------------------------------------------------------------------------
 void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
 {
-    hs_assert(font);
+    HS_ASSERT(font);
 
     static constexpr uint VERTS_PER_GLYPH = 6; // Two triangles
     static constexpr uint BYTES_PER_GLYPH = VERTS_PER_GLYPH * sizeof(GuiVertex);

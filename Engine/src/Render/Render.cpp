@@ -100,7 +100,7 @@ bool CheckResult(VkResult result, const char* file, int line, const char* fun)
     if (result != VK_SUCCESS)
     {
         hs::Log(hs::LogLevel::Error, "Operation failed, %s(%d), %s, error: %d %s", file, line, fun, result, ResultToString(result));
-        hs_assert(false);
+        HS_ASSERT(false);
         return false;
     }
     return true;
@@ -403,7 +403,7 @@ RESULT Render::FindPhysicalDevice()
     if (VKR_FAILED(vkEnumeratePhysicalDevices(vkInstance_, &physicalDeviceCount, physicalDevices)))
         return R_FAIL;
 
-    hs_assert(physicalDeviceCount > 0 && physicalDeviceCount < HS_ARR_LEN(physicalDevices));
+    HS_ASSERT(physicalDeviceCount > 0 && physicalDeviceCount < HS_ARR_LEN(physicalDevices));
 
     int bestDevice = 0;
     // TODO Actually find the best device and check capabilities here
@@ -449,7 +449,7 @@ RESULT Render::CreateDevice()
         }
     }
 
-    hs_assert(directQueueFamilyIdx_ != VKR_INVALID);
+    HS_ASSERT(directQueueFamilyIdx_ != VKR_INVALID);
 
     VkDeviceQueueCreateInfo queues[1]{};
     float prioritites[1]{ 1.0f };
@@ -576,7 +576,7 @@ RESULT Render::CreateSwapchain()
     if (VKR_FAILED(vkGetSwapchainImagesKHR(vkDevice_, vkSwapchain_, &swapchainImageCount, nullptr)))
         return R_FAIL;
 
-    hs_assert(swapchainImageCount == 2 && "We kind of assume 2 is the number");
+    HS_ASSERT(swapchainImageCount == 2 && "We kind of assume 2 is the number");
 
     if (VKR_FAILED(vkGetSwapchainImagesKHR(vkDevice_, vkSwapchain_, &swapchainImageCount, bbImages_)))
         return R_FAIL;
@@ -704,7 +704,7 @@ RESULT Render::CreateMainRenderPass()
     //renderPassInfo.dependencyCount = 1;
     //renderPassInfo.pDependencies = &dependency;
 
-    hs_assert(!mainRenderPass_);
+    HS_ASSERT(!mainRenderPass_);
 
     if (VKR_FAILED(vkCreateRenderPass(vkDevice_, &renderPassInfo, nullptr, &mainRenderPass_)))
         return R_FAIL;
@@ -728,7 +728,7 @@ RESULT Render::CreateMainFrameBuffer()
         framebufferInfo.height          = height_;
         framebufferInfo.layers          = 1;
 
-        hs_assert(!mainFrameBuffer_[bbIdx]);
+        HS_ASSERT(!mainFrameBuffer_[bbIdx]);
         if (VKR_FAILED(vkCreateFramebuffer(vkDevice_, &framebufferInfo, nullptr, &mainFrameBuffer_[bbIdx])))
             return R_FAIL;
     }
@@ -770,7 +770,7 @@ RESULT Render::CreateOverlayRenderPass()
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
 
-    hs_assert(!overlayRenderPass_);
+    HS_ASSERT(!overlayRenderPass_);
 
     if (VKR_FAILED(vkCreateRenderPass(vkDevice_, &renderPassInfo, nullptr, &overlayRenderPass_)))
         return R_FAIL;
@@ -794,7 +794,7 @@ RESULT Render::CreateOverlayFrameBuffer()
         framebufferInfo.height          = height_;
         framebufferInfo.layers          = 1;
 
-        hs_assert(!overlayFrameBuffer_[bbIdx]);
+        HS_ASSERT(!overlayFrameBuffer_[bbIdx]);
         if (VKR_FAILED(vkCreateFramebuffer(vkDevice_, &framebufferInfo, nullptr, &overlayFrameBuffer_[bbIdx])))
             return R_FAIL;
     }
@@ -856,7 +856,7 @@ void Render::DestroyFrameBuffer(VkFramebuffer* frameBufferArr)
 //------------------------------------------------------------------------------
 RESULT Render::CompileShaders()
 {
-    hs_assert(shaderManager_);
+    HS_ASSERT(shaderManager_);
 
     ClearPipelineCache();
 
@@ -1915,7 +1915,7 @@ void Render::SetTexture(uint slot, Texture* texture)
 //------------------------------------------------------------------------------
 void Render::SetVertexBuffer(uint slot, const RenderBufferEntry& entry)
 {
-    hs_assert(slot < RenderState::MAX_VERT_BUFF);
+    HS_ASSERT(slot < RenderState::MAX_VERT_BUFF);
 
     state_.vertexBuffers_[slot] = entry.buffer_;
     state_.vbOffsets_[slot] = entry.offset_;
@@ -1936,7 +1936,7 @@ void Render::SetVertexLayout(uint slot, uint layoutHandle)
 //------------------------------------------------------------------------------
 void Render::SetDynamicUbo(uint slot, const RenderBufferEntry& entry)
 {
-    hs_assert(slot < DYNAMIC_UBO_COUNT + 1);
+    HS_ASSERT(slot < DYNAMIC_UBO_COUNT + 1);
 
     state_.dynamicUBOs_[slot] = entry;
 }

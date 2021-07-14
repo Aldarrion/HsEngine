@@ -270,7 +270,7 @@ static void Cleanup()
             width = rect.right - rect.left;
             height = rect.bottom - rect.top;
 
-            hs_assert(width > 0 && height > 0);
+            HS_ASSERT(width > 0 && height > 0);
         }
 
         uint windowStyle = GetWindowStyle(newState);
@@ -286,7 +286,7 @@ static void Cleanup()
         {
             LOG_ERR("Failed to Render handle resize window");
             // TODO(pavel): Do something more useful here, but this fail is pretty serious, Render needs to be able to recover too
-            hs_assert(false);
+            HS_ASSERT(false);
             return;
         }
 
@@ -332,7 +332,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to create engine");
             return -1;
         }
-        hs_assert(g_Engine);
+        HS_ASSERT(g_Engine);
 
         if (HS_FAILED(g_Engine->InitWin32()))
         {
@@ -346,7 +346,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to create resource manager");
             return -1;
         }
-        hs_assert(g_ResourceManager);
+        HS_ASSERT(g_ResourceManager);
 
         if (HS_FAILED(g_ResourceManager->Init()))
         {
@@ -360,7 +360,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to create render");
             return -1;
         }
-        hs_assert(g_Render);
+        HS_ASSERT(g_Render);
 
         if (HS_FAILED(g_Render->InitWin32(g_hwnd, instance)))
         {
@@ -387,7 +387,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to crete input");
             return -1;
         }
-        hs_assert(g_Input);
+        HS_ASSERT(g_Input);
 
         if (HS_FAILED(g_Input->InitWin32(g_hwnd)))
         {
@@ -401,7 +401,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to crete game");
             return -1;
         }
-        hs_assert(g_GameBase);
+        HS_ASSERT(g_GameBase);
 
         if (HS_FAILED(g_GameBase->Init()))
         {
@@ -564,7 +564,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to create engine");
             return -1;
         }
-        hs_assert(g_Engine);
+        HS_ASSERT(g_Engine);
 
         if (HS_FAILED(g_Engine->InitLinux(g_wnd)))
         {
@@ -578,7 +578,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to create resource manager");
             return -1;
         }
-        hs_assert(g_ResourceManager);
+        HS_ASSERT(g_ResourceManager);
 
         if (HS_FAILED(g_ResourceManager->Init()))
         {
@@ -592,7 +592,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to create render");
             return -1;
         }
-        hs_assert(g_Render);
+        HS_ASSERT(g_Render);
 
         if (HS_FAILED(g_Render->InitLinux(g_wnd)))
         {
@@ -619,7 +619,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to crete input");
             return -1;
         }
-        hs_assert(g_Input);
+        HS_ASSERT(g_Input);
 
         if (HS_FAILED(g_Input->InitLinux(g_wnd)))
         {
@@ -633,7 +633,7 @@ static void Cleanup()
             Log(LogLevel::Error, "Failed to crete game");
             return -1;
         }
-        hs_assert(g_GameBase);
+        HS_ASSERT(g_GameBase);
 
         if (HS_FAILED(g_GameBase->Init()))
         {

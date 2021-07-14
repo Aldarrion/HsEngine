@@ -44,7 +44,7 @@ void Log(LogLevel level, const char* formatString, ...)
 
     const size_t prefixSize = strlen(prefix);
     const int len = vsnprintf(buffer + prefixSize, buffSize - 1 - prefixSize, formatString, args);
-    hs_assert(len >= 0 && "Logging failed, check the format string or exceeded length.");
+    HS_ASSERT(len >= 0 && "Logging failed, check the format string or exceeded length.");
 
     buffer[prefixSize + len] = '\n';
     buffer[prefixSize + len + 1] = '\0';

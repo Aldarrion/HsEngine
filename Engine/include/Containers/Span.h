@@ -48,7 +48,7 @@ public:
     //------------------------------------------------------------------------------
     constexpr T& operator[](uint64 index) const
     {
-        hs_assert(index < count_);
+        HS_ASSERT(index < count_);
         return items_[index];
     }
 

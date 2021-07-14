@@ -28,7 +28,7 @@ RESULT RenderBuffer::Init()
             bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
             break;
         default:
-            hs_assert(false);
+            HS_ASSERT(false);
             break;
     }
 

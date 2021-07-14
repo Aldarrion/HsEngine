@@ -3,6 +3,6 @@
 
 #include <cassert>
 
-#define hs_assert(x) assert(x)
+#define HS_ASSERT(x) assert(x)
 
-#define HS_NOT_IMPLEMENTED hs_assert(!"Not implemented");
+#define HS_NOT_IMPLEMENTED HS_ASSERT(!"Not implemented");

@@ -16,8 +16,18 @@
 namespace hs
 {
 
+/*!
+Unsigned types come with a lot of hassle
+64-bit by default is wasteful but more importantly it puts sign extension to
+many places where 32/64-bit is mixed.
+
+If we'll need more than 2G elements in an array we can make this a template
+argument and use int64.
+*/
+using ArrayIndex_t = int;
+
 //------------------------------------------------------------------------------
-template<class T, uint64 capacity_>
+template<class T, ArrayIndex_t capacity_>
 class StaticMemoryPolicy
 {
 public:
@@ -44,29 +54,29 @@ public:
     //------------------------------------------------------------------------------
     void EnsureEmplaceBack()
     {
-        hs_assert(false && "Static array size cannot grow");
+        HS_ASSERT(false && "Static array size cannot grow");
     }
 
     //------------------------------------------------------------------------------
-    void EnsureEmplace(uint64 index)
+    void EnsureEmplace(ArrayIndex_t index)
     {
-        hs_assert(false && "Static array size cannot grow");
+        HS_ASSERT(false && "Static array size cannot grow");
     }
 
     //------------------------------------------------------------------------------
-    void Reserve(uint64 capacity)
+    void Reserve(ArrayIndex_t capacity)
     {
-        hs_assert(false && "Static array size cannot grow");
+        HS_ASSERT(false && "Static array size cannot grow");
     }
 
     //------------------------------------------------------------------------------
-    uint64& CountMut()
+    ArrayIndex_t& CountMut()
     {
         return count_;
     }
 
     //------------------------------------------------------------------------------
-    uint64 Count() const
+    ArrayIndex_t Count() const
     {
         return count_;
     }
@@ -84,14 +94,14 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    uint64 Capacity() const
+    ArrayIndex_t Capacity() const
     {
         return capacity_;
     }
 
 private:
     T items_[capacity_];
-    uint64 count_;
+    ArrayIndex_t count_;
 };
 
 //------------------------------------------------------------------------------
@@ -104,7 +114,7 @@ public:
     //------------------------------------------------------------------------------
     void CopyConstruct(const GrowableMemoryPolicy<T>& other)
     {
-        hs_assert(!items_);
+        HS_ASSERT(!items_);
 
         capacity_ = other.capacity_;
         count_ = other.count_;
@@ -157,14 +167,14 @@ public:
     //------------------------------------------------------------------------------
     void EnsureEmplaceBack()
     {
-        capacity_ = ArrMax(capacity_ << 1, MIN_CAPACITY);
+        capacity_ = GetNextCapacity();
         Reserve(capacity_);
     }
 
     //------------------------------------------------------------------------------
-    void EnsureEmplace(uint64 index)
+    void EnsureEmplace(ArrayIndex_t index)
     {
-        capacity_ = ArrMax(capacity_ << 1, MIN_CAPACITY);
+        capacity_ = GetNextCapacity();
 
         auto newItems = (T*)malloc(sizeof(T) * capacity_);
         if constexpr (std::is_trivial_v<T>)
@@ -190,7 +200,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Reserve(uint64 capacity)
+    void Reserve(ArrayIndex_t capacity)
     {
         capacity_ = ArrMax(capacity, MIN_CAPACITY);
         T* newItems = (T*)malloc(sizeof(T) * capacity_);
@@ -200,7 +210,7 @@ public:
         }
         else
         {
-            for (int i = 0; i < count_; ++i)
+            for (ArrayIndex_t i = 0; i < count_; ++i)
             {
                 new(newItems + i) T(std::move(items_[i]));
                 items_[i].~T();
@@ -212,13 +222,13 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    uint64& CountMut()
+    ArrayIndex_t& CountMut()
     {
         return count_;
     }
 
     //------------------------------------------------------------------------------
-    uint64 Count() const
+    ArrayIndex_t Count() const
     {
         return count_;
     }
@@ -236,22 +246,30 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    uint64 Capacity() const
+    ArrayIndex_t Capacity() const
     {
         return capacity_;
     }
 
 private:
-    static constexpr uint64 MIN_CAPACITY = 8;
+    static constexpr ArrayIndex_t MIN_CAPACITY = 8;
 
-    uint64 capacity_{};
-    uint64 count_{};
+    ArrayIndex_t capacity_{};
+    ArrayIndex_t count_{};
     T* items_{};
 
     //------------------------------------------------------------------------------
-    uint64 ArrMax(uint64 a, uint64 b)
+    ArrayIndex_t ArrMax(ArrayIndex_t a, ArrayIndex_t b) const
     {
         return a > b ? a : b;
+    }
+
+    //------------------------------------------------------------------------------
+    ArrayIndex_t GetNextCapacity() const
+    {
+        ArrayIndex_t newCapacity = ArrMax(capacity_ << 1, MIN_CAPACITY);
+        HS_ASSERT(newCapacity > 0);
+        return newCapacity;
     }
 };
 
@@ -264,9 +282,9 @@ public:
     using ConstIter_t = const Iter_t;
 
     //------------------------------------------------------------------------------
-    static constexpr uint64 IndexBad()
+    static constexpr ArrayIndex_t IndexBad()
     {
-        return (uint64)-1;
+        return (ArrayIndex_t)-1;
     }
 
     //------------------------------------------------------------------------------
@@ -284,7 +302,7 @@ public:
     //------------------------------------------------------------------------------
     ~TemplArray()
     {
-        for (int i = 0; i < Count(); ++i)
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
             Data()[i].~T();
 
         memory_.Free();
@@ -294,7 +312,7 @@ public:
     TemplArray(const TemplArray<T, MemoryPolicy>& other)
     {
         memory_.CopyConstruct(other.memory_);
-        for (int i = 0; i < Count(); ++i)
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
         {
             Data()[i] = other.Data()[i];
         }
@@ -306,12 +324,12 @@ public:
         if (this == &other)
             return *this;
 
-        for (int i = 0; i < Count(); ++i)
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
             Data()[i].~T();
 
         memory_.Assign(other.memory_);
 
-        for (int i = 0; i < Count(); ++i)
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
         {
             Data()[i] = other.Data()[i];
         }
@@ -333,7 +351,7 @@ public:
         if (this == &other)
             return *this;
 
-        for (int i = 0; i < Count(); ++i)
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
             Data()[i].~T();
 
         memory_.MoveAssign(std::move(other.memory_));
@@ -342,13 +360,13 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] uint64 Count() const
+    [[nodiscard]] ArrayIndex_t Count() const
     {
         return memory_.Count();
     }
 
     //------------------------------------------------------------------------------
-    uint64 Capacity() const
+    ArrayIndex_t Capacity() const
     {
         return memory_.Capacity();
     }
@@ -360,16 +378,16 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] const T& operator[](uint64 index) const
+    [[nodiscard]] const T& operator[](ArrayIndex_t index) const
     {
-        hs_assert(index < Count());
+        HS_ASSERT(index < Count());
         return memory_.Items()[index];
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] T& operator[](uint64 index)
+    [[nodiscard]] T& operator[](ArrayIndex_t index)
     {
-        hs_assert(index < Count());
+        HS_ASSERT(index < Count());
         return memory_.Items()[index];
     }
 
@@ -380,16 +398,16 @@ public:
         if (Count() == Capacity())
             memory_.EnsureEmplaceBack();
 
-        hs_assert(Count() < Capacity());
+        HS_ASSERT(Count() < Capacity());
         new(Data() + Count()) T(std::forward<ArgsT>(args)...);
         memory_.CountMut()++;
     }
 
     //------------------------------------------------------------------------------
     template<class ...ArgsT>
-    void Emplace(uint64 index, ArgsT&& ...args)
+    void Emplace(ArrayIndex_t index, ArgsT&& ...args)
     {
-        hs_assert(index <= Count());
+        HS_ASSERT(index <= Count());
         if (index == Count())
         {
             EmplaceBack(std::forward<ArgsT>(args)...);
@@ -421,7 +439,7 @@ public:
             Data()[index] = T(std::forward<ArgsT>(args)...);
         }
 
-        hs_assert(Count() < Capacity());
+        HS_ASSERT(Count() < Capacity());
         memory_.CountMut()++;
     }
 
@@ -429,7 +447,7 @@ public:
     void Add(const T& item)
     {
         // Check for aliasing
-        hs_assert((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
+        HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
         EmplaceBack(item);
     }
 
@@ -437,7 +455,7 @@ public:
     void Add(T&& item)
     {
         // Check for aliasing
-        hs_assert((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
+        HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
         EmplaceBack(std::move(item));
     }
 
@@ -447,7 +465,7 @@ public:
     */
     bool AddUnique(const T& item)
     {
-        for (int i = 0; i < Count(); ++i)
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
         {
             if (Data()[i] == item)
                 return false;
@@ -458,25 +476,25 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Insert(uint64 index, const T& item)
+    void Insert(ArrayIndex_t index, const T& item)
     {
         // Check for aliasing
-        hs_assert((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
+        HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
         Emplace(index, item);
     }
 
     //------------------------------------------------------------------------------
-    void Insert(uint64 index, T&& item)
+    void Insert(ArrayIndex_t index, T&& item)
     {
         // Check for aliasing
-        hs_assert((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
+        HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
         Emplace(index, std::move(item));
     }
 
     //------------------------------------------------------------------------------
-    void Remove(uint64 index)
+    void Remove(ArrayIndex_t index)
     {
-        hs_assert(index < Count());
+        HS_ASSERT(index < Count());
 
         if (std::is_trivial_v<T>)
         {
@@ -501,7 +519,7 @@ public:
     //------------------------------------------------------------------------------
     void Clear()
     {
-        for (uint64 i = 0; i < Count(); ++i)
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
         {
             Data()[i].~T();
         }
@@ -509,7 +527,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Reserve(uint64 capacity)
+    void Reserve(ArrayIndex_t capacity)
     {
         if (capacity <= Capacity())
             return;
@@ -520,28 +538,28 @@ public:
     //------------------------------------------------------------------------------
     [[nodiscard]] const T& First() const
     {
-        hs_assert(Count());
+        HS_ASSERT(Count());
         return Data()[0];
     }
 
     //------------------------------------------------------------------------------
     [[nodiscard]] T& First()
     {
-        hs_assert(Count());
+        HS_ASSERT(Count());
         return Data()[0];
     }
 
     //------------------------------------------------------------------------------
     [[nodiscard]] const T& Last() const
     {
-        hs_assert(Count());
+        HS_ASSERT(Count());
         return Data()[Count() - 1];
     }
 
     //------------------------------------------------------------------------------
     [[nodiscard]] T& Last()
     {
-        hs_assert(Count());
+        HS_ASSERT(Count());
         return Data()[Count() - 1];
     }
 
@@ -558,9 +576,9 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    uint64 IndexOf(const T& item) const
+    ArrayIndex_t IndexOf(const T& item) const
     {
-        for (int i = 0; i < Count(); ++i)
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
         {
             if (Data()[i] == item)
                 return i;
@@ -618,7 +636,7 @@ template<class T>
 using Array = TemplArray<T, GrowableMemoryPolicy<T>>;
 
 //------------------------------------------------------------------------------
-template<class T, uint64 capacity>
+template<class T, ArrayIndex_t capacity>
 using StaticArray = TemplArray<T, StaticMemoryPolicy<T, capacity>>;
 
 //------------------------------------------------------------------------------

@@ -71,7 +71,7 @@ void DrawCanvas::Draw(const RenderPassContext& ctx)
     }
     else
     {
-        hs_assert(drawMode_ == DrawMode::CatmullRom);
+        HS_ASSERT(drawMode_ == DrawMode::CatmullRom);
 
         const uint tesselLevel = 5;
 

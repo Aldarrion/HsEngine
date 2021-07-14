@@ -128,7 +128,7 @@ RESULT SpriteMaterial::Init()
 //------------------------------------------------------------------------------
 void SpriteMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
 {
-    hs_assert(false);
+    HS_ASSERT(false);
 }
 
 //------------------------------------------------------------------------------
@@ -245,7 +245,7 @@ RESULT DebugShapeMaterial::Init()
 //------------------------------------------------------------------------------
 void DebugShapeMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
 {
-    hs_assert(false);
+    HS_ASSERT(false);
 }
 
 //------------------------------------------------------------------------------
@@ -411,7 +411,7 @@ RESULT SkyboxMaterial::Init()
         {
             if (!pixels[i])
             {
-                hs_assert(!"Could not load a skybox image");
+                HS_ASSERT(!"Could not load a skybox image");
                 return R_FAIL;
             }
         }

@@ -223,8 +223,8 @@ bool Input::GetState(MouseButton button) const
 //------------------------------------------------------------------------------
 bool Input::GetState(uint gamepad, int gamepadButton) const
 {
-    hs_assert(gamepad < GLFW_JOYSTICK_LAST);
-    hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
+    HS_ASSERT(gamepad < GLFW_JOYSTICK_LAST);
+    HS_ASSERT(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
 
     return currentGamepads_[gamepad].buttons[gamepadButton] == GLFW_PRESS;
 }
@@ -232,8 +232,8 @@ bool Input::GetState(uint gamepad, int gamepadButton) const
 //------------------------------------------------------------------------------
 float Input::GetAxis(uint gamepad, int axis) const
 {
-    hs_assert(gamepad < GLFW_JOYSTICK_LAST);
-    hs_assert(axis < GLFW_GAMEPAD_AXIS_LAST);
+    HS_ASSERT(gamepad < GLFW_JOYSTICK_LAST);
+    HS_ASSERT(axis < GLFW_GAMEPAD_AXIS_LAST);
 
     float val = currentGamepads_[gamepad].axes[axis];
     if (val < 0 && val > -THUMBSTICK_DEADZONE)
@@ -247,7 +247,7 @@ float Input::GetAxis(uint gamepad, int axis) const
 //------------------------------------------------------------------------------
 bool Input::IsButtonDown(MouseButton btn) const
 {
-    hs_assert(btn < BTN_COUNT);
+    HS_ASSERT(btn < BTN_COUNT);
 
     return buttons_[btn] == ButtonState::Down;
 }
@@ -255,7 +255,7 @@ bool Input::IsButtonDown(MouseButton btn) const
 //------------------------------------------------------------------------------
 bool Input::IsButtonUp(MouseButton btn) const
 {
-    hs_assert(btn < BTN_COUNT);
+    HS_ASSERT(btn < BTN_COUNT);
 
     return buttons_[btn] == ButtonState::Up;
 }
@@ -263,8 +263,8 @@ bool Input::IsButtonUp(MouseButton btn) const
 //------------------------------------------------------------------------------
 bool Input::IsButtonDown(uint gamepad, int gamepadButton) const
 {
-    hs_assert(gamepad < GLFW_JOYSTICK_LAST);
-    hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
+    HS_ASSERT(gamepad < GLFW_JOYSTICK_LAST);
+    HS_ASSERT(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
 
     return currentGamepads_[gamepad].buttons[gamepadButton] == GLFW_PRESS
         && previousGamepads_[gamepad].buttons[gamepadButton] == GLFW_RELEASE;
@@ -273,8 +273,8 @@ bool Input::IsButtonDown(uint gamepad, int gamepadButton) const
 //------------------------------------------------------------------------------
 bool Input::IsButtonUp(uint gamepad, int gamepadButton) const
 {
-    hs_assert(gamepad < GLFW_JOYSTICK_LAST);
-    hs_assert(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
+    HS_ASSERT(gamepad < GLFW_JOYSTICK_LAST);
+    HS_ASSERT(gamepadButton < GLFW_GAMEPAD_BUTTON_LAST);
 
     return currentGamepads_[gamepad].buttons[gamepadButton] == GLFW_RELEASE
         && previousGamepads_[gamepad].buttons[gamepadButton] == GLFW_PRESS;
@@ -295,7 +295,7 @@ void Input::KeyUp(int key)
 //------------------------------------------------------------------------------
 void Input::ButtonDown(MouseButton button)
 {
-    hs_assert(button < BTN_COUNT);
+    HS_ASSERT(button < BTN_COUNT);
 
     buttons_[button] = ButtonState::Down;
 }
@@ -303,7 +303,7 @@ void Input::ButtonDown(MouseButton button)
 //------------------------------------------------------------------------------
 void Input::ButtonUp(MouseButton button)
 {
-    hs_assert(button < BTN_COUNT);
+    HS_ASSERT(button < BTN_COUNT);
 
     buttons_[button] = ButtonState::Up;
 }
@@ -337,7 +337,7 @@ void Input::SetMouseMode(MouseMode mode)
         {
             #if HS_WINDOWS
                 int showCount = ShowCursor(false);
-                hs_assert(showCount < 0);
+                HS_ASSERT(showCount < 0);
             #elif HS_LINUX
                 glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             #endif
@@ -345,10 +345,10 @@ void Input::SetMouseMode(MouseMode mode)
         }
         else
         {
-            hs_assert(mouseMode_ == MouseMode::Absolute);
+            HS_ASSERT(mouseMode_ == MouseMode::Absolute);
             #if HS_WINDOWS
                 int showCount = ShowCursor(true);
-                hs_assert(showCount >= 0);
+                HS_ASSERT(showCount >= 0);
             #elif HS_LINUX
                 glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             #endif

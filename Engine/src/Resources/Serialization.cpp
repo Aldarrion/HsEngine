@@ -277,7 +277,7 @@ RESULT SerializationManager::Init()
 const DefBase* SerializationManager::GetDef(const char* name) const
 {
     auto def = defs_.find(name);
-    hs_assert(def != defs_.end());
+    HS_ASSERT(def != defs_.end());
     return def->second;
 }
 

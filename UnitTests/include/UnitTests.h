@@ -59,7 +59,7 @@ private:
 }
 
 //------------------------------------------------------------------------------
-#define DEF_TEST(name) \
+#define TEST_DEF(name) \
 class Test_##name : public hsTest::Test \
 { \
 public: \

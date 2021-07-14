@@ -44,13 +44,13 @@ public:
 
     DataT GetValue() const
     {
-        hs_assert(IsOk());
+        HS_ASSERT(IsOk());
         return data_;
     }
 
     DataT GetValue()
     {
-        hs_assert(IsOk());
+        HS_ASSERT(IsOk());
         return data_;
     }
 
@@ -94,12 +94,11 @@ constexpr uint ArrSizeInternal(T(&)[N])
 }
 
 #define HS_ARR_LEN(arr) ::internal::ArrSizeInternal(arr)
-//#define VKR_ARR_COUNT(arr) sizeof(arr)/sizeof(arr[0])
 
 #define HS_FAILED(res) (((int)(res)) < 0)
 #define HS_SUCCEEDED(res) (((int)(res)) >= 0)
 #if HS_DEBUG
-    #define HS_CHECK(res) hs_assert(HS_SUCCEEDED(res))
+    #define HS_CHECK(res) HS_ASSERT(HS_SUCCEEDED(res))
 #else
     #define HS_CHECK(res) (void)res
 #endif

@@ -36,7 +36,7 @@ inline constexpr NumberT Clamp(NumberT x, NumberT min, NumberT max)
 //------------------------------------------------------------------------------
 inline constexpr uint Align(uint x, uint align)
 {
-    hs_assert(align);
+    HS_ASSERT(align);
     return ((x + align - 1) / align) * align;
 }
 
@@ -589,14 +589,14 @@ struct Mat44
     //------------------------------------------------------------------------------
     constexpr float operator()(int i, int j) const
     {
-        hs_assert(i >= 0 && i < 4 && j >= 0 && j < 4);
+        HS_ASSERT(i >= 0 && i < 4 && j >= 0 && j < 4);
         return m[i][j];
     }
 
     //------------------------------------------------------------------------------
     constexpr float& operator()(int i, int j)
     {
-        hs_assert(i >= 0 && i < 4 && j >= 0 && j < 4);
+        HS_ASSERT(i >= 0 && i < 4 && j >= 0 && j < 4);
         return m[i][j];
     }
 
@@ -625,7 +625,7 @@ struct Mat44
         Vec3 v = c3 * w - d3 * z;
 
         const float det = s.Dot(v) + t.Dot(u);
-        hs_assert(det && "Matrix must be regular");
+        HS_ASSERT(det && "Matrix must be regular");
 
         const float invDet = 1.0f / det;
         s *= invDet;
@@ -660,7 +660,7 @@ struct Mat44
         Vec3 t = c3.Cross(d3);
 
         const float det = s.Dot(c3);
-        hs_assert(det && "Matrix must be regular");
+        HS_ASSERT(det && "Matrix must be regular");
 
         const float invDet = 1.0f / det;
 

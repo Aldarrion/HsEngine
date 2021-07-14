@@ -77,7 +77,7 @@ RenderBufferEntry RenderBufferCache::BeginAlloc(uint size, uint align, void** da
             if (HS_FAILED(MakeEntry(newEntry)))
             {
                 LOG_ERR("Failed to create new buffer entry");
-                hs_assert(false);
+                HS_ASSERT(false);
                 return {};
             }
             entries_.Insert(0, newEntry);
