@@ -64,7 +64,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Reserve(ArrayIndex_t capacity)
+    void Grow(ArrayIndex_t capacity)
     {
         HS_ASSERT(false && "Static array size cannot grow");
     }
@@ -101,7 +101,7 @@ public:
 
 private:
     T items_[capacity_];
-    ArrayIndex_t count_;
+    ArrayIndex_t count_{};
 };
 
 //------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ public:
     void EnsureEmplaceBack()
     {
         capacity_ = GetNextCapacity();
-        Reserve(capacity_);
+        Grow(capacity_);
     }
 
     //------------------------------------------------------------------------------
@@ -200,7 +200,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Reserve(ArrayIndex_t capacity)
+    void Grow(ArrayIndex_t capacity)
     {
         capacity_ = ArrMax(capacity, MIN_CAPACITY);
         T* newItems = (T*)malloc(sizeof(T) * capacity_);
@@ -532,7 +532,7 @@ public:
         if (capacity <= Capacity())
             return;
 
-        memory_.Reserve(capacity);
+        memory_.Grow(capacity);
     }
 
     //------------------------------------------------------------------------------
