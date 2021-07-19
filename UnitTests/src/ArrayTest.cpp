@@ -270,6 +270,21 @@ public:
 
         TEST_TRUE((uintptr)a.Data() % alignof(ArrayT::Item_t) == 0);
     }
+
+    void TestGrowAfterReserve(TestResult& test_result)
+    {
+        ArrayT a;
+        TEST_TRUE(a.Capacity() == 0);
+
+        a.Reserve(17);
+        TEST_TRUE(a.Capacity() == 17);
+
+        a.Reserve(10);
+        TEST_TRUE(a.Capacity() == 17);
+
+        AddToArray(18, 0, a);
+        TEST_TRUE(IsPow2(a.Capacity()));
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -350,6 +365,13 @@ TEST_DEF(Array_SelfAsignment_IsHandled)
 TEST_DEF(Array_Data_IsAligned)
 {
     TEST_ALL_ARRAYS(TestDataAlignment);
+}
+
+//------------------------------------------------------------------------------
+TEST_DEF(Array_Grow_ResizesToPow2)
+{
+    ArrayTester<Array<int>> tester;
+    tester.TestGrowAfterReserve(test_result);
 }
 
 //------------------------------------------------------------------------------

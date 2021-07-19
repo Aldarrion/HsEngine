@@ -4,6 +4,7 @@
 #include "Common/Assert.h"
 
 #include <math.h>
+#include <intrin.h>
 
 namespace hs
 {
@@ -41,11 +42,65 @@ inline constexpr uint Align(uint x, uint align)
 }
 
 //------------------------------------------------------------------------------
+inline int BitScanReverse(uint x)
+{
+    HS_ASSERT(x != 0);
+    #if HS_MSVC
+        //uint lzc = __lzcnt(x); // lzcnt is supported from Haswell
+        unsigned long highestBitIdx;
+        _BitScanReverse(&highestBitIdx, x);
+        return highestBitIdx;
+    #elif HS_CLANG || HS_GCC
+        int lzc = __builtin_clz(x);
+        return 31 - lzc;
+    #else
+        static_assert(false, "Implement");
+    #endif
+}
+
+//------------------------------------------------------------------------------
+inline int BitScanReverse(uint64 x)
+{
+    HS_ASSERT(x != 0);
+    #if HS_MSVC
+        //uint lzc = __lzcnt64(x); // lzcnt is supported from Haswell
+        unsigned long highestBitIdx;
+        _BitScanReverse64(&highestBitIdx, x);
+        return highestBitIdx;
+    #elif HS_CLANG || HS_GCC
+        int lzc = __builtin_clzll(x);
+        return 63 - lzc;
+    #else
+        static_assert(false, "Implement");
+    #endif
+}
+
+//------------------------------------------------------------------------------
 template<class IntegralT>
 inline constexpr bool IsPow2(IntegralT x)
 {
     static_assert(std::is_integral_v<IntegralT>);
     return (x > 0) && ((x & (x - 1)) == 0);
+}
+
+//------------------------------------------------------------------------------
+inline uint NextPow2(uint x)
+{
+    if (x == 0)
+        return 2;
+
+    const int highestBitIdx = BitScanReverse(x);
+    return 1u << (Min(highestBitIdx + 1, 31));
+}
+
+//------------------------------------------------------------------------------
+inline constexpr uint NextPow2(uint64 x)
+{
+    if (x == 0)
+        return 2;
+
+    const int highestBitIdx = BitScanReverse(x);
+    return 1ull << (Min(highestBitIdx + 1, 63));
 }
 
 //------------------------------------------------------------------------------

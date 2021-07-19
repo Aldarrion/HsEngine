@@ -6,6 +6,7 @@
 
 #include "Containers/Span.h"
 
+#include "Math/Math.h"
 #include "Common/Types.h"
 #include "Common/Assert.h"
 
@@ -205,7 +206,7 @@ public:
     //------------------------------------------------------------------------------
     void Grow(ArrayIndex_t capacity)
     {
-        capacity_ = ArrMax(capacity, MIN_CAPACITY);
+        capacity_ = Max(capacity, MIN_CAPACITY);
         auto newItems = static_cast<T*>(AllocAligned(sizeof(T) * capacity_, alignof(T)));
         if constexpr (std::is_trivial_v<T>)
         {
@@ -262,15 +263,9 @@ private:
     T* items_{};
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t ArrMax(ArrayIndex_t a, ArrayIndex_t b) const
-    {
-        return a > b ? a : b;
-    }
-
-    //------------------------------------------------------------------------------
     ArrayIndex_t GetNextCapacity() const
     {
-        ArrayIndex_t newCapacity = ArrMax(capacity_ << 1, MIN_CAPACITY);
+        ArrayIndex_t newCapacity = Max(NextPow2(static_cast<uint>(capacity_)), static_cast<uint>(MIN_CAPACITY));
         HS_ASSERT(newCapacity > 0);
         return newCapacity;
     }
@@ -326,11 +321,8 @@ public:
         if (this == &other)
             return *this;
 
-        if constexpr (!std::is_trivial_v<T>)
-        {
-            for (ArrayIndex_t i = 0; i < Count(); ++i)
-                Data()[i].~T();
-        }
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
+            Data()[i].~T();
 
         memory_.Assign(other.memory_);
 
@@ -498,7 +490,7 @@ public:
     {
         HS_ASSERT(index < Count());
 
-        if (std::is_trivial_v<T>)
+        if constexpr (std::is_trivial_v<T>)
         {
             memmove(&Data()[index], &Data()[index + 1], (Count() - index) * sizeof(T));
         }
@@ -634,16 +626,9 @@ private:
 
     void CopyRange(T* dst, const T* src, ArrayIndex_t count)
     {
-        if constexpr (std::is_trivial_v<T>)
+        for (ArrayIndex_t i = 0; i < count; ++i)
         {
-            memcpy(dst, src, count * sizeof(T));
-        }
-        else
-        {
-            for (ArrayIndex_t i = 0; i < count; ++i)
-            {
-                dst[i] = src[i];
-            }
+            dst[i] = src[i];
         }
     }
 };
