@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Config.h"
-#include "Common/hs_Assert.h"
+#include "Common/Assert.h"
 
 #if HS_MSVC
     #include <intrin.h>
@@ -91,8 +91,8 @@ inline void AtomicStore(volatile int* value, int x)
 
 //------------------------------------------------------------------------------
 /*!
-Atomically compares expected to *dst 
-if equal, desired is stored to *dst 
+Atomically compares expected to *dst
+if equal, desired is stored to *dst
 otherwise, no operation is performed
 
 \return Initial value of *dst before exchange

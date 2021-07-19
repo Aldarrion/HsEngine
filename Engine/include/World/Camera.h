@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Math/hs_Math.h"
+#include "Math/Math.h"
 
 namespace hs
 {

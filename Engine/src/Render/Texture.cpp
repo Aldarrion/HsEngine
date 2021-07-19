@@ -5,7 +5,7 @@
 #include "Render/Buffer.h"
 #include "Common/Logging.h"
 
-#include "Render/hs_Image.h"
+#include "Render/Image.h"
 
 namespace hs
 {

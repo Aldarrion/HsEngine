@@ -4,7 +4,7 @@
 
 #include "Render/Material.h"
 
-#include "Math/hs_Math.h"
+#include "Math/Math.h"
 
 #include "Containers/Array.h"
 

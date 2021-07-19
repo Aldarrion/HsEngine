@@ -5,7 +5,7 @@
 #include "Common/Enums.h"
 #include "Containers/Array.h"
 
-#include "Math/hs_Math.h"
+#include "Math/Math.h"
 
 #if HS_WINDOWS
     #include "Platform/hs_Windows.h"

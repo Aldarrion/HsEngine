@@ -14,13 +14,13 @@
 #include "Render/Buffer.h"
 #include "Render/RenderBufferCache.h"
 #include "Render/RenderPassContext.h"
-#include "Render/hs_Vulkan.h"
+#include "Render/Vulkan.h"
 
 #include "Resources/Serialization.h"
 #include "Input/Input.h"
 
 #include "Common/Logging.h"
-#include "Common/hs_Assert.h"
+#include "Common/Assert.h"
 #include "Common/Util.h"
 
 #if HS_WINDOWS

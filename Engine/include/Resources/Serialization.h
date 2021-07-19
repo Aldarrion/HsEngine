@@ -5,7 +5,7 @@
 #include "Containers/Array.h"
 #include "Containers/Hash.h"
 
-#include "Math/hs_Math.h"
+#include "Math/Math.h"
 
 #include "Common/Enums.h"
 

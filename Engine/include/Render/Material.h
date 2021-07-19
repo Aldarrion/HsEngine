@@ -7,7 +7,7 @@
 #include "Common/Pointers.h"
 #include "Common/Enums.h"
 #include "Common/Types.h"
-#include "Math/hs_Math.h"
+#include "Math/Math.h"
 
 namespace hs
 {

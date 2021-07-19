@@ -7,7 +7,7 @@
 
 #include "Common/Logging.h"
 #include "Common/Types.h"
-#include "Common/hs_Assert.h"
+#include "Common/Assert.h"
 
 #include "sdl/SDL.h"
 
@@ -16,7 +16,7 @@
     #include "imgui/imgui_impl_win32.h"
 #elif HS_LINUX
     // TODO is the vulkan include needed here?
-    #include "Render/hs_Vulkan.h"
+    #include "Render/Vulkan.h"
     #include "GLFW/glfw3.h"
     #include "imgui/imgui_impl_glfw.h"
 #endif

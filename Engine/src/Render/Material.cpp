@@ -8,7 +8,7 @@
 #include "Render/VertexTypes.h"
 #include "Input/Input.h"
 
-#include "Render/hs_Image.h"
+#include "Render/Image.h"
 
 #include "Common.h"
 

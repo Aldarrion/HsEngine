@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common/Types.h"
-#include "Common/hs_Assert.h"
+#include "Common/Assert.h"
 
 #include <math.h>
 
@@ -877,7 +877,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    static constexpr Color FromSrgb(byte r, byte g, byte b, byte a)
+    static constexpr Color FromSrgb(uint8 r, uint8 g, uint8 b, uint8 a)
     {
         return ToLinear(Color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f));
     }

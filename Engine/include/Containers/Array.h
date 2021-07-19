@@ -5,7 +5,7 @@
 #include "Containers/Span.h"
 
 #include "Common/Types.h"
-#include "Common/hs_Assert.h"
+#include "Common/Assert.h"
 
 #include <cstdlib>
 #include <cstring>

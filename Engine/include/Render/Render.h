@@ -11,7 +11,7 @@
 #include "Containers/Hash.h"
 #include "Containers/Array.h"
 
-#include "Math/hs_Math.h"
+#include "Math/Math.h"
 
 #include "Common/Pointers.h"
 #include "Common/Enums.h"

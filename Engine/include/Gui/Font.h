@@ -2,7 +2,7 @@
 
 #include "Config.h"
 
-#include "Math/hs_Math.h"
+#include "Math/Math.h"
 
 #include "Common/Enums.h"
 #include "Common/Types.h"
@@ -33,7 +33,7 @@ public:
     [[nodiscard]] const float GetSpaceWidth() const;
     [[nodiscard]] const GlyphInfo* GetGlyphInfo(uint codepoint) const;
 
-private: 
+private:
     Texture* texture_;
     float spaceWidth_;
     std::unordered_map<uint, GlyphInfo> glyphs_;

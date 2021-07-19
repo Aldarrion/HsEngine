@@ -1,9 +1,9 @@
 #include "Common/Logging.h"
 
 #include "Common/Types.h"
-#include "Common/hs_Assert.h"
+#include "Common/Assert.h"
 
-#include "Math/hs_Math.h"
+#include "Math/Math.h"
 
 #if HS_WINDOWS
     #include "Platform/hs_Windows.h"
