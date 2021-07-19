@@ -5,16 +5,20 @@
 #include "Common/Enums.h"
 
 #include <cstdint>
+#include <cstddef>
+
+namespace hs
+{
 
 using uint8     = uint8_t;
 using uint16    = uint16_t;
 using uint      = uint32_t;
 using uint64    = uint64_t;
 
-using byte      = uint8;
+using int8      = int8_t;
+using int16     = int16_t;
+using int64     = int64_t;
 
-namespace hs
-{
 class Texture;
 class Shader;
 class VertexBuffer;
@@ -85,8 +89,8 @@ namespace internal
 {
 
 //------------------------------------------------------------------------------
-template<class T, uint N>
-constexpr uint ArrSizeInternal(T(&)[N])
+template<class T, hs::uint N>
+constexpr hs::uint ArrSizeInternal(T(&)[N])
 {
     return N;
 }

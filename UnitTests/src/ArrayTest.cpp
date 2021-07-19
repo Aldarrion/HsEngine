@@ -2,8 +2,67 @@
 
 #include "Containers/Array.h"
 
+#include <vector>
+
 using namespace hsTest;
 using namespace hs;
+
+//------------------------------------------------------------------------------
+template<bool IS_MOVEABLE>
+struct NotTrivialType
+{
+    int x_;
+    int moveCount_{};
+    int copyCount_{};
+
+    NotTrivialType() = delete;
+    NotTrivialType(int x) // Implicit by design
+        : x_(x)
+    {
+    }
+
+    NotTrivialType(const NotTrivialType& other)
+    {
+        x_ = other.x_;
+        copyCount_ = 1 + other.copyCount_;
+        moveCount_ = other.moveCount_;
+    }
+
+    NotTrivialType& operator=(const NotTrivialType& other)
+    {
+        x_ = other.x_;
+        copyCount_ = 1 + other.copyCount_;
+        moveCount_ = other.moveCount_;
+
+        return *this;
+    }
+
+    template<class = std::enable_if_t<IS_MOVEABLE, void>>
+    NotTrivialType(NotTrivialType&& other)
+    {
+        x_ = other.x_;
+        copyCount_ = other.copyCount_;
+        moveCount_ = 1 + other.moveCount_;
+    }
+
+    template<class = std::enable_if_t<IS_MOVEABLE, void>>
+    NotTrivialType& operator=(NotTrivialType&& other)
+    {
+        x_ = other.x_;
+        copyCount_ = other.copyCount_;
+        moveCount_ = 1 + other.moveCount_;
+
+        return *this;
+    }
+
+    bool operator==(const NotTrivialType& other)
+    {
+        return x_ == other.x_;
+    }
+};
+
+static_assert(!std::is_trivial_v<NotTrivialType<true>>);
+static_assert(!std::is_trivial_v<NotTrivialType<false>>);
 
 //------------------------------------------------------------------------------
 template<class ElementT, class ArrayT>
@@ -66,7 +125,7 @@ public:
 
         a.Remove(0);
 
-        TEST_TRUE(a.Count() == 32)
+        TEST_TRUE(a.Count() == 32);
         TEST_TRUE(a[0] == 1);
         TEST_TRUE(a[1] == 2);
 
@@ -115,7 +174,10 @@ public:
         a.Add(1);
         a.Add(2);
 
-        Array<int> b{ a };
+        auto aDataBefore = a.Data();
+        ArrayT b{ a };
+        TEST_TRUE(a.Data() == aDataBefore);
+
         b.Add(3);
 
         TEST_TRUE(b.Last() == 3);
@@ -125,6 +187,7 @@ public:
 
         TEST_TRUE(a.Count() == 2);
         TEST_TRUE(b.Count() == 4);
+        TEST_TRUE(a.Data() != b.Data());
     }
 
     void TestMove(TestResult& test_result)
@@ -134,12 +197,19 @@ public:
         a.Add(1);
         a.Add(2);
 
+        auto aDataBefore = a.Data();
         ArrayT b{ std::move(a) };
+
+        if (ArrayT::MemoryPolicy_t::IS_MOVEABLE)
+            TEST_TRUE(a.Data() != aDataBefore);
+        else
+            TEST_TRUE(a.Data() == aDataBefore);
 
         b.Add(3);
         b.Add(4);
         b.Add(5);
         b.Add(6);
+
 
         TEST_TRUE(b.First() == 0);
         TEST_TRUE(b.Last() == 6);
@@ -171,69 +241,101 @@ public:
         TEST_TRUE(a.First().x_ == 1);
         TEST_TRUE(a.Last().x_ == 3);
     }
+
+    void TestSelfAsignment(TestResult& test_result)
+    {
+        ArrayT a;
+        AddToArray(33, 0, a);
+
+        auto aDataBefore = a.Data();
+        a = a;
+
+        TEST_TRUE(aDataBefore == a.Data());
+        TEST_TRUE(a[0] == 0);
+        TEST_TRUE(a[12] == 12);
+        TEST_TRUE(a.Count() == 33);
+
+        a = std::move(a);
+
+        TEST_TRUE(aDataBefore == a.Data());
+        TEST_TRUE(a[0] == 0);
+        TEST_TRUE(a[12] == 12);
+        TEST_TRUE(a.Count() == 33);
+    }
 };
+
+//------------------------------------------------------------------------------
+#define TEST_ALL_ARRAYS(testName) \
+    ArrayTester<Array<int>> tester; \
+    tester.testName(test_result); \
+    \
+    ArrayTester<StaticArray<int, 128>> testerStatic; \
+    testerStatic.testName(test_result);\
+    \
+    ArrayTester<Array<NotTrivialType<true>>> testerNotTrivial; \
+    testerNotTrivial.testName(test_result); \
+    \
+    ArrayTester<StaticArray<NotTrivialType<true>, 128>> testerNotTrivialStatic; \
+    testerNotTrivialStatic.testName(test_result);
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_Add_InsertsAtTheEnd)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestAdd(test_result);
+    TEST_ALL_ARRAYS(TestAdd);
 }
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_Insert_Works)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestAdd(test_result);
+    TEST_ALL_ARRAYS(TestInsert);
 }
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_RemoveElements_Works)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestRemove(test_result);
+    TEST_ALL_ARRAYS(TestRemove);
 }
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_FirstLast_Work)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestFirstLast(test_result);
+    TEST_ALL_ARRAYS(TestFirstLast);
 }
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_Data_ReturnPtrToFirst)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestData(test_result);
+    TEST_ALL_ARRAYS(TestData)
 }
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_Clear_RemovesElements)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestClear(test_result);
+    TEST_ALL_ARRAYS(TestClear);
 }
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_CopyOperations_MakeCopy)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestCopy(test_result);
+    TEST_ALL_ARRAYS(TestCopy);
 }
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_MoveOperations_Work)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestMove(test_result);
+    TEST_ALL_ARRAYS(TestMove);
 }
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_MoveOnlyType_Works)
 {
-    ArrayTester<Array<int>> tester;
-    tester.TestMoveOnlyType(test_result);
+    TEST_ALL_ARRAYS(TestMoveOnlyType);
+}
+
+//------------------------------------------------------------------------------
+TEST_DEF(Array_SelfAsignment_IsHandled)
+{
+    TEST_ALL_ARRAYS(TestSelfAsignment);
 }
 
 //------------------------------------------------------------------------------

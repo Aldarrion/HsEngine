@@ -84,13 +84,13 @@ public:
     //------------------------------------------------------------------------------
     T* Items()
     {
-        return items_;
+        return reinterpret_cast<T*>(items_);
     }
 
     //------------------------------------------------------------------------------
     const T* Items() const
     {
-        return items_;
+        return reinterpret_cast<const T*>(items_);
     }
 
     //------------------------------------------------------------------------------
@@ -100,7 +100,7 @@ public:
     }
 
 private:
-    T items_[capacity_];
+    alignas(T) uint8 items_[capacity_ * sizeof(T)];
     ArrayIndex_t count_{};
 };
 
@@ -167,8 +167,7 @@ public:
     //------------------------------------------------------------------------------
     void EnsureEmplaceBack()
     {
-        capacity_ = GetNextCapacity();
-        Grow(capacity_);
+        Grow(GetNextCapacity());
     }
 
     //------------------------------------------------------------------------------
@@ -176,7 +175,7 @@ public:
     {
         capacity_ = GetNextCapacity();
 
-        auto newItems = (T*)malloc(sizeof(T) * capacity_);
+        auto newItems = static_cast<T*>(malloc(sizeof(T) * capacity_));
         if constexpr (std::is_trivial_v<T>)
         {
             memcpy(newItems, items_, sizeof(T) * index);
@@ -184,12 +183,12 @@ public:
         }
         else
         {
-            for (int i = 0; i < index; ++i)
+            for (ArrayIndex_t i = 0; i < index; ++i)
             {
                 new(newItems + i) T(std::move(items_[i]));
                 items_[i].~T();
             }
-            for (int i = index; i < count_; ++i)
+            for (ArrayIndex_t i = index; i < count_; ++i)
             {
                 new(newItems + i + 1) T(std::move(items_[i]));
                 items_[i].~T();
@@ -203,7 +202,7 @@ public:
     void Grow(ArrayIndex_t capacity)
     {
         capacity_ = ArrMax(capacity, MIN_CAPACITY);
-        T* newItems = (T*)malloc(sizeof(T) * capacity_);
+        auto newItems = static_cast<T*>(malloc(sizeof(T) * capacity_));
         if constexpr (std::is_trivial_v<T>)
         {
             memcpy(newItems, items_, sizeof(T) * count_);
@@ -280,6 +279,7 @@ class TemplArray
 public:
     using Iter_t = T*;
     using ConstIter_t = const Iter_t;
+    using MemoryPolicy_t = MemoryPolicy;
 
     //------------------------------------------------------------------------------
     static constexpr ArrayIndex_t IndexBad()

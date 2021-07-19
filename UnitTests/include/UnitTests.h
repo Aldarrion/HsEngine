@@ -68,7 +68,7 @@ public: \
 } object_Test_##name ; \
 void Test_##name::Run(TestResult& test_result)
 
-#define TEST_TRUE_MSG(expr, msg) { if (!(expr)) { test_result.AddFail(); printf("FAIL: %s line: %d, %s\n", test_result.GetTest()->GetName(), __LINE__, msg); return; } }
+#define TEST_TRUE_MSG(expr, msg) do { if (!(expr)) { test_result.AddFail(); printf("FAIL: %s line: %d, %s\n", test_result.GetTest()->GetName(), __LINE__, msg); return; } } while (false)
 #define TEST_TRUE(expr) TEST_TRUE_MSG(expr, #expr##" is false")
 #define TEST_FALSE(expr) TEST_TRUE_MSG(!(expr), #expr##" is true")
 #define TEST_FAIL(msg) TEST_TRUE_MSG(!(msg), msg)
