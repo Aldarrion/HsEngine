@@ -41,6 +41,14 @@ inline constexpr uint Align(uint x, uint align)
 }
 
 //------------------------------------------------------------------------------
+template<class IntegralT>
+inline constexpr bool IsPow2(IntegralT x)
+{
+    static_assert(std::is_integral_v<IntegralT>);
+    return (x > 0) && ((x & (x - 1)) == 0);
+}
+
+//------------------------------------------------------------------------------
 inline constexpr float DegToRad(float deg)
 {
     return (deg * HS_PI) / 180.0f;

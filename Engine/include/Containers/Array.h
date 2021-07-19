@@ -2,12 +2,13 @@
 
 #include "Config.h"
 
+#include "System/Memory.h"
+
 #include "Containers/Span.h"
 
 #include "Common/Types.h"
 #include "Common/Assert.h"
 
-#include <cstdlib>
 #include <cstring>
 #include <type_traits>
 #include <initializer_list>
@@ -118,14 +119,17 @@ public:
 
         capacity_ = other.capacity_;
         count_ = other.count_;
-        items_ = (T*)malloc(sizeof(T) * capacity_);
+        items_ = static_cast<T*>(AllocAligned(sizeof(T) * capacity_, alignof(T)));
     }
 
     //------------------------------------------------------------------------------
     void Assign(const GrowableMemoryPolicy<T>& other)
     {
         if (capacity_ != other.capacity_)
-            items_ = (T*)realloc(items_, sizeof(T) * other.capacity_);
+        {
+            FreeAligned(items_);
+            items_ = static_cast<T*>(AllocAligned(sizeof(T) * other.capacity_, alignof(T)));
+        }
 
         capacity_ = other.capacity_;
         count_ = other.count_;
@@ -146,7 +150,7 @@ public:
     //------------------------------------------------------------------------------
     void MoveAssign(GrowableMemoryPolicy<T>&& other)
     {
-        free(items_);
+        FreeAligned(items_);
         capacity_ = other.capacity_;
         count_ = other.count_;
         items_ = other.items_;
@@ -161,7 +165,7 @@ public:
     {
         count_ = 0;
         capacity_ = 0;
-        free(items_);
+        FreeAligned(items_);
     }
 
     //------------------------------------------------------------------------------
@@ -175,7 +179,7 @@ public:
     {
         capacity_ = GetNextCapacity();
 
-        auto newItems = static_cast<T*>(malloc(sizeof(T) * capacity_));
+        auto newItems = static_cast<T*>(AllocAligned(sizeof(T) * capacity_, alignof(T)));
         if constexpr (std::is_trivial_v<T>)
         {
             memcpy(newItems, items_, sizeof(T) * index);
@@ -194,7 +198,7 @@ public:
                 items_[i].~T();
             }
         }
-        free(items_);
+        FreeAligned(items_);
         items_ = newItems;
     }
 
@@ -202,7 +206,7 @@ public:
     void Grow(ArrayIndex_t capacity)
     {
         capacity_ = ArrMax(capacity, MIN_CAPACITY);
-        auto newItems = static_cast<T*>(malloc(sizeof(T) * capacity_));
+        auto newItems = static_cast<T*>(AllocAligned(sizeof(T) * capacity_, alignof(T)));
         if constexpr (std::is_trivial_v<T>)
         {
             memcpy(newItems, items_, sizeof(T) * count_);
@@ -216,7 +220,7 @@ public:
             }
         }
 
-        free(items_);
+        FreeAligned(items_);
         items_ = newItems;
     }
 
@@ -277,6 +281,7 @@ template<class T, class MemoryPolicy>
 class TemplArray
 {
 public:
+    using Item_t = T;
     using Iter_t = T*;
     using ConstIter_t = const Iter_t;
     using MemoryPolicy_t = MemoryPolicy;
@@ -312,10 +317,7 @@ public:
     TemplArray(const TemplArray<T, MemoryPolicy>& other)
     {
         memory_.CopyConstruct(other.memory_);
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
-        {
-            Data()[i] = other.Data()[i];
-        }
+        CopyRange(Data(), other.Data(), Count());
     }
 
     //------------------------------------------------------------------------------
@@ -324,15 +326,15 @@ public:
         if (this == &other)
             return *this;
 
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
-            Data()[i].~T();
+        if constexpr (!std::is_trivial_v<T>)
+        {
+            for (ArrayIndex_t i = 0; i < Count(); ++i)
+                Data()[i].~T();
+        }
 
         memory_.Assign(other.memory_);
 
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
-        {
-            Data()[i] = other.Data()[i];
-        }
+        CopyRange(Data(), other.Data(), Count());
 
         return *this;
     }
@@ -629,6 +631,21 @@ public:
 
 private:
     MemoryPolicy memory_;
+
+    void CopyRange(T* dst, const T* src, ArrayIndex_t count)
+    {
+        if constexpr (std::is_trivial_v<T>)
+        {
+            memcpy(dst, src, count * sizeof(T));
+        }
+        else
+        {
+            for (ArrayIndex_t i = 0; i < count; ++i)
+            {
+                dst[i] = src[i];
+            }
+        }
+    }
 };
 
 //------------------------------------------------------------------------------

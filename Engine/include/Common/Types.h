@@ -19,6 +19,8 @@ using int8      = int8_t;
 using int16     = int16_t;
 using int64     = int64_t;
 
+using uintptr   = uintptr_t;
+
 class Texture;
 class Shader;
 class VertexBuffer;

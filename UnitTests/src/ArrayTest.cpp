@@ -9,7 +9,7 @@ using namespace hs;
 
 //------------------------------------------------------------------------------
 template<bool IS_MOVEABLE>
-struct NotTrivialType
+struct alignas(32) NotTrivialType
 {
     int x_;
     int moveCount_{};
@@ -262,6 +262,14 @@ public:
         TEST_TRUE(a[12] == 12);
         TEST_TRUE(a.Count() == 33);
     }
+
+    void TestDataAlignment(TestResult& test_result)
+    {
+        ArrayT a;
+        AddToArray(33, 0, a);
+
+        TEST_TRUE((uintptr)a.Data() % alignof(ArrayT::Item_t) == 0);
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -336,6 +344,12 @@ TEST_DEF(Array_MoveOnlyType_Works)
 TEST_DEF(Array_SelfAsignment_IsHandled)
 {
     TEST_ALL_ARRAYS(TestSelfAsignment);
+}
+
+//------------------------------------------------------------------------------
+TEST_DEF(Array_Data_IsAligned)
+{
+    TEST_ALL_ARRAYS(TestDataAlignment);
 }
 
 //------------------------------------------------------------------------------
