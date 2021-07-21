@@ -280,7 +280,7 @@ class TemplArray
 public:
     using Item_t = T;
     using Iter_t = T*;
-    using ConstIter_t = const Iter_t;
+    using ConstIter_t = const T*;
     using MemoryPolicy_t = MemoryPolicy;
 
     //------------------------------------------------------------------------------
@@ -669,7 +669,7 @@ class SmallArrayBase
 public:
     using Item_t = T;
     using Iter_t = T*;
-    using ConstIter_t = const Iter_t;
+    using ConstIter_t = const T*;
 
     //------------------------------------------------------------------------------
     ~SmallArrayBase()
@@ -1076,6 +1076,17 @@ public:
     //------------------------------------------------------------------------------
     SmallArray() : SmallArrayBase(SMALL_CAPACITY)
     {
+    }
+
+    //------------------------------------------------------------------------------
+    SmallArray(std::initializer_list<T> elements)
+        : SmallArrayBase(SMALL_CAPACITY)
+    {
+        Reserve(elements.size());
+        for (auto&& e : elements)
+        {
+            Add(std::forward<decltype(e)>(e));
+        }
     }
 
     //------------------------------------------------------------------------------

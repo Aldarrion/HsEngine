@@ -53,7 +53,7 @@ struct alignas(128) NotTrivialType
         return *this;
     }
 
-    bool operator==(const NotTrivialType& other)
+    bool operator==(const NotTrivialType<IS_MOVEABLE>& other) const
     {
         return x_ == other.x_;
     }
@@ -298,6 +298,44 @@ public:
         AddToArray(18, 0, a);
         TEST_TRUE(IsPow2(a.Capacity()));
     }
+
+    void TestRangeFor(TestResult& test_result)
+    {
+        ArrayT a;
+        AddToArray(55, 0, a);
+
+        int i = 0;
+        for (const auto& item : a)
+        {
+            TEST_TRUE(item == a[i]);
+            ++i;
+        }
+    }
+
+    void TestIterators(TestResult& test_result)
+    {
+        ArrayT a;
+        AddToArray(55, 0, a);
+
+        int i = 0;
+        for (auto it = a.begin(); it != a.end(); ++it, ++i)
+        {
+            TEST_TRUE(*it == a[i]);
+        }
+
+        i = 0;
+        for (auto it = a.cbegin(); it != a.cend(); ++it, ++i)
+        {
+            TEST_TRUE(*it == a[i]);
+        }
+
+        const ArrayT constA{ 1, 2, 3, 4, 5 };
+        i = 0;
+        for (auto it = a.begin(); it != a.end(); ++it, ++i)
+        {
+            TEST_TRUE(*it == a[i]);
+        }
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -400,6 +438,18 @@ TEST_DEF(Array_Grow_ResizesToPow2)
 {
     ArrayTester<Array<int>> tester;
     tester.TestGrowAfterReserve(test_result);
+}
+
+//------------------------------------------------------------------------------
+TEST_DEF(Array_RangeFor_Works)
+{
+    TEST_ALL_ARRAYS(TestRangeFor);
+}
+
+//------------------------------------------------------------------------------
+TEST_DEF(Array_Iterators_Work)
+{
+    TEST_ALL_ARRAYS(TestIterators);
 }
 
 //------------------------------------------------------------------------------
