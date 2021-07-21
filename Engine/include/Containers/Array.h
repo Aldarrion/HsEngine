@@ -11,6 +11,7 @@
 #include "Common/Assert.h"
 
 #include <cstring>
+#include <cstddef>
 #include <type_traits>
 #include <initializer_list>
 #include <new>
@@ -27,13 +28,14 @@ If we'll need more than 2G elements in an array we can make this a template
 argument and use int64.
 */
 using ArrayIndex_t = int;
+using ArrayIndexUnsigned_t = uint;
 
 //------------------------------------------------------------------------------
 template<class T, ArrayIndex_t capacity_>
 class StaticMemoryPolicy
 {
 public:
-    static constexpr bool IS_MOVEABLE = false;
+    static constexpr bool IS_MOVABLE = false;
 
     //------------------------------------------------------------------------------
     void CopyConstruct(const StaticMemoryPolicy<T, capacity_>& other)
@@ -111,7 +113,7 @@ template<class T>
 class GrowableMemoryPolicy
 {
 public:
-    static constexpr bool IS_MOVEABLE = true;
+    static constexpr bool IS_MOVABLE = true;
 
     //------------------------------------------------------------------------------
     void CopyConstruct(const GrowableMemoryPolicy<T>& other)
@@ -288,6 +290,12 @@ public:
     }
 
     //------------------------------------------------------------------------------
+    bool IsMovable()
+    {
+        return MemoryPolicy::IS_MOVABLE;
+    }
+
+    //------------------------------------------------------------------------------
     TemplArray() = default;
 
     //------------------------------------------------------------------------------
@@ -332,14 +340,14 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    template<class = std::enable_if_t<MemoryPolicy::IS_MOVEABLE, void>>
+    template<class = std::enable_if_t<MemoryPolicy::IS_MOVABLE, void>>
     TemplArray(TemplArray<T, MemoryPolicy>&& other)
     {
         memory_.MoveConstruct(std::move(other.memory_));
     }
 
     //------------------------------------------------------------------------------
-    template<class = std::enable_if_t<MemoryPolicy::IS_MOVEABLE, void>>
+    template<class = std::enable_if_t<MemoryPolicy::IS_MOVABLE, void>>
     TemplArray<T, MemoryPolicy>& operator=(TemplArray<T, MemoryPolicy>&& other)
     {
         if (this == &other)
@@ -423,7 +431,7 @@ public:
             else
             {
                 // count_ is at least 1, otherwise there is early exit
-                // New last place is not initialized item, move construct there
+                // New Back place is not initialized item, move construct there
                 new(Data() + Count()) T(std::move(Data()[Count() - 1]));
                 // Other items can be move assigned
                 for (T* item = Data() + Count() - 1; item != Data() + index; --item)
@@ -459,11 +467,8 @@ public:
     */
     bool AddUnique(const T& item)
     {
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
-        {
-            if (Data()[i] == item)
-                return false;
-        }
+        if (IndexOf(item) != IndexBad())
+            return false;
 
         Add(item);
         return true;
@@ -505,7 +510,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void RemoveLast()
+    void RemoveBack()
     {
         Remove(Count() - 1);
     }
@@ -530,28 +535,28 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] const T& First() const
+    [[nodiscard]] const T& Front() const
     {
         HS_ASSERT(Count());
         return Data()[0];
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] T& First()
+    [[nodiscard]] T& Front()
     {
         HS_ASSERT(Count());
         return Data()[0];
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] const T& Last() const
+    [[nodiscard]] const T& Back() const
     {
         HS_ASSERT(Count());
         return Data()[Count() - 1];
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] T& Last()
+    [[nodiscard]] T& Back()
     {
         HS_ASSERT(Count());
         return Data()[Count() - 1];
@@ -654,5 +659,533 @@ Span<const T> MakeSpan(const TemplArray<T, MemoryPolicyT>& array)
 {
     return Span<const T>(array.Data(), array.Count());
 }
+
+//------------------------------------------------------------------------------
+// Small array
+//------------------------------------------------------------------------------
+template<class T>
+class SmallArrayBase
+{
+public:
+    using Item_t = T;
+    using Iter_t = T*;
+    using ConstIter_t = const Iter_t;
+
+    //------------------------------------------------------------------------------
+    ~SmallArrayBase()
+    {
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
+            items_[i].~T();
+
+        if (!IsSmall())
+        {
+            FreeAligned(items_);
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] ArrayIndex_t Count() const
+    {
+        return count_;
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] ArrayIndex_t Capacity() const
+    {
+        return capacity_;
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] bool IsEmpty() const
+    {
+        return count_ == 0;
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] T* Data()
+    {
+        return items_;
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] const T* Data() const
+    {
+        return items_;
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] const T& operator[](ArrayIndex_t index) const
+    {
+        HS_ASSERT(index < Count());
+        return items_[index];
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] T& operator[](ArrayIndex_t index)
+    {
+        HS_ASSERT(index < Count());
+        return items_[index];
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] const T& Front() const
+    {
+        HS_ASSERT(Count());
+        return Data()[0];
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] T& Front()
+    {
+        HS_ASSERT(Count());
+        return Data()[0];
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] const T& Back() const
+    {
+        HS_ASSERT(Count());
+        return Data()[Count() - 1];
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] T& Back()
+    {
+        HS_ASSERT(Count());
+        return Data()[Count() - 1];
+    }
+
+    //------------------------------------------------------------------------------
+    template<class ...ArgsT>
+    void EmplaceBack(ArgsT&& ...args)
+    {
+        if (Count() >= Capacity())
+        {
+            Grow();
+        }
+
+        HS_ASSERT(Count() < Capacity());
+        new(Data() + Count()) T(std::forward<ArgsT>(args)...);
+        ++count_;
+    }
+
+    //------------------------------------------------------------------------------
+    template<class ...ArgsT>
+    void Emplace(ArrayIndex_t index, ArgsT&& ...args)
+    {
+        HS_ASSERT(index <= Count());
+        if (index == Count())
+        {
+            EmplaceBack(std::forward<ArgsT>(args)...);
+            return;
+        }
+
+        if (Count() == Capacity())
+        {
+            GrowForInsert(index);
+            new(Data() + index) T(std::forward<ArgsT>(args)...);
+        }
+        else
+        {
+            // Move items by one to the right
+            if constexpr (std::is_trivial_v<T>)
+            {
+                memmove(&Data()[index + 1], &Data()[index], (Count() - index) * sizeof(T));
+            }
+            else
+            {
+                // count_ is at least 1, otherwise there is early exit
+                // New last place is not initialized item, move construct there
+                new(Data() + Count()) T(std::move(Data()[Count() - 1]));
+                // Other items can be move assigned
+                for (T* item = Data() + Count() - 1; item != Data() + index; --item)
+                    *item = std::move(*(item - 1));
+            }
+
+            Data()[index] = T(std::forward<ArgsT>(args)...);
+        }
+
+        HS_ASSERT(Count() < Capacity());
+        ++count_;
+    }
+
+    //------------------------------------------------------------------------------
+    void Add(const T& item)
+    {
+        // Check for aliasing
+        HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
+        EmplaceBack(item);
+    }
+
+    //------------------------------------------------------------------------------
+    void Add(T&& item)
+    {
+        // Check for aliasing
+        HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
+        EmplaceBack(std::move(item));
+    }
+
+    /*!
+    If the item is present in the array returs false, if not present adds it and returns true.
+    O(n) complexity where n is the number of elements in the array.
+    */
+    bool AddUnique(const T& item)
+    {
+        if (IndexOf(item) != IndexBad())
+            return false;
+
+        Add(item);
+        return true;
+    }
+
+    //------------------------------------------------------------------------------
+    void Insert(ArrayIndex_t index, const T& item)
+    {
+        // Check for aliasing
+        HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
+        Emplace(index, item);
+    }
+
+    //------------------------------------------------------------------------------
+    void Insert(ArrayIndex_t index, T&& item)
+    {
+        // Check for aliasing
+        HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
+        Emplace(index, std::move(item));
+    }
+
+    //------------------------------------------------------------------------------
+    void Remove(ArrayIndex_t index)
+    {
+        HS_ASSERT(index < Count());
+
+        if constexpr (std::is_trivial_v<T>)
+        {
+            memmove(&Data()[index], &Data()[index + 1], (Count() - index) * sizeof(T));
+        }
+        else
+        {
+            for (T* item = Data() + index; item != Data() + Count() - 1; ++item)
+                *item = std::move(item[1]);
+            Data()[Count() - 1].~T();
+        }
+
+        --count_;
+    }
+
+    //------------------------------------------------------------------------------
+    void RemoveBack()
+    {
+        Remove(Count() - 1);
+    }
+
+    //------------------------------------------------------------------------------
+    void Clear()
+    {
+        for (ArrayIndex_t i = 0; i < Count(); ++i)
+        {
+            Data()[i].~T();
+        }
+        count_ = 0;
+    }
+
+    //------------------------------------------------------------------------------
+    void Reserve(ArrayIndex_t capacity)
+    {
+        if (capacity <= Capacity())
+            return;
+
+        Grow(capacity);
+    }
+
+    #pragma region Iterators
+    //------------------------------------------------------------------------------
+    // Iterators
+    //------------------------------------------------------------------------------
+    [[nodiscard]] ConstIter_t cbegin() const
+    {
+        return Data();
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] ConstIter_t begin() const
+    {
+        return cbegin();
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] Iter_t begin()
+    {
+        return Data();
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] ConstIter_t cend() const
+    {
+        return Data() + Count();
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] ConstIter_t end() const
+    {
+        return cend();
+    }
+
+    //------------------------------------------------------------------------------
+    [[nodiscard]] Iter_t end()
+    {
+        return Data() + Count();
+    }
+    #pragma endregion
+
+protected:
+    T* items_;
+    ArrayIndex_t count_{};
+    ArrayIndex_t capacity_;
+
+    //------------------------------------------------------------------------------
+    SmallArrayBase(ArrayIndex_t initialCapacity)
+        : capacity_(initialCapacity), items_(reinterpret_cast<T*>(GetSmallData()))
+    {
+    }
+
+    // Protected so we can test it
+
+    //! Return pointer to the small items array
+    void* GetSmallData() const;
+
+    //! Determine whether the array is small or dynamically allocated
+    bool IsSmall() const
+    {
+        return items_ == GetSmallData();
+    }
+
+private:
+    //------------------------------------------------------------------------------
+    ArrayIndex_t GetNextCapacity()
+    {
+        auto nextCapacity = static_cast<ArrayIndex_t>(NextPow2(static_cast<ArrayIndexUnsigned_t>(capacity_)));
+        HS_ASSERT(nextCapacity > 0);
+        return nextCapacity;
+    }
+
+    //------------------------------------------------------------------------------
+    void Grow()
+    {
+        Grow(GetNextCapacity());
+    }
+
+    //------------------------------------------------------------------------------
+    void Grow(ArrayIndex_t newCapacity)
+    {
+        capacity_ = newCapacity;
+        auto newItems = reinterpret_cast<T*>(AllocAligned(capacity_ * sizeof(T), alignof(T)));
+
+        if constexpr (std::is_trivial_v<T>)
+        {
+            memcpy(newItems, items_, count_ * sizeof(T));
+        }
+        else
+        {
+            for (ArrayIndex_t i = 0; i < count_; ++i)
+            {
+                new(newItems + i) T(std::move(items_[i]));
+                items_[i].~T();
+            }
+        }
+
+        if (!IsSmall())
+        {
+            FreeAligned(items_);
+        }
+
+        items_ = newItems;
+    }
+
+    //------------------------------------------------------------------------------
+    void GrowForInsert(ArrayIndex_t index)
+    {
+        capacity_ = GetNextCapacity();
+
+        auto newItems = static_cast<T*>(AllocAligned(sizeof(T) * capacity_, alignof(T)));
+        if constexpr (std::is_trivial_v<T>)
+        {
+            memcpy(newItems, items_, sizeof(T) * index);
+            memcpy(&newItems[index + 1], &items_[index], (count_ - index) * sizeof(T));
+        }
+        else
+        {
+            for (ArrayIndex_t i = 0; i < index; ++i)
+            {
+                new(newItems + i) T(std::move(items_[i]));
+                items_[i].~T();
+            }
+            for (ArrayIndex_t i = index; i < count_; ++i)
+            {
+                new(newItems + i + 1) T(std::move(items_[i]));
+                items_[i].~T();
+            }
+        }
+        FreeAligned(items_);
+        items_ = newItems;
+    }
+};
+
+//------------------------------------------------------------------------------
+//! Offset of the small item array
+template <class T/*, typename = void*/>
+struct SmallVectorAlignmentAndSize
+{
+  SmallArrayBase<T> base_;
+  uint8 alignas(T) smallData_;
+};
+
+//------------------------------------------------------------------------------
+template<class T>
+void* SmallArrayBase<T>::GetSmallData() const
+{
+    uintptr thisPtr = reinterpret_cast<uintptr>(this);
+    return reinterpret_cast<void*>(thisPtr + offsetof(SmallVectorAlignmentAndSize<T>, smallData_));
+}
+
+//------------------------------------------------------------------------------
+template<class T, ArrayIndex_t CAPACITY>
+class SmallArrayStorage
+{
+protected:
+    alignas(T) uint8 smallItems_[CAPACITY * sizeof(T)];
+};
+
+//------------------------------------------------------------------------------
+// TODO(pavel): Is the alignas necessary here? If we enable it the size of the
+// SmallArray increases.
+template<class T>
+class /*alignas(T)*/ SmallArrayStorage<T, 0> { };
+
+//------------------------------------------------------------------------------
+template<class T, ArrayIndex_t SMALL_CAPACITY>
+class SmallArray : public SmallArrayBase<T>, public SmallArrayStorage<T, SMALL_CAPACITY>
+{
+public:
+    //------------------------------------------------------------------------------
+    bool IsMovable()
+    {
+        return !IsSmall();
+    }
+
+    //------------------------------------------------------------------------------
+    SmallArray() : SmallArrayBase(SMALL_CAPACITY)
+    {
+    }
+
+    //------------------------------------------------------------------------------
+    SmallArray(const SmallArray<T, SMALL_CAPACITY>& other)
+        : SmallArrayBase(SMALL_CAPACITY)
+    {
+        capacity_ = other.capacity_;
+        count_ = other.count_;
+
+        if (!other.IsSmall())
+        {
+            items_ = reinterpret_cast<T*>(AllocAligned(other.capacity_ * sizeof(T), alignof(T)));
+        }
+
+        for (ArrayIndex_t i = 0; i < count_; ++i)
+        {
+            new(items_ + i) T(other.items_[i]);
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    SmallArray(SmallArray<T, SMALL_CAPACITY>&& other)
+        : SmallArrayBase(SMALL_CAPACITY)
+    {
+        capacity_ = other.capacity_;
+        count_ = other.count_;
+
+        if (!other.IsSmall())
+        {
+            items_ = other.items_;
+            other.items_ = nullptr;
+        }
+        else
+        {
+            // Cannot move internal buffer, fallback to copy
+            for (ArrayIndex_t i = 0; i < count_; ++i)
+            {
+                new(items_ + i) T(std::move(other.items_[i]));
+            }
+        }
+
+        other.count_ = 0;
+    }
+
+    //------------------------------------------------------------------------------
+    SmallArray<T, SMALL_CAPACITY>& operator=(const SmallArray<T, SMALL_CAPACITY>& other)
+    {
+        if (this == &other)
+            return *this;
+
+        for (ArrayIndex_t i = 0; i < count_; ++i)
+        {
+            items_[i].~T();
+        }
+
+        if (capacity_ != other.capacity_ && !IsSmall())
+        {
+            FreeAligned(items_);
+        }
+
+        capacity_ = other.capacity_;
+        count_ = other.count_;
+
+        if (!other.IsSmall())
+        {
+            items_ = reinterpret_cast<T*>(AllocAligned(capacity_ * sizeof(T), alignof(T)));
+        }
+
+        for (ArrayIndex_t i = 0; i < count_; ++i)
+        {
+            new(items_ + i) T(other.items_[i]);
+        }
+
+        return *this;
+    }
+
+    //------------------------------------------------------------------------------
+    SmallArray<T, SMALL_CAPACITY>& operator=(SmallArray<T, SMALL_CAPACITY>&& other)
+    {
+        if (this == &other)
+            return *this;
+
+        for (ArrayIndex_t i = 0; i < count_; ++i)
+        {
+            items_[i].~T();
+        }
+
+        if (capacity_ != other.capacity_ && !IsSmall())
+        {
+            FreeAligned(items_);
+        }
+
+        capacity_ = other.capacity_;
+        count_ = other.count_;
+
+        if (!other.IsSmall())
+        {
+            items_ = other.items_;
+        }
+        else
+        {
+            // Cannot move internal buffer, fallback to copy
+            for (ArrayIndex_t i = 0; i < count_; ++i)
+            {
+                new(items_ + i) T(std::move(other.items_[i]));
+            }
+        }
+
+        return *this;
+    }
+};
 
 }

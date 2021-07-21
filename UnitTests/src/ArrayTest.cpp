@@ -2,14 +2,12 @@
 
 #include "Containers/Array.h"
 
-#include <vector>
-
 using namespace hsTest;
 using namespace hs;
 
 //------------------------------------------------------------------------------
 template<bool IS_MOVEABLE>
-struct alignas(32) NotTrivialType
+struct alignas(128) NotTrivialType
 {
     int x_;
     int moveCount_{};
@@ -129,19 +127,19 @@ public:
         TEST_TRUE(a[0] == 1);
         TEST_TRUE(a[1] == 2);
 
-        a.RemoveLast();
+        a.RemoveBack();
 
         TEST_TRUE(a.Count() == 31);
         TEST_TRUE(a[0] == 1);
     }
 
-    void TestFirstLast(TestResult& test_result)
+    void TestFrontBack(TestResult& test_result)
     {
         ArrayT a;
         AddToArray(33, 0, a);
 
-        TEST_TRUE(a.First() == 0);
-        TEST_TRUE(a.Last() == 32);
+        TEST_TRUE(a.Front() == 0);
+        TEST_TRUE(a.Back() == 32);
     }
 
     void TestData(TestResult& test_result)
@@ -180,8 +178,8 @@ public:
 
         b.Add(3);
 
-        TEST_TRUE(b.Last() == 3);
-        TEST_TRUE(a.Last() == 2);
+        TEST_TRUE(b.Back() == 3);
+        TEST_TRUE(a.Back() == 2);
 
         a.Remove(0);
 
@@ -190,17 +188,15 @@ public:
         TEST_TRUE(a.Data() != b.Data());
     }
 
-    void TestMove(TestResult& test_result)
+    void TestMove(TestResult& test_result, int count)
     {
         ArrayT a;
-        a.Add(0);
-        a.Add(1);
-        a.Add(2);
+        AddToArray(count, 0, a);
 
         auto aDataBefore = a.Data();
         ArrayT b{ std::move(a) };
 
-        if (ArrayT::MemoryPolicy_t::IS_MOVEABLE)
+        if (a.IsMovable())
             TEST_TRUE(a.Data() != aDataBefore);
         else
             TEST_TRUE(a.Data() == aDataBefore);
@@ -211,9 +207,9 @@ public:
         b.Add(6);
 
 
-        TEST_TRUE(b.First() == 0);
-        TEST_TRUE(b.Last() == 6);
-        TEST_TRUE(b.Count() == 7);
+        TEST_TRUE(b.Front() == 0);
+        TEST_TRUE(b.Back() == 6);
+        TEST_TRUE(b.Count() == count + 4);
     }
 
     void TestMoveOnlyType(TestResult& test_result)
@@ -238,8 +234,8 @@ public:
         a.Add(std::move(mo));
 
         TEST_TRUE(a.Count() == 3);
-        TEST_TRUE(a.First().x_ == 1);
-        TEST_TRUE(a.Last().x_ == 3);
+        TEST_TRUE(a.Front().x_ == 1);
+        TEST_TRUE(a.Back().x_ == 3);
     }
 
     void TestSelfAsignment(TestResult& test_result)
@@ -271,6 +267,23 @@ public:
         TEST_TRUE((uintptr)a.Data() % alignof(ArrayT::Item_t) == 0);
     }
 
+    void TestReserve(TestResult& test_result)
+    {
+        ArrayT a;
+
+        auto oldCapacity = a.Capacity();
+        a.Reserve(oldCapacity + 1);
+
+        TEST_TRUE(a.Capacity() > oldCapacity);
+
+        AddToArray(128, 0, a);
+
+        auto bigCapacity = a.Capacity();
+        a.Reserve(bigCapacity + 1);
+
+        TEST_TRUE(a.Capacity() == bigCapacity + 1);
+    }
+
     void TestGrowAfterReserve(TestResult& test_result)
     {
         ArrayT a;
@@ -288,18 +301,26 @@ public:
 };
 
 //------------------------------------------------------------------------------
-#define TEST_ALL_ARRAYS(testName) \
+#define TEST_DYNAMIC_ARRAYS(testName, ...) \
     ArrayTester<Array<int>> tester; \
-    tester.testName(test_result); \
-    \
-    ArrayTester<StaticArray<int, 128>> testerStatic; \
-    testerStatic.testName(test_result);\
+    tester.testName(test_result, ## __VA_ARGS__); \
     \
     ArrayTester<Array<NotTrivialType<true>>> testerNotTrivial; \
-    testerNotTrivial.testName(test_result); \
+    testerNotTrivial.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<int, 10>> smallTester; \
+    smallTester.testName(test_result, ## __VA_ARGS__);
+
+//------------------------------------------------------------------------------
+#define TEST_ALL_ARRAYS(testName, ...) \
+{ \
+    TEST_DYNAMIC_ARRAYS(testName, ## __VA_ARGS__) \
+    ArrayTester<StaticArray<int, 128>> testerStatic; \
+    testerStatic.testName(test_result, ## __VA_ARGS__);\
     \
     ArrayTester<StaticArray<NotTrivialType<true>, 128>> testerNotTrivialStatic; \
-    testerNotTrivialStatic.testName(test_result);
+    testerNotTrivialStatic.testName(test_result, ## __VA_ARGS__); \
+}
 
 //------------------------------------------------------------------------------
 TEST_DEF(Array_Add_InsertsAtTheEnd)
@@ -320,13 +341,13 @@ TEST_DEF(Array_RemoveElements_Works)
 }
 
 //------------------------------------------------------------------------------
-TEST_DEF(Array_FirstLast_Work)
+TEST_DEF(Array_FrontBack_Work)
 {
-    TEST_ALL_ARRAYS(TestFirstLast);
+    TEST_ALL_ARRAYS(TestFrontBack);
 }
 
 //------------------------------------------------------------------------------
-TEST_DEF(Array_Data_ReturnPtrToFirst)
+TEST_DEF(Array_Data_ReturnPtrToFront)
 {
     TEST_ALL_ARRAYS(TestData)
 }
@@ -346,7 +367,8 @@ TEST_DEF(Array_CopyOperations_MakeCopy)
 //------------------------------------------------------------------------------
 TEST_DEF(Array_MoveOperations_Work)
 {
-    TEST_ALL_ARRAYS(TestMove);
+    TEST_ALL_ARRAYS(TestMove, 3);
+    TEST_ALL_ARRAYS(TestMove, 12);
 }
 
 //------------------------------------------------------------------------------
@@ -365,6 +387,12 @@ TEST_DEF(Array_SelfAsignment_IsHandled)
 TEST_DEF(Array_Data_IsAligned)
 {
     TEST_ALL_ARRAYS(TestDataAlignment);
+}
+
+//------------------------------------------------------------------------------
+TEST_DEF(Array_Reserve_Works)
+{
+    TEST_DYNAMIC_ARRAYS(TestReserve);
 }
 
 //------------------------------------------------------------------------------
@@ -389,12 +417,46 @@ TEST_DEF(StaticArray_Move_IsDisabled)
     b.Add(5);
     b.Add(6);
 
-    TEST_TRUE(a.First() == 0);
-    TEST_TRUE(a.Last() == 2);
+    TEST_TRUE(a.Front() == 0);
+    TEST_TRUE(a.Back() == 2);
     TEST_TRUE(a.Count() == 3);
 
-    TEST_TRUE(b.First() == 0);
-    TEST_TRUE(b.Last() == 6);
+    TEST_TRUE(b.Front() == 0);
+    TEST_TRUE(b.Back() == 6);
     TEST_TRUE(b.Count() == 7);
+}
+
+//------------------------------------------------------------------------------
+template<class T>
+class SmallArrayTester : public SmallArray<T, 10>
+{
+public:
+    void Test(TestResult test_result)
+    {
+        TEST_TRUE(GetSmallData() == smallItems_);
+        TEST_TRUE((uintptr)smallItems_ % alignof(T) == 0);
+        TEST_TRUE(IsSmall());
+
+        for (int i = 0; i < 10; ++i)
+        {
+            Add(i);
+        }
+        TEST_TRUE(IsSmall());
+
+        Add(11);
+        TEST_FALSE(IsSmall());
+    };
+};
+
+//------------------------------------------------------------------------------
+TEST_DEF(SmallArray_Hacks_Work)
+{
+    SmallArrayTester<NotTrivialType<true>> tester;
+    tester.Test(test_result);
+
+    constexpr int arrSize = sizeof(Array<NotTrivialType<true>>);
+    constexpr int baseSize = sizeof(SmallArrayBase<NotTrivialType<true>>);
+    constexpr int smallArrSize = sizeof(SmallArray<NotTrivialType<true>, 0>);
+    static_assert(smallArrSize == baseSize, "Small array with 0 sized small buffer must not have any overhead");
 }
 

@@ -60,16 +60,16 @@ RESULT RenderBufferCache::Init()
 RenderBufferEntry RenderBufferCache::BeginAlloc(uint size, uint align, void** data)
 {
     align = Max(align, minAlignment_);
-    entries_.First().begin_ = Align(entries_.First().begin_, align);
+    entries_.Front().begin_ = Align(entries_.Front().begin_, align);
 
-    if ((int)BUFFER_SIZE - (int)entries_.First().begin_ < (int)size)
+    if ((int)BUFFER_SIZE - (int)entries_.Front().begin_ < (int)size)
     {
-        if (entries_.Last().safeToUseFrame_ <= g_Render->GetCurrentFrame())
+        if (entries_.Back().safeToUseFrame_ <= g_Render->GetCurrentFrame())
         {
-            auto last = entries_.Last();
+            auto last = entries_.Back();
             entries_.Insert(0, last);
-            entries_.RemoveLast();
-            entries_.First().begin_ = 0;
+            entries_.RemoveBack();
+            entries_.Front().begin_ = 0;
         }
         else
         {
@@ -85,14 +85,14 @@ RenderBufferEntry RenderBufferCache::BeginAlloc(uint size, uint align, void** da
     }
 
     RenderBufferEntry result;
-    result.buffer_ = entries_.First().buffer_->GetBuffer();
-    result.offset_ = entries_.First().begin_;
+    result.buffer_ = entries_.Front().buffer_->GetBuffer();
+    result.offset_ = entries_.Front().begin_;
     result.size_ = size;
 
-    *data = (uint8*)entries_.First().buffer_->Map() + entries_.First().begin_;
+    *data = (uint8*)entries_.Front().buffer_->Map() + entries_.Front().begin_;
 
-    entries_.First().safeToUseFrame_ = g_Render->GetSafeFrame();
-    entries_.First().begin_ += size;
+    entries_.Front().safeToUseFrame_ = g_Render->GetSafeFrame();
+    entries_.Front().begin_ += size;
 
     return result;
 }
@@ -100,7 +100,7 @@ RenderBufferEntry RenderBufferCache::BeginAlloc(uint size, uint align, void** da
 //------------------------------------------------------------------------------
 void RenderBufferCache::EndAlloc()
 {
-    entries_.First().buffer_->Unmap();
+    entries_.Front().buffer_->Unmap();
 }
 
 //------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ uint RenderBufferCache::GetMaxSize() const
 //------------------------------------------------------------------------------
 int RenderBufferCache::GetRemainingBufferSize(uint align) const
 {
-    return (int)BUFFER_SIZE - (int)Align(entries_.First().begin_, align);
+    return (int)BUFFER_SIZE - (int)Align(entries_.Front().begin_, align);
 }
 
 }
