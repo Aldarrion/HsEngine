@@ -639,28 +639,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
-template<class T>
-using Array = TemplArray<T, GrowableMemoryPolicy<T>>;
-
-//------------------------------------------------------------------------------
-template<class T, ArrayIndex_t capacity>
-using StaticArray = TemplArray<T, StaticMemoryPolicy<T, capacity>>;
-
-//------------------------------------------------------------------------------
-template<class T, class MemoryPolicyT>
-Span<T> MakeSpan(TemplArray<T, MemoryPolicyT>& array)
-{
-    return Span<T>(array.Data(), array.Count());
-}
-
-//------------------------------------------------------------------------------
-template<class T, class MemoryPolicyT>
-Span<const T> MakeSpan(const TemplArray<T, MemoryPolicyT>& array)
-{
-    return Span<const T>(array.Data(), array.Count());
-}
-
-//------------------------------------------------------------------------------
 // Small array
 //------------------------------------------------------------------------------
 template<class T>
@@ -1198,5 +1176,42 @@ public:
         return *this;
     }
 };
+
+//------------------------------------------------------------------------------
+template<class T>
+//using Array = TemplArray<T, GrowableMemoryPolicy<T>>;
+using Array = SmallArray<T, 0>;
+
+//------------------------------------------------------------------------------
+template<class T, ArrayIndex_t capacity>
+using StaticArray = TemplArray<T, StaticMemoryPolicy<T, capacity>>;
+
+//------------------------------------------------------------------------------
+template<class T, class MemoryPolicyT>
+Span<T> MakeSpan(TemplArray<T, MemoryPolicyT>& array)
+{
+    return Span<T>(array.Data(), array.Count());
+}
+
+//------------------------------------------------------------------------------
+template<class T, class MemoryPolicyT>
+Span<const T> MakeSpan(const TemplArray<T, MemoryPolicyT>& array)
+{
+    return Span<const T>(array.Data(), array.Count());
+}
+
+//------------------------------------------------------------------------------
+template<class T>
+Span<T> MakeSpan(SmallArrayBase<T>& array)
+{
+    return Span<T>(array.Data(), array.Count());
+}
+
+//------------------------------------------------------------------------------
+template<class T>
+Span<const T> MakeSpan(const SmallArrayBase<T>& array)
+{
+    return Span<const T>(array.Data(), array.Count());
+}
 
 }

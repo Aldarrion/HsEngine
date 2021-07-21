@@ -338,16 +338,43 @@ public:
     }
 };
 
+template<class T>
+using OldDynamicArray_t = TemplArray<T, GrowableMemoryPolicy<T>>;
+
 //------------------------------------------------------------------------------
 #define TEST_DYNAMIC_ARRAYS(testName, ...) \
-    ArrayTester<Array<int>> tester; \
+    ArrayTester<OldDynamicArray_t<int>> tester; \
     tester.testName(test_result, ## __VA_ARGS__); \
     \
-    ArrayTester<Array<NotTrivialType<true>>> testerNotTrivial; \
+    ArrayTester<OldDynamicArray_t<NotTrivialType<true>>> testerNotTrivial; \
     testerNotTrivial.testName(test_result, ## __VA_ARGS__); \
     \
     ArrayTester<SmallArray<int, 10>> smallTester; \
-    smallTester.testName(test_result, ## __VA_ARGS__);
+    smallTester.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<NotTrivialType<true>, 10>> smallTesterNotTrivial; \
+    smallTesterNotTrivial.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<NotTrivialType<false>, 10>> smallTesterNotMovable; \
+    smallTesterNotMovable.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<int, 0>> smallTesterEmpty; \
+    smallTesterEmpty.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<NotTrivialType<true>, 0>> smallTesterEmptyNotTrivial; \
+    smallTesterEmptyNotTrivial.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<NotTrivialType<false>, 0>> smallTesterEmptyNotMovable; \
+    smallTesterEmptyNotMovable.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<int, 1024>> smallTesterLarge; \
+    smallTesterLarge.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<NotTrivialType<true>, 1024>> smallTesterLargeNotTrivial; \
+    smallTesterLargeNotTrivial.testName(test_result, ## __VA_ARGS__); \
+    \
+    ArrayTester<SmallArray<NotTrivialType<false>, 1024>> smallTesterLargeNotMovable; \
+    smallTesterLargeNotMovable.testName(test_result, ## __VA_ARGS__);
 
 //------------------------------------------------------------------------------
 #define TEST_ALL_ARRAYS(testName, ...) \
