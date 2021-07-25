@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
+set(MSVC_LIKE (MSVC OR "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC"))
+
 # To enable MSVC_RUNTIME_LIBRARY
 if(MSVC)
     cmake_policy(SET CMP0091 NEW)
@@ -114,21 +116,21 @@ if(WIN32)
 # TODO else() # Linux
 endif()
 
-## Platform definitions
-if(WIN32)
-    target_compile_definitions(${PROJ_NAME} PUBLIC HS_WINDOWS=1)
-elseif(UNIX)
-    target_compile_definitions(${PROJ_NAME} PUBLIC HS_LINUX=1)
-endif()
+## Platform definitions - handled in code now since this is not reliable
+#if(WIN32)
+#    target_compile_definitions(${PROJ_NAME} PUBLIC HS_WINDOWS=1)
+#elseif(UNIX)
+#    target_compile_definitions(${PROJ_NAME} PUBLIC HS_LINUX=1)
+#endif()
 
-## Compiler definitions
-if(MSVC)
-    target_compile_definitions(${PROJ_NAME} PUBLIC HS_MSVC=1)
-elseif(CLANG)
-    target_compile_definitions(${PROJ_NAME} PUBLIC HS_CLANG=1)
-elseif(GCC)
-    target_compile_definitions(${PROJ_NAME} PUBLIC HS_GCC=1)
-endif()
+## Compiler definitions - handled in code now since this is not reliable
+#if(MSVC)
+#    target_compile_definitions(${PROJ_NAME} PUBLIC HS_MSVC=1)
+#elseif(CLANG)
+#    target_compile_definitions(${PROJ_NAME} PUBLIC HS_CLANG=1)
+#elseif(GCC)
+#    target_compile_definitions(${PROJ_NAME} PUBLIC HS_GCC=1)
+#endif()
 
 ##
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

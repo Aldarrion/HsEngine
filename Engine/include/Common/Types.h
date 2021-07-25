@@ -21,6 +21,17 @@ using int64     = int64_t;
 
 using uintptr   = uintptr_t;
 
+/*!
+Unsigned types come with a lot of hassle
+64-bit by default is wasteful but more importantly it puts sign extension to
+many places where 32/64-bit is mixed.
+
+If we'll need more than 2G elements in an array we can make this a template
+argument and use int64.
+*/
+using Index_t = int;
+using IndexUnsigned_t = uint;
+
 class Texture;
 class Shader;
 class VertexBuffer;

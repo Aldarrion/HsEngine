@@ -9,6 +9,7 @@ macro(SetupCompiler projectName)
 
     # Shared setup for all MSVC-like compilers
     if(MSVC)
+        #message(FATAL_ERROR "MSVC detected")
         # Disable C++ exceptions
         string(REGEX REPLACE "/EH[a-z]+" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
         #add_definitions(/EHa- /EHs- /EHc- /EHr-)
@@ -17,7 +18,9 @@ macro(SetupCompiler projectName)
         #string(REGEX REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
         #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR-")
         add_definitions(/GR-)
+    endif()
 
-        add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    if(MSVC_LIKE)
+        add_definitions(/D_CRT_SECURE_NO_WARNINGS)
     endif()
 endmacro()

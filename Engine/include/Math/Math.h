@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Config.h"
+
 #include "Common/Types.h"
 #include "Common/Assert.h"
 
@@ -25,6 +27,18 @@ template<class NumberT>
 inline constexpr NumberT Min(NumberT a, NumberT b)
 {
     return a < b ? a : b;
+}
+
+//------------------------------------------------------------------------------
+inline int Ceilf(float f)
+{
+    return ceilf(f);
+}
+
+//------------------------------------------------------------------------------
+inline int Ceili(float f)
+{
+    return static_cast<int>(ceilf(f));
 }
 
 //------------------------------------------------------------------------------

@@ -21,7 +21,7 @@ void* AllocAligned(uint64 size, uint64 alignment)
 
     size = Align(size, alignment);
 
-    #if HS_MSVC
+    #if HS_WINDOWS
         return _aligned_malloc(size, alignment);
     #else
         return std::aligned_alloc(alignment, size);
@@ -41,12 +41,13 @@ void* ReallocAligned(void* memory, uint64 oldSize, uint64 newSize, uint64 alignm
 
     newSize = Align(newSize, alignment);
 
-    #if HS_MSVC
+    #if HS_WINDOWS
         return _aligned_realloc(memory, newSize, alignment);
     #else
-        void* newMemory = std::aligned_alloc(alignment, newSize);
-        memcpy(newMemory, memory, oldSize);
-        std::free(memory);
+        realloc(memory, newSize);
+        //void* newMemory = std::aligned_alloc(alignment, newSize);
+        //memcpy(newMemory, memory, oldSize);
+        //std::free(memory);
     #endif
 }
 
@@ -59,7 +60,7 @@ void Free(void* memory)
 //------------------------------------------------------------------------------
 void FreeAligned(void* memory)
 {
-    #if HS_MSVC
+    #if HS_WINDOWS
         _aligned_free(memory);
     #else
         std::free(memory);

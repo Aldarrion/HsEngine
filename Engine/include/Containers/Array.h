@@ -19,19 +19,8 @@
 namespace hs
 {
 
-/*!
-Unsigned types come with a lot of hassle
-64-bit by default is wasteful but more importantly it puts sign extension to
-many places where 32/64-bit is mixed.
-
-If we'll need more than 2G elements in an array we can make this a template
-argument and use int64.
-*/
-using ArrayIndex_t = int;
-using ArrayIndexUnsigned_t = uint;
-
 //------------------------------------------------------------------------------
-template<class T, ArrayIndex_t capacity_>
+template<class T, Index_t capacity_>
 class StaticMemoryPolicy
 {
 public:
@@ -62,25 +51,25 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void EnsureEmplace(ArrayIndex_t index)
+    void EnsureEmplace(Index_t index)
     {
         HS_ASSERT(false && "Static array size cannot grow");
     }
 
     //------------------------------------------------------------------------------
-    void Grow(ArrayIndex_t capacity)
+    void Grow(Index_t capacity)
     {
         HS_ASSERT(false && "Static array size cannot grow");
     }
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t& CountMut()
+    Index_t& CountMut()
     {
         return count_;
     }
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t Count() const
+    Index_t Count() const
     {
         return count_;
     }
@@ -98,14 +87,14 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t Capacity() const
+    Index_t Capacity() const
     {
         return capacity_;
     }
 
 private:
     alignas(T) uint8 items_[capacity_ * sizeof(T)];
-    ArrayIndex_t count_{};
+    Index_t count_{};
 };
 
 //------------------------------------------------------------------------------
@@ -178,7 +167,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void EnsureEmplace(ArrayIndex_t index)
+    void EnsureEmplace(Index_t index)
     {
         capacity_ = GetNextCapacity();
 
@@ -190,12 +179,12 @@ public:
         }
         else
         {
-            for (ArrayIndex_t i = 0; i < index; ++i)
+            for (Index_t i = 0; i < index; ++i)
             {
                 new(newItems + i) T(std::move(items_[i]));
                 items_[i].~T();
             }
-            for (ArrayIndex_t i = index; i < count_; ++i)
+            for (Index_t i = index; i < count_; ++i)
             {
                 new(newItems + i + 1) T(std::move(items_[i]));
                 items_[i].~T();
@@ -206,7 +195,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Grow(ArrayIndex_t capacity)
+    void Grow(Index_t capacity)
     {
         capacity_ = Max(capacity, MIN_CAPACITY);
         auto newItems = static_cast<T*>(AllocAligned(sizeof(T) * capacity_, alignof(T)));
@@ -216,7 +205,7 @@ public:
         }
         else
         {
-            for (ArrayIndex_t i = 0; i < count_; ++i)
+            for (Index_t i = 0; i < count_; ++i)
             {
                 new(newItems + i) T(std::move(items_[i]));
                 items_[i].~T();
@@ -228,13 +217,13 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t& CountMut()
+    Index_t& CountMut()
     {
         return count_;
     }
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t Count() const
+    Index_t Count() const
     {
         return count_;
     }
@@ -252,22 +241,22 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t Capacity() const
+    Index_t Capacity() const
     {
         return capacity_;
     }
 
 private:
-    static constexpr ArrayIndex_t MIN_CAPACITY = 8;
+    static constexpr Index_t MIN_CAPACITY = 8;
 
-    ArrayIndex_t capacity_{};
-    ArrayIndex_t count_{};
+    Index_t capacity_{};
+    Index_t count_{};
     T* items_{};
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t GetNextCapacity() const
+    Index_t GetNextCapacity() const
     {
-        ArrayIndex_t newCapacity = Max(NextPow2(static_cast<uint>(capacity_)), static_cast<uint>(MIN_CAPACITY));
+        Index_t newCapacity = Max(NextPow2(static_cast<uint>(capacity_)), static_cast<uint>(MIN_CAPACITY));
         HS_ASSERT(newCapacity > 0);
         return newCapacity;
     }
@@ -284,9 +273,9 @@ public:
     using MemoryPolicy_t = MemoryPolicy;
 
     //------------------------------------------------------------------------------
-    static constexpr ArrayIndex_t IndexBad()
+    static constexpr Index_t IndexBad()
     {
-        return (ArrayIndex_t)-1;
+        return (Index_t)-1;
     }
 
     //------------------------------------------------------------------------------
@@ -310,7 +299,7 @@ public:
     //------------------------------------------------------------------------------
     ~TemplArray()
     {
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
+        for (Index_t i = 0; i < Count(); ++i)
             Data()[i].~T();
 
         memory_.Free();
@@ -329,7 +318,7 @@ public:
         if (this == &other)
             return *this;
 
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
+        for (Index_t i = 0; i < Count(); ++i)
             Data()[i].~T();
 
         memory_.Assign(other.memory_);
@@ -340,20 +329,22 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    template<class = std::enable_if_t<MemoryPolicy::IS_MOVABLE, void>>
-    TemplArray(TemplArray<T, MemoryPolicy>&& other)
+    template<class DummyT = void>
+    TemplArray(TemplArray<T, MemoryPolicy>&& other,
+        typename std::enable_if_t<MemoryPolicy::IS_MOVABLE, DummyT>* = 0)
     {
         memory_.MoveConstruct(std::move(other.memory_));
     }
 
     //------------------------------------------------------------------------------
-    template<class = std::enable_if_t<MemoryPolicy::IS_MOVABLE, void>>
-    TemplArray<T, MemoryPolicy>& operator=(TemplArray<T, MemoryPolicy>&& other)
+    template<class DummyT = TemplArray<T, MemoryPolicy>&>
+    typename std::enable_if_t<MemoryPolicy::IS_MOVABLE, DummyT>
+    operator=(TemplArray<T, MemoryPolicy>&& other)
     {
         if (this == &other)
             return *this;
 
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
+        for (Index_t i = 0; i < Count(); ++i)
             Data()[i].~T();
 
         memory_.MoveAssign(std::move(other.memory_));
@@ -362,13 +353,13 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] ArrayIndex_t Count() const
+    [[nodiscard]] Index_t Count() const
     {
         return memory_.Count();
     }
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t Capacity() const
+    Index_t Capacity() const
     {
         return memory_.Capacity();
     }
@@ -380,14 +371,14 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] const T& operator[](ArrayIndex_t index) const
+    [[nodiscard]] const T& operator[](Index_t index) const
     {
         HS_ASSERT(index < Count());
         return memory_.Items()[index];
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] T& operator[](ArrayIndex_t index)
+    [[nodiscard]] T& operator[](Index_t index)
     {
         HS_ASSERT(index < Count());
         return memory_.Items()[index];
@@ -407,7 +398,7 @@ public:
 
     //------------------------------------------------------------------------------
     template<class ...ArgsT>
-    void Emplace(ArrayIndex_t index, ArgsT&& ...args)
+    void Emplace(Index_t index, ArgsT&& ...args)
     {
         HS_ASSERT(index <= Count());
         if (index == Count())
@@ -475,7 +466,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Insert(ArrayIndex_t index, const T& item)
+    void Insert(Index_t index, const T& item)
     {
         // Check for aliasing
         HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
@@ -483,7 +474,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Insert(ArrayIndex_t index, T&& item)
+    void Insert(Index_t index, T&& item)
     {
         // Check for aliasing
         HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
@@ -491,7 +482,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Remove(ArrayIndex_t index)
+    void Remove(Index_t index)
     {
         HS_ASSERT(index < Count());
 
@@ -518,7 +509,7 @@ public:
     //------------------------------------------------------------------------------
     void Clear()
     {
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
+        for (Index_t i = 0; i < Count(); ++i)
         {
             Data()[i].~T();
         }
@@ -526,7 +517,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Reserve(ArrayIndex_t capacity)
+    void Reserve(Index_t capacity)
     {
         if (capacity <= Capacity())
             return;
@@ -575,9 +566,9 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    ArrayIndex_t IndexOf(const T& item) const
+    Index_t IndexOf(const T& item) const
     {
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
+        for (Index_t i = 0; i < Count(); ++i)
         {
             if (Data()[i] == item)
                 return i;
@@ -629,9 +620,9 @@ public:
 private:
     MemoryPolicy memory_;
 
-    void CopyRange(T* dst, const T* src, ArrayIndex_t count)
+    void CopyRange(T* dst, const T* src, Index_t count)
     {
-        for (ArrayIndex_t i = 0; i < count; ++i)
+        for (Index_t i = 0; i < count; ++i)
         {
             dst[i] = src[i];
         }
@@ -652,7 +643,7 @@ public:
     //------------------------------------------------------------------------------
     ~SmallArrayBase()
     {
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
+        for (Index_t i = 0; i < Count(); ++i)
             items_[i].~T();
 
         if (!IsSmall())
@@ -662,13 +653,13 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] ArrayIndex_t Count() const
+    [[nodiscard]] Index_t Count() const
     {
         return count_;
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] ArrayIndex_t Capacity() const
+    [[nodiscard]] Index_t Capacity() const
     {
         return capacity_;
     }
@@ -692,14 +683,14 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] const T& operator[](ArrayIndex_t index) const
+    [[nodiscard]] const T& operator[](Index_t index) const
     {
         HS_ASSERT(index < Count());
         return items_[index];
     }
 
     //------------------------------------------------------------------------------
-    [[nodiscard]] T& operator[](ArrayIndex_t index)
+    [[nodiscard]] T& operator[](Index_t index)
     {
         HS_ASSERT(index < Count());
         return items_[index];
@@ -749,7 +740,7 @@ public:
 
     //------------------------------------------------------------------------------
     template<class ...ArgsT>
-    void Emplace(ArrayIndex_t index, ArgsT&& ...args)
+    void Emplace(Index_t index, ArgsT&& ...args)
     {
         HS_ASSERT(index <= Count());
         if (index == Count())
@@ -817,7 +808,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Insert(ArrayIndex_t index, const T& item)
+    void Insert(Index_t index, const T& item)
     {
         // Check for aliasing
         HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
@@ -825,7 +816,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Insert(ArrayIndex_t index, T&& item)
+    void Insert(Index_t index, T&& item)
     {
         // Check for aliasing
         HS_ASSERT((&item < Data() || &item >= Data() + Capacity()) && "Inserting item from array to itself is not handled");
@@ -833,7 +824,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Remove(ArrayIndex_t index)
+    void Remove(Index_t index)
     {
         HS_ASSERT(index < Count());
 
@@ -860,7 +851,7 @@ public:
     //------------------------------------------------------------------------------
     void Clear()
     {
-        for (ArrayIndex_t i = 0; i < Count(); ++i)
+        for (Index_t i = 0; i < Count(); ++i)
         {
             Data()[i].~T();
         }
@@ -868,7 +859,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    void Reserve(ArrayIndex_t capacity)
+    void Reserve(Index_t capacity)
     {
         if (capacity <= Capacity())
             return;
@@ -918,11 +909,11 @@ public:
 
 protected:
     T* items_;
-    ArrayIndex_t count_{};
-    ArrayIndex_t capacity_;
+    Index_t count_{};
+    Index_t capacity_;
 
     //------------------------------------------------------------------------------
-    SmallArrayBase(ArrayIndex_t initialCapacity)
+    SmallArrayBase(Index_t initialCapacity)
         : capacity_(initialCapacity), items_(reinterpret_cast<T*>(GetSmallData()))
     {
     }
@@ -940,9 +931,9 @@ protected:
 
 private:
     //------------------------------------------------------------------------------
-    ArrayIndex_t GetNextCapacity()
+    Index_t GetNextCapacity()
     {
-        auto nextCapacity = static_cast<ArrayIndex_t>(NextPow2(static_cast<ArrayIndexUnsigned_t>(capacity_)));
+        auto nextCapacity = static_cast<Index_t>(NextPow2(static_cast<IndexUnsigned_t>(capacity_)));
         HS_ASSERT(nextCapacity > 0);
         return nextCapacity;
     }
@@ -954,7 +945,7 @@ private:
     }
 
     //------------------------------------------------------------------------------
-    void Grow(ArrayIndex_t newCapacity)
+    void Grow(Index_t newCapacity)
     {
         capacity_ = newCapacity;
         auto newItems = reinterpret_cast<T*>(AllocAligned(capacity_ * sizeof(T), alignof(T)));
@@ -965,7 +956,7 @@ private:
         }
         else
         {
-            for (ArrayIndex_t i = 0; i < count_; ++i)
+            for (Index_t i = 0; i < count_; ++i)
             {
                 new(newItems + i) T(std::move(items_[i]));
                 items_[i].~T();
@@ -981,7 +972,7 @@ private:
     }
 
     //------------------------------------------------------------------------------
-    void GrowForInsert(ArrayIndex_t index)
+    void GrowForInsert(Index_t index)
     {
         capacity_ = GetNextCapacity();
 
@@ -993,12 +984,12 @@ private:
         }
         else
         {
-            for (ArrayIndex_t i = 0; i < index; ++i)
+            for (Index_t i = 0; i < index; ++i)
             {
                 new(newItems + i) T(std::move(items_[i]));
                 items_[i].~T();
             }
-            for (ArrayIndex_t i = index; i < count_; ++i)
+            for (Index_t i = index; i < count_; ++i)
             {
                 new(newItems + i + 1) T(std::move(items_[i]));
                 items_[i].~T();
@@ -1015,7 +1006,7 @@ template <class T/*, typename = void*/>
 struct SmallVectorAlignmentAndSize
 {
   SmallArrayBase<T> base_;
-  uint8 alignas(T) smallData_;
+  alignas(T) uint8 smallData_;
 };
 
 //------------------------------------------------------------------------------
@@ -1027,7 +1018,7 @@ void* SmallArrayBase<T>::GetSmallData() const
 }
 
 //------------------------------------------------------------------------------
-template<class T, ArrayIndex_t CAPACITY>
+template<class T, Index_t CAPACITY>
 class SmallArrayStorage
 {
 protected:
@@ -1041,11 +1032,20 @@ template<class T>
 class /*alignas(T)*/ SmallArrayStorage<T, 0> { };
 
 //------------------------------------------------------------------------------
-template<class T, ArrayIndex_t SMALL_CAPACITY>
+template<class T, Index_t SMALL_CAPACITY>
 class SmallArray : public SmallArrayBase<T>, public SmallArrayStorage<T, SMALL_CAPACITY>
 {
+protected:
     using This_t = SmallArray<T, SMALL_CAPACITY>;
+    using SmallArrayBase<T>::items_;
+    using SmallArrayBase<T>::count_;
+    using SmallArrayBase<T>::capacity_;
+    using SmallArrayBase<T>::IsSmall;
+
 public:
+    using SmallArrayBase<T>::Reserve;
+    using SmallArrayBase<T>::Add;
+
     //------------------------------------------------------------------------------
     bool IsMovable()
     {
@@ -1053,7 +1053,7 @@ public:
     }
 
     //------------------------------------------------------------------------------
-    SmallArray() : SmallArrayBase(SMALL_CAPACITY)
+    SmallArray() : SmallArrayBase<T>(SMALL_CAPACITY)
     {
         // For SMALL_CAPACITY == 0 we don't need the offset
         if constexpr (SMALL_CAPACITY != 0)
@@ -1065,7 +1065,7 @@ public:
 
     //------------------------------------------------------------------------------
     SmallArray(std::initializer_list<T> elements)
-        : SmallArrayBase(SMALL_CAPACITY)
+        : SmallArrayBase<T>(SMALL_CAPACITY)
     {
         Reserve(elements.size());
         for (auto&& e : elements)
@@ -1076,7 +1076,7 @@ public:
 
     //------------------------------------------------------------------------------
     SmallArray(const SmallArray<T, SMALL_CAPACITY>& other)
-        : SmallArrayBase(SMALL_CAPACITY)
+        : SmallArrayBase<T>(SMALL_CAPACITY)
     {
         capacity_ = other.capacity_;
         count_ = other.count_;
@@ -1086,7 +1086,7 @@ public:
             items_ = reinterpret_cast<T*>(AllocAligned(other.capacity_ * sizeof(T), alignof(T)));
         }
 
-        for (ArrayIndex_t i = 0; i < count_; ++i)
+        for (Index_t i = 0; i < count_; ++i)
         {
             new(items_ + i) T(other.items_[i]);
         }
@@ -1094,7 +1094,7 @@ public:
 
     //------------------------------------------------------------------------------
     SmallArray(SmallArray<T, SMALL_CAPACITY>&& other)
-        : SmallArrayBase(SMALL_CAPACITY)
+        : SmallArrayBase<T>(SMALL_CAPACITY)
     {
         capacity_ = other.capacity_;
         count_ = other.count_;
@@ -1107,7 +1107,7 @@ public:
         else
         {
             // Cannot move internal buffer, fallback to copy
-            for (ArrayIndex_t i = 0; i < count_; ++i)
+            for (Index_t i = 0; i < count_; ++i)
             {
                 new(items_ + i) T(std::move(other.items_[i]));
             }
@@ -1122,7 +1122,7 @@ public:
         if (this == &other)
             return *this;
 
-        for (ArrayIndex_t i = 0; i < count_; ++i)
+        for (Index_t i = 0; i < count_; ++i)
         {
             items_[i].~T();
         }
@@ -1140,7 +1140,7 @@ public:
             items_ = reinterpret_cast<T*>(AllocAligned(capacity_ * sizeof(T), alignof(T)));
         }
 
-        for (ArrayIndex_t i = 0; i < count_; ++i)
+        for (Index_t i = 0; i < count_; ++i)
         {
             new(items_ + i) T(other.items_[i]);
         }
@@ -1154,7 +1154,7 @@ public:
         if (this == &other)
             return *this;
 
-        for (ArrayIndex_t i = 0; i < count_; ++i)
+        for (Index_t i = 0; i < count_; ++i)
         {
             items_[i].~T();
         }
@@ -1174,7 +1174,7 @@ public:
         else
         {
             // Cannot move internal buffer, fallback to copy
-            for (ArrayIndex_t i = 0; i < count_; ++i)
+            for (Index_t i = 0; i < count_; ++i)
             {
                 new(items_ + i) T(std::move(other.items_[i]));
             }
@@ -1190,7 +1190,7 @@ template<class T>
 using Array = SmallArray<T, 0>;
 
 //------------------------------------------------------------------------------
-template<class T, ArrayIndex_t capacity>
+template<class T, Index_t capacity>
 using StaticArray = TemplArray<T, StaticMemoryPolicy<T, capacity>>;
 
 //------------------------------------------------------------------------------
