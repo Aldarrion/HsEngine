@@ -1044,6 +1044,7 @@ class /*alignas(T)*/ SmallArrayStorage<T, 0> { };
 template<class T, ArrayIndex_t SMALL_CAPACITY>
 class SmallArray : public SmallArrayBase<T>, public SmallArrayStorage<T, SMALL_CAPACITY>
 {
+    using This_t = SmallArray<T, SMALL_CAPACITY>;
 public:
     //------------------------------------------------------------------------------
     bool IsMovable()
@@ -1054,6 +1055,12 @@ public:
     //------------------------------------------------------------------------------
     SmallArray() : SmallArrayBase(SMALL_CAPACITY)
     {
+        // For SMALL_CAPACITY == 0 we don't need the offset
+        if constexpr (SMALL_CAPACITY != 0)
+        {
+            // Check if our compiler-specific hacks work
+            static_assert(offsetof(This_t, smallItems_) == offsetof(SmallVectorAlignmentAndSize<T>, smallData_));
+        }
     }
 
     //------------------------------------------------------------------------------
