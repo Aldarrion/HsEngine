@@ -135,12 +135,14 @@ endif()
 ##
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     target_compile_options(${PROJ_NAME} PUBLIC -Werror)
+    target_compile_options(${PROJ_NAME} PUBLIC -Wall)
 
     #target_compile_options(${PROJ_NAME} PUBLIC -fsanitize=undefined)
 
     target_compile_options(${PROJ_NAME} PUBLIC -Wno-unused-private-field)
+    target_compile_options(${PROJ_NAME} PUBLIC -Wno-unused-function)
     target_compile_options(${PROJ_NAME} PUBLIC -Wno-nullability-completeness)
-    target_compile_options(${PROJ_NAME} PUBLIC -Wno-range-loop-construct)
+    #target_compile_options(${PROJ_NAME} PUBLIC -Wno-range-loop-construct)
 
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fsanitize=address")

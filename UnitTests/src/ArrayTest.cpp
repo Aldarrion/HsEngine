@@ -2,67 +2,11 @@
 
 #include "Containers/Array.h"
 
+#include "TestContainersCommon.h"
+
 using namespace hsTest;
 using namespace hs;
 
-//------------------------------------------------------------------------------
-template<bool IS_MOVEABLE>
-struct alignas(128) NotTrivialType
-{
-    int x_;
-    int moveCount_{};
-    int copyCount_{};
-
-    NotTrivialType() = delete;
-    NotTrivialType(int x) // Implicit by design
-        : x_(x)
-    {
-    }
-
-    NotTrivialType(const NotTrivialType& other)
-    {
-        x_ = other.x_;
-        copyCount_ = 1 + other.copyCount_;
-        moveCount_ = other.moveCount_;
-    }
-
-    NotTrivialType& operator=(const NotTrivialType& other)
-    {
-        x_ = other.x_;
-        copyCount_ = 1 + other.copyCount_;
-        moveCount_ = other.moveCount_;
-
-        return *this;
-    }
-
-    template<class DummyT = void>
-    NotTrivialType(NotTrivialType&& other,
-        typename std::enable_if_t<IS_MOVEABLE, DummyT>* = 0)
-    {
-        x_ = other.x_;
-        copyCount_ = other.copyCount_;
-        moveCount_ = 1 + other.moveCount_;
-    }
-
-    template<class DummyT = NotTrivialType&>
-    typename std::enable_if_t<IS_MOVEABLE, DummyT>
-     operator=(NotTrivialType&& other)
-    {
-        x_ = other.x_;
-        copyCount_ = other.copyCount_;
-        moveCount_ = 1 + other.moveCount_;
-
-        return *this;
-    }
-
-    bool operator==(const NotTrivialType<IS_MOVEABLE>& other) const
-    {
-        return x_ == other.x_;
-    }
-};
-
-static_assert(!std::is_trivial_v<NotTrivialType<true>>);
-//static_assert(!std::is_trivial_v<NotTrivialType<false>>);
 
 //------------------------------------------------------------------------------
 template<class ElementT, class ArrayT>
@@ -245,8 +189,10 @@ public:
         ArrayT a;
         AddToArray(33, 0, a);
 
+        ArrayT* aPtr = &a;
+
         auto aDataBefore = a.Data();
-        a = a;
+        a = *aPtr;
 
         TEST_TRUE(aDataBefore == a.Data());
         TEST_TRUE(a[0] == 0);
@@ -534,7 +480,6 @@ TEST_DEF(SmallArray_Hacks_Work)
     SmallArrayTester<NotTrivialType<true>> tester;
     tester.Test(test_result);
 
-    constexpr int arrSize = sizeof(Array<NotTrivialType<true>>);
     constexpr int baseSize = sizeof(SmallArrayBase<NotTrivialType<true>>);
     constexpr int smallArrSize = sizeof(SmallArray<NotTrivialType<true>, 0>);
     static_assert(smallArrSize == baseSize, "Small array with 0 sized small buffer must not have any overhead");

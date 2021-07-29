@@ -14,7 +14,7 @@ namespace hs
 //------------------------------------------------------------------------------
 static constexpr const char* FRAG_EXT = "fs";
 static constexpr const char* VERT_EXT = "vs";
-static constexpr const char* PATH_PREFIX = "../Engine/Shaders/%s";
+//static constexpr const char* PATH_PREFIX = "../Engine/Shaders/%s";
 static constexpr const char* SHADER_BIN_DIR = "Shaders";
 
 //------------------------------------------------------------------------------

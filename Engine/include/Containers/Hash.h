@@ -16,7 +16,7 @@ struct FibonacciHash
 {
     constexpr Hash_t operator()(const KeyT key) const
     {
-        return (key * 11400714819323198485llu) >> 61;
+        return key * 11400714819323198485llu;
     }
 };
 

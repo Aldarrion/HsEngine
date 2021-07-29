@@ -914,7 +914,7 @@ protected:
 
     //------------------------------------------------------------------------------
     SmallArrayBase(Index_t initialCapacity)
-        : capacity_(initialCapacity), items_(reinterpret_cast<T*>(GetSmallData()))
+        : items_(reinterpret_cast<T*>(GetSmallData())), capacity_(initialCapacity)
     {
     }
 

@@ -102,12 +102,12 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
     HS_ASSERT(font);
 
     static constexpr uint VERTS_PER_GLYPH = 6; // Two triangles
-    static constexpr uint BYTES_PER_GLYPH = VERTS_PER_GLYPH * sizeof(GuiVertex);
+    //static constexpr uint BYTES_PER_GLYPH = VERTS_PER_GLYPH * sizeof(GuiVertex);
 
     RenderBufferCache* vbCache = g_Render->GetVertexCache();
-    uint remainingSize = vbCache->GetRemainingBufferSize(sizeof(GuiVertex));
-    uint remainingGlyphs = remainingSize / BYTES_PER_GLYPH;
-    uint glyphsToRender = text.Length();
+    //uint remainingSize = vbCache->GetRemainingBufferSize(sizeof(GuiVertex));
+    //uint remainingGlyphs = remainingSize / BYTES_PER_GLYPH;
+    //uint glyphsToRender = text.Length();
 
     //while (glyphsToRender > remainingGlyphs)
     //{
