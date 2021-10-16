@@ -122,8 +122,8 @@ vs_out main(uint vertID : SV_VERTEXID)
     vs_out o = (vs_out)0;
 
     float4 pos = float4(CubeVerts[CubeIndices[vertID]], 1);
-    o.Pos = mul(pos, mul(Instance.World, Scene.VP));
-    o.WorldPos = mul(pos, Instance.World).xyz;
+    o.Pos = mul(mul(Scene.VP, Instance.World), pos);
+    o.WorldPos = mul(Instance.World, pos).xyz;
 
     //o.Color = CubeColors[CubeIndices[vertID]];
     o.Normal = normalize(CubeNormals[CubeIndices[vertID]]);

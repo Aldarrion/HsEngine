@@ -68,7 +68,7 @@ vs_out main(uint vertID : SV_VERTEXID)
     float4 pos = float4(CubeVerts[CubeIndices[vertID]], 1);
     o.SkyboxCoord = pos;
 
-    o.Pos = mul(pos, View.VP);
+    o.Pos = mul(View.VP, pos);
 
     return o;
 }
