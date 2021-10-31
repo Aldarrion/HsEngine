@@ -52,11 +52,11 @@ void TestCollection::RunTests()
     printf("\n------------------------------------------------------------------------------\n");
     if (failCount == 0)
     {
-        printf("\x1B[32mSuccess, all tests have passed!\033[0m\n");
+        printf("Success, all tests have passed!\n");
     }
     else
     {
-        printf("\x1B[31mFail, %d errors!\033[0m\n", failCount);
+        printf("Fail, %d errors!\n", failCount);
     }
 }
 
