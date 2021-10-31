@@ -1,6 +1,6 @@
 #include "UnitTests.h"
 
-#include "System/Atomic.h"
+#include "Threading/Atomic.h"
 
 using namespace hsTest;
 using namespace hs;
