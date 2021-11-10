@@ -17,8 +17,42 @@ namespace hs
 {
 
 //------------------------------------------------------------------------------
-// Thread
+// Inplace function
+//------------------------------------------------------------------------------
 
+template<class RetT, class... ArgsT>
+class FunctionTable
+{
+    using FunT = RetT(*)(Args&&...);
+};
+
+template<int STORAGE_SIZE = 32, int ALIGNMENT = 8>
+class JobFunction
+{
+public:
+    //template<class FunctionT>
+    //JobFunction(FunctionT&& function)
+    //{
+    //    static const FunctionTable ftable{ inplace_function_detail::wrapper<C>{} };
+    //    functionTable_ = std::addressof(ftable);
+
+    //    ::new (std::addressof(storage_)) C{ std::forward<T>(closure) };
+    //}
+
+    template<class RetT, class... ArgsT>
+    RetT Call(ArgsT&& args...)
+    {
+
+    }
+
+private:
+    alignas(ALIGNMENT) char  storage_[STORAGE_SIZE];
+    void*                    functionTable_;
+};
+
+//------------------------------------------------------------------------------
+// Thread
+//------------------------------------------------------------------------------
 struct Thread
 {
     #if HS_WINDOWS
@@ -94,7 +128,7 @@ void ThreadDestroy(Thread& thread)
 
 JobSystem* g_JobSystem;
 
-constexpr int MAX_JOB_DEPENDENTS = 8;
+constexpr int MAX_JOB_DEPENDENTS = 7;
 
 //------------------------------------------------------------------------------
 enum class JobState : int8
@@ -105,25 +139,34 @@ enum class JobState : int8
     DONE,
 };
 
-//------------------------------------------------------------------------------
-struct Job
+enum JobFlags : int8
 {
-    Job* dependents_[MAX_JOB_DEPENDENTS]; // TODO use index instead of pointer?
-    JobState state_;
-    int8 dependencies_;
+    JOB_NONE,
 };
+
+//------------------------------------------------------------------------------
+struct alignas(64) Job
+{
+    JobFunction<56, 16> function_;
+    Job*                dependents_[MAX_JOB_DEPENDENTS];
+    int16               dependencies_;
+    JobState            state_;
+    JobFlags            flags_;
+};
+
+static_assert(sizeof(Job) == 128);
 
 //------------------------------------------------------------------------------
 enum class WorkerState
 {
     RUNNING,
-    TERMINATE
+    TERMINATE,
 };
 
 //------------------------------------------------------------------------------
 struct alignas(64) WorkerContext
 {
-    Array<Job> queue_;
+    SmallArray<Job*, 128> queue_;
     WorkerState state_;
 };
 
@@ -135,11 +178,16 @@ public:
     void Shutdown();
 
     void Execute(Span<Job*> jobs);
-    void Wait(Job* job);
+    void WorkUntil(Job* job);
     void AddDependency(Job* a, Job* b);
 
-    Array<Thread> threadPool_;
-    Array<WorkerContext> workerContext_;
+    // Move to a job ring allocator, it's not bound to the system since we don't intend to use indices to reference jobs
+    Job* AllocateJob(int workerId);
+
+    Array<Thread>           threadPool_;
+    Array<WorkerContext>    workerContext_;
+    Array<Array<Job>>       jobPools_;
+    Array<int>              jobPoolIdx_;
     // Mutex(es) over queues
 };
 
@@ -161,11 +209,18 @@ static void WorkerRun(void* params)
 //------------------------------------------------------------------------------
 void JobSystem::Initialize(const JobSystemCreateParams& params)
 {
-    WorkerThreadParams workerParams;
-    workerParams.jobSystem_ = this;
+    HS_ASSERT(params.jobPoolSize_ > 2 && IsPow2(params.jobPoolSize_));
 
     threadPool_.Reserve(params.threadCount_);
     workerContext_.Resize(params.threadCount_);
+    jobPools_.Resize(params.threadCount_);
+    jobPoolIdx_.Resize(params.threadCount_);
+
+    for (int i = 0; i < jobPools_.Count(); ++i)
+        jobPools_.Resize(params.jobPoolSize_);
+
+    WorkerThreadParams workerParams;
+    workerParams.jobSystem_ = this;
 
     for (int i = 0; i < params.threadCount_; ++i)
     {
@@ -187,6 +242,13 @@ void JobSystem::Shutdown()
 }
 
 //------------------------------------------------------------------------------
+Job* JobSystem::AllocateJob(int workerId)
+{
+    jobPoolIdx_ = ((jobPoolIdx_ + 1) & (jobPools_[workerId].Count() - 1));
+    return jobPools_[workerId][jobPoolIdx_];
+}
+
+//------------------------------------------------------------------------------
 void JobSystem::Execute(Span<Job*> jobs)
 {
     // Add jobs without dependencies to queues
@@ -196,9 +258,9 @@ void JobSystem::Execute(Span<Job*> jobs)
 }
 
 //------------------------------------------------------------------------------
-void JobSystem::Wait(Job* job)
+void JobSystem::WorkUntil(Job* job)
 {
-
+    while (AtomicLoad(job->
 }
 
 //------------------------------------------------------------------------------

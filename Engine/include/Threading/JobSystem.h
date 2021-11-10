@@ -13,10 +13,12 @@ extern JobSystem* g_JobSystem;
 struct JobSystemCreateParams
 {
     int threadCount_;
+    int jobPoolSize_;
 };
 
 void JobSystemCreate(const JobSystemCreateParams& params);
 void JobSystemDestroy(JobSystem* jobSystem);
+
 void JobSystemExecute(JobSystem* jobSystem, Span<Job*> jobs);
 void JobSystemWait(JobSystem* jobSystem, Span<Job*> jobs);
 
