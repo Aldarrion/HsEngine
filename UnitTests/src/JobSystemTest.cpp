@@ -1,5 +1,6 @@
 #include "UnitTests.h"
 
+#include "Threading/Atomic.h"
 #include "Threading/JobSystem.h"
 
 using namespace hsTest;
@@ -24,13 +25,6 @@ void TestFunction(TestState* state)
     // ...
 }
 
-struct Job
-{
-    // State, dependencies, dependents
-    JobFunction jobFunction_;
-    void*       arg_;
-};
-
 template<class ArgT, void (*func)(ArgT*)>
 Job* MakeJob(ArgT* arg)
 {
@@ -44,21 +38,21 @@ Job* MakeJob(ArgT* arg)
 
 TEST_DEF(JobSystem)
 {
-    int x{};
-    int y{};
+    // int x{};
+    // int y{};
 
-    JobSystem* jobSystem = GetJobsystem();
+    // JobSystem* jobSystem = g_JobSystem;
 
-    TestState state{};
+    // TestState state{};
 
-    //Job* a = MakeJob([x, y](/*???*/){ /* return? */ });
-    Job* b = MakeJob<TestState, &TestFunction>(&state)
+    // //Job* a = MakeJob([x, y](/*???*/){ /* return? */ });
+    // Job* b = MakeJob<TestState, &TestFunction>(&state)
 
-    JobSystemAddDependency(jobSystem, a, b);
+    // JobSystemAddDependency(jobSystem, a, b);
 
-    JobSystemExecute(jobSystem, a);
-    JobSystemExecute(jobSystem, b);
+    // JobSystemExecute(jobSystem, a);
+    // JobSystemExecute(jobSystem, b);
 
-    JobSystemWorkUntil(jobSystem, a);
-    JobSystemWorkUntil(jobSystem, b);
+    // JobSystemWorkUntil(jobSystem, a);
+    // JobSystemWorkUntil(jobSystem, b);
 }

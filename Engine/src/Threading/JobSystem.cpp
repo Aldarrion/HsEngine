@@ -2,159 +2,18 @@
 
 #include "String/StringUtil.h"
 #include "String/String.h"
-
+#include "Threading/Thread.h"
+#include "Threading/Atomic.h"
 #include "Containers/Array.h"
 #include "Common/Types.h"
 
 #include <cstdio>
 
-#if HS_WINDOWS
-    #include "Platform/hs_Windows.h"
-    #include <processthreadsapi.h>
-#endif
-
 namespace hs
 {
 
 //------------------------------------------------------------------------------
-// Inplace function
-//------------------------------------------------------------------------------
-
-template<class RetT, class... ArgsT>
-class FunctionTable
-{
-    using FunT = RetT(*)(Args&&...);
-};
-
-template<int STORAGE_SIZE = 32, int ALIGNMENT = 8>
-class JobFunction
-{
-public:
-    //template<class FunctionT>
-    //JobFunction(FunctionT&& function)
-    //{
-    //    static const FunctionTable ftable{ inplace_function_detail::wrapper<C>{} };
-    //    functionTable_ = std::addressof(ftable);
-
-    //    ::new (std::addressof(storage_)) C{ std::forward<T>(closure) };
-    //}
-
-    template<class RetT, class... ArgsT>
-    RetT Call(ArgsT&& args...)
-    {
-
-    }
-
-private:
-    alignas(ALIGNMENT) char  storage_[STORAGE_SIZE];
-    void*                    functionTable_;
-};
-
-//------------------------------------------------------------------------------
-// Thread
-//------------------------------------------------------------------------------
-struct Thread
-{
-    #if HS_WINDOWS
-        HANDLE hThread_;
-    #else
-    #endif
-};
-
-//------------------------------------------------------------------------------
-using ThreadFunction = void (*)(void*);
-
-//------------------------------------------------------------------------------
-struct ThreadFunctionWrapperData
-{
-    ThreadFunction function_;
-    void* data_;
-};
-
-#if HS_WINDOWS
-    DWORD ThreadFunctionWin32Wrapper(void* data)
-    {
-        auto wrapperData = reinterpret_cast<ThreadFunctionWrapperData*>(data);
-        wrapperData->function_(wrapperData->data_);
-        return 0;
-    }
-#endif
-
-Thread ThreadCreate(ThreadFunction threadFunction, void* args, StringView name)
-{
-    Thread thread;
-    #if HS_WINDOWS
-        ThreadFunctionWrapperData wrapperArgs;
-        wrapperArgs.function_ = threadFunction;
-        wrapperArgs.data_ = args;
-
-        thread.hThread_ = CreateThread(
-          nullptr,                      // Thread attributes
-          0,                            // Stack size
-          ThreadFunctionWin32Wrapper,   // Function to run in the thread
-          &wrapperArgs,                 // Args to threadFunction
-          0,                            // Creation flags
-          nullptr                       // Thread ID
-        );
-
-        if (name.Length())
-        {
-            auto wname = MakeWString(name);
-            auto hr = SetThreadDescription(thread.hThread_, wname.buffer_);
-
-            HS_ASSERT(hr == S_OK);
-        }
-
-    #else
-        HS_NOT_IMPLEMENTED;
-        thread = {};
-    #endif
-
-    return thread;
-}
-
-//------------------------------------------------------------------------------
-void ThreadDestroy(Thread& thread)
-{
-    #if HS_WINDOWS
-        bool closed = CloseHandle(thread.hThread_);
-        HS_ASSERT(closed);
-    #else
-        HS_NOT_IMPLEMENTED;
-    #endif
-}
-
-//------------------------------------------------------------------------------
-
 JobSystem* g_JobSystem;
-
-constexpr int MAX_JOB_DEPENDENTS = 7;
-
-//------------------------------------------------------------------------------
-enum class JobState : int8
-{
-    INIT,
-    WAITING,
-    RUNNING,
-    DONE,
-};
-
-enum JobFlags : int8
-{
-    JOB_NONE,
-};
-
-//------------------------------------------------------------------------------
-struct alignas(64) Job
-{
-    JobFunction<56, 16> function_;
-    Job*                dependents_[MAX_JOB_DEPENDENTS];
-    int16               dependencies_;
-    JobState            state_;
-    JobFlags            flags_;
-};
-
-static_assert(sizeof(Job) == 128);
 
 //------------------------------------------------------------------------------
 enum class WorkerState
@@ -179,7 +38,7 @@ public:
 
     void Execute(Span<Job*> jobs);
     void WorkUntil(Job* job);
-    void AddDependency(Job* a, Job* b);
+    void AddDependency(Job* job, Job* dependsOn);
 
     // Move to a job ring allocator, it's not bound to the system since we don't intend to use indices to reference jobs
     Job* AllocateJob(int workerId);
@@ -237,15 +96,15 @@ void JobSystem::Shutdown()
 {
     for (int i = 0; i < threadPool_.Count(); ++i)
     {
-        ThreadDestroy(threadPool_[i]);
+        ThreadDestroy(&threadPool_[i]);
     }
 }
 
 //------------------------------------------------------------------------------
 Job* JobSystem::AllocateJob(int workerId)
 {
-    jobPoolIdx_ = ((jobPoolIdx_ + 1) & (jobPools_[workerId].Count() - 1));
-    return jobPools_[workerId][jobPoolIdx_];
+    jobPoolIdx_[workerId] = ((jobPoolIdx_[workerId] + 1) & (jobPools_[workerId].Count() - 1));
+    return &jobPools_[workerId][jobPoolIdx_[workerId]];
 }
 
 //------------------------------------------------------------------------------
@@ -260,13 +119,15 @@ void JobSystem::Execute(Span<Job*> jobs)
 //------------------------------------------------------------------------------
 void JobSystem::WorkUntil(Job* job)
 {
-    while (AtomicLoad(job->
+    while (AtomicLoad(&job->state_) != JOB_STATE_DONE)
+    {
+        // TODO work on jobs here
+    }
 }
 
 //------------------------------------------------------------------------------
-void JobSystem::AddDependency(Job* a, Job* b)
+void JobSystem::AddDependency(Job* task, Job* dependsOn)
 {
-    // a depends on b
 }
 
 
