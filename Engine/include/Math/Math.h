@@ -11,6 +11,10 @@
 namespace hs
 {
 
+#ifdef BitScanReverse
+    #undef BitScanReverse
+#endif
+
 static constexpr float HS_PI = 3.141592653589793238462643383279502884197f;
 static constexpr float HS_PI_HALF = HS_PI / 2;
 static constexpr float HS_TAU = 2 * HS_PI;
