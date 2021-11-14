@@ -2,6 +2,9 @@
 
 #include "Config.h"
 #include "Common/Assert.h"
+#include "Common/Types.h"
+
+#include <type_traits>
 
 #if HS_MSVC
     #include <intrin.h>
@@ -42,7 +45,7 @@ inline int AtomicDecrement(int* value)
 inline int AtomicAdd(int* value, int x)
 {
     #if HS_MSVC
-        return _InterlockedExchangeAdd(reinterpret_cast<long*>(value), x);
+        return _InterlockedExchangeAdd(reinterpret_cast<long*>(value), x) + x;
     #elif HS_CLANG || HS_GCC
         return __atomic_add_fetch(value, x, __ATOMIC_SEQ_CST);
     #else
@@ -55,7 +58,7 @@ inline int AtomicAdd(int* value, int x)
 inline int AtomicSubtract(int* value, int x)
 {
     #if HS_MSVC
-        return _InterlockedExchangeAdd(reinterpret_cast<long*>(value), -x);
+        return _InterlockedExchangeAdd(reinterpret_cast<long*>(value), -x) - x;
     #elif HS_CLANG || HS_GCC
         return __atomic_sub_fetch(value, x, __ATOMIC_SEQ_CST);
     #else
@@ -65,10 +68,11 @@ inline int AtomicSubtract(int* value, int x)
 
 //------------------------------------------------------------------------------
 //! Atomically loads value and returns it
-inline int AtomicLoad(const int* value)
+template<class IntegralT>
+inline IntegralT AtomicLoad(const IntegralT* value)
 {
     #if HS_MSVC
-        int tmp = *value;
+        IntegralT tmp = *value;
         // Barrier after read to simulate acquire semantics
         // = no memory operations after AtomicLoad can be reodered up (before it)
         _ReadWriteBarrier();
@@ -82,10 +86,22 @@ inline int AtomicLoad(const int* value)
 
 //------------------------------------------------------------------------------
 //! Atomically stores x to value
-inline void AtomicStore(int* value, int x)
+template<class IntegralT>
+inline void AtomicStore(IntegralT* value, IntegralT x)
 {
     #if HS_MSVC
-        _InterlockedExchange(reinterpret_cast<long*>(value), x);
+        constexpr int VALUE_SIZE = (int)(sizeof(IntegralT));
+        if constexpr (VALUE_SIZE == sizeof(int8))
+            _InterlockedExchange8(reinterpret_cast<CAHR*>(value), x);
+        else if constexpr (VALUE_SIZE == sizeof(int16))
+            _InterlockedExchange16(reinterpret_cast<short*>(value), x);
+        else if constexpr (VALUE_SIZE == sizeof(int32))
+            _InterlockedExchange(reinterpret_cast<long*>(value), x);
+        else if constexpr (VALUE_SIZE == sizeof(int64))
+            _InterlockedExchange64(reinterpret_cast<LONG64*>(value), x);
+        else
+            static_assert(false, "Unsupported type passed");
+
     #elif HS_CLANG || HS_GCC
         __atomic_store_n(value, x, __ATOMIC_SEQ_CST);
     #else
