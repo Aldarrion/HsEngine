@@ -8,7 +8,7 @@ using namespace hs;
 
 //------------------------------------------------------------------------------
 int g_Counter = 0;
-void TestThread(void*)
+void ThreadStoreValue(void*)
 {
     AtomicStore(&g_Counter, 42);
 }
@@ -16,7 +16,7 @@ void TestThread(void*)
 //------------------------------------------------------------------------------
 TEST_DEF(Thread_CreateAndDestroyThread)
 {
-    Thread t = ThreadCreate(&TestThread, nullptr, StringView("TestThreadName"));
+    Thread t = ThreadCreate(&ThreadStoreValue, nullptr, StringView("TestThreadName"));
 
     while (AtomicLoad(&g_Counter) != 42)
     {
@@ -25,3 +25,6 @@ TEST_DEF(Thread_CreateAndDestroyThread)
 
     ThreadDestroy(&t);
 }
+
+//------------------------------------------------------------------------------
+

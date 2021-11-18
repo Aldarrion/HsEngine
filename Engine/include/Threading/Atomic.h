@@ -128,70 +128,17 @@ Atomically compares expected to *dst
 if equal, desired is stored to *dst
 otherwise, no operation is performed
 
-\return Initial value of *dst before exchange
+\return True if exchanged, false otherwise
 */
-inline int AtomicCompareExchange(int* dst, int desired, int expected)
+inline bool AtomicCompareExchange(int* dst, int expected, int desired)
 {
     #if HS_MSVC
-        return _InterlockedCompareExchange(reinterpret_cast<long*>(dst), desired, expected);
+        return _InterlockedCompareExchange(reinterpret_cast<long*>(dst), desired, expected) == expected;
     #elif HS_CLANG || HS_GCC
-        __atomic_compare_exchange_n(dst, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
-        return expected;
+        return __atomic_compare_exchange_n(dst, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
     #else
         HS_NOT_IMPLEMENTED
     #endif
-}
-
-//------------------------------------------------------------------------------
-class AtomicInt
-{
-public:
-    int Increment();
-    int Decrement();
-    int Add(int x);
-    int Subtract(int x);
-    int GetValue() const;
-    void SetValue(int x);
-    int CompareExchange(int desired, int expected);
-
-private:
-    int value_{};
-};
-
-//------------------------------------------------------------------------------
-inline int AtomicInt::Increment()
-{
-    return AtomicIncrement(&value_);
-}
-//------------------------------------------------------------------------------
-inline int AtomicInt::Decrement()
-{
-    return AtomicDecrement(&value_);
-}
-//------------------------------------------------------------------------------
-inline int AtomicInt::Add(int x)
-{
-    return AtomicAdd(&value_, x);
-}
-//------------------------------------------------------------------------------
-inline int AtomicInt::Subtract(int x)
-{
-    return AtomicSubtract(&value_, x);
-}
-//------------------------------------------------------------------------------
-inline int AtomicInt::GetValue() const
-{
-    return AtomicLoad(&value_);
-}
-//------------------------------------------------------------------------------
-inline void AtomicInt::SetValue(int x)
-{
-    AtomicStore(&value_, x);
-}
-//------------------------------------------------------------------------------
-inline int AtomicInt::CompareExchange(int desired, int expected)
-{
-    return AtomicCompareExchange(&value_, desired, expected);
 }
 
 }

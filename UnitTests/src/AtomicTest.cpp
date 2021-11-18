@@ -63,10 +63,10 @@ TEST_DEF(Atomic_CompareExchange_ExchangesOnTrue)
     int expected = 123;
     int desired = 42;
 
-    int old = AtomicCompareExchange(&x, desired, expected);
+    bool exchanged = AtomicCompareExchange(&x, expected, desired);
     int n = AtomicLoad(&x);
 
-    TEST_TRUE(old == 123);
+    TEST_TRUE(exchanged);
     TEST_TRUE(n == 42);
 }
 
@@ -76,10 +76,10 @@ TEST_DEF(Atomic_CompareExchange_DoesNothingOnFalse)
     int expected = 1;
     int desired = 42;
 
-    int old = AtomicCompareExchange(&x, desired, expected);
+    bool exchanged = AtomicCompareExchange(&x, expected, desired);
     int n = AtomicLoad(&x);
 
-    TEST_TRUE(old == 123);
+    TEST_FALSE(exchanged);
     TEST_TRUE(n == 123);
 }
 

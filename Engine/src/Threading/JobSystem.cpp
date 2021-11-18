@@ -47,7 +47,6 @@ public:
     Array<WorkerContext>    workerContext_;
     Array<Array<Job>>       jobPools_;
     Array<int>              jobPoolIdx_;
-    // Mutex(es) over queues
 };
 
 //------------------------------------------------------------------------------
