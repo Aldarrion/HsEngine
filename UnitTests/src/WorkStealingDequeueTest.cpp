@@ -7,7 +7,8 @@ using namespace hs;
 
 TEST_DEF(WorkStealingDequeue_CanDoBasicOperationsOnASingleThread)
 {
-    WorkStealingDequeue<int*, nullptr> queue(128);
+    WorkStealingDequeue<int*, nullptr> queue;
+    queue.Init(128);
 
     int a = 42;
     int b = 123;
@@ -24,4 +25,6 @@ TEST_DEF(WorkStealingDequeue_CanDoBasicOperationsOnASingleThread)
     TEST_TRUE(b == *ret_b);
     TEST_TRUE(ret_null == nullptr);
     TEST_TRUE(steal_null == nullptr);
+
+    queue.Destroy();
 }

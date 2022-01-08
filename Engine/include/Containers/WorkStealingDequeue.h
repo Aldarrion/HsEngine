@@ -26,15 +26,20 @@ class alignas(64) WorkStealingDequeue
 {
 public:
     //------------------------------------------------------------------------------
-    explicit WorkStealingDequeue(int32 size)
-        : arrayCapacity_(size)
+    WorkStealingDequeue() = default;
+    WorkStealingDequeue(const WorkStealingDequeue&) = delete;
+    WorkStealingDequeue& operator=(const WorkStealingDequeue&) = delete;
+
+    //------------------------------------------------------------------------------
+    void Init(int32 size)
     {
+        arrayCapacity_  = size;
         HS_ASSERT(IsPow2(arrayCapacity_));
         array_ = new T[size]{};
     }
 
     //------------------------------------------------------------------------------
-    ~WorkStealingDequeue()
+    void Destroy()
     {
         delete[] array_;
     }
