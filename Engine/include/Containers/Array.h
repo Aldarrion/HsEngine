@@ -794,6 +794,24 @@ public:
         EmplaceBack(std::move(item));
     }
 
+    //------------------------------------------------------------------------------
+    static constexpr Index_t IndexBad()
+    {
+        return (Index_t)-1;
+    }
+
+    //------------------------------------------------------------------------------
+    Index_t IndexOf(const T& item) const
+    {
+        for (Index_t i = 0; i < Count(); ++i)
+        {
+            if (Data()[i] == item)
+                return i;
+        }
+
+        return IndexBad();
+    }
+
     /*!
     If the item is present in the array returs false, if not present adds it and returns true.
     O(n) complexity where n is the number of elements in the array.
