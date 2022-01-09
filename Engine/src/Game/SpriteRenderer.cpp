@@ -31,7 +31,7 @@ void SpriteRenderer::AddSprite(Sprite* sprite, const Mat44& world)
     Vec2 pos = world.GetPositionXY();
     // TODO(pavel): This is not correct, we need to take into account the pivot and rotation as well, bounding box should be probably a part of the sprite
     const Box2D tileBoundBox = MakeBox2DMinMax(pos - sprite->size_, pos + sprite->size_);
-    const Box2D frustum = g_Render->GetCamera().GetOrthoFrustum();
+    const Box2D frustum = CameraGetOrthoFrustum(g_Render->GetCamera());
 
     if (!IsIntersecting(tileBoundBox, frustum))
         return;

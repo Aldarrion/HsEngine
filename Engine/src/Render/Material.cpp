@@ -96,8 +96,8 @@ void SetSceneData()
     RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), sizeof(sh::SceneData), &mapped);
     auto ubo = (sh::SceneData*)mapped;
 
-    Mat44 camMat = g_Render->GetCamera().ToCamera();
-    Mat44 projMat = camMat * g_Render->GetCamera().ToProjection();
+    Mat44 camMat = g_Render->GetCamera()->toCamera_;
+    Mat44 projMat = camMat * g_Render->GetCamera()->toProjection_;
     ubo->VP = projMat;
 
     g_Render->GetUBOCache()->EndAlloc();
@@ -376,8 +376,8 @@ void PhongMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
     SceneData* ubo{};
     RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(SceneData), sizeof(SceneData), (void**)&ubo);
 
-    ubo->Projection = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
-    ubo->ViewPos    = g_Render->GetCamera().Position().ToVec4Pos();
+    ubo->Projection = g_Render->GetCamera()->toCamera_ * g_Render->GetCamera()->toProjection_;
+    ubo->ViewPos    = g_Render->GetCamera()->pos_.ToVec4Pos();
 
     g_Render->GetUBOCache()->EndAlloc();
 
@@ -451,10 +451,10 @@ void SkyboxMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData
     RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(SceneData), sizeof(SceneData), &mapped);
     auto ubo = (SceneData*)mapped;
 
-    Mat44 camMat = g_Render->GetCamera().ToCamera();
+    Mat44 camMat = g_Render->GetCamera()->toCamera_;
     camMat.SetPosition(Vec3{});
 
-    Mat44 projMat = camMat * g_Render->GetCamera().ToProjection();
+    Mat44 projMat = camMat * g_Render->GetCamera()->toProjection_;
     ubo->Projection = projMat;
 
     g_Render->GetUBOCache()->EndAlloc();
@@ -497,8 +497,8 @@ void PBRMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
         sh::SceneData* scene{};
         RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::SceneData), sizeof(sh::SceneData), (void**)&scene);
 
-        scene->VP       = g_Render->GetCamera().ToCamera() * g_Render->GetCamera().ToProjection();
-        scene->ViewPos  = g_Render->GetCamera().Position().ToVec4Pos();
+        scene->VP       = g_Render->GetCamera()->toCamera_ * g_Render->GetCamera()->toProjection_;
+        scene->ViewPos  = g_Render->GetCamera()->pos_.ToVec4Pos();
 
         g_Render->GetUBOCache()->EndAlloc();
         g_Render->SetDynamicUbo(0, constBuffer);

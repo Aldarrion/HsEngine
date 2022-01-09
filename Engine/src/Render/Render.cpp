@@ -1265,7 +1265,7 @@ RESULT Render::Init()
     if (shaderManager_->Init() != R_OK)
         return R_FAIL;
 
-    camera_.UpdateMatrices();
+    CameraUpdate(&camera_);
 
     //
     serializationManager_ = MakeUnique<SerializationManager>();
@@ -1309,8 +1309,7 @@ void Render::RenderObjects(Span<VisualObject> objects)
 //------------------------------------------------------------------------------
 void Render::RenderObjects(Span<VisualObject*> objects)
 {
-    for (int i = 0; i < objects.Count(); ++i)
-        RenderObject(objects[i]);
+    renderObjects_[RPT_MAIN].AddRange(objects);
 }
 
 //------------------------------------------------------------------------------
@@ -2007,15 +2006,15 @@ uint Render::GetOrCreateVertexLayout(VkPipelineVertexInputStateCreateInfo info)
 }
 
 //------------------------------------------------------------------------------
-const Camera& Render::GetCamera() const
+const Camera* Render::GetCamera() const
 {
-    return camera_;
+    return &camera_;
 }
 
 //------------------------------------------------------------------------------
-Camera& Render::GetCamera()
+Camera* Render::GetCamera()
 {
-    return camera_;
+    return &camera_;
 }
 
 //------------------------------------------------------------------------------

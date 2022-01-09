@@ -795,6 +795,14 @@ public:
     }
 
     //------------------------------------------------------------------------------
+    void AddRange(Span<T> items)
+    {
+        Reserve(Count() + items.Count());
+        for (int i = 0; i < items.Count(); ++i)
+            Add(items[i]);
+    }
+
+    //------------------------------------------------------------------------------
     static constexpr Index_t IndexBad()
     {
         return (Index_t)-1;

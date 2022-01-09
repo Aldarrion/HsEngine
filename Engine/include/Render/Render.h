@@ -225,8 +225,8 @@ public:
 
     //----------------------
     // Camera
-    const Camera& GetCamera() const;
-    Camera& GetCamera();
+    const Camera* GetCamera() const;
+    Camera* GetCamera();
 
     SpriteRenderer* GetSpriteRenderer() const;
     DebugShapeRenderer* GetDebugShapeRenderer() const;

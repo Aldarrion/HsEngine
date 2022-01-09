@@ -16,38 +16,14 @@ enum class ProjectionType
 };
 
 //------------------------------------------------------------------------------
-class Camera
+struct Camera
 {
-public:
-    void InitAsPerspective(const Vec3& pos, const Vec3& target, float fovY = 75, float near = 0.01f, float far = 1000.0f);
-
-    const Mat44& ToCamera() const;
-    const Mat44& ToProjection() const;
-    const Vec3& Position() const;
-
-    void SetPosition(const Vec3& pos);
-    void SetPosition(const Vec2& pos);
-
-    void Init(const PropertyContainer& data);
-    void FillData(PropertyContainer& data);
-
-    void UpdateFreeFly();
-    void Update();
-    void UpdateMatrices();
-
-    Box2D GetOrthoFrustum() const;
-
-    float GetHorizontalExtent() const;
-    void SetHorizontalExtent(float extent);
-
-private:
     Mat44 toCamera_;
-    Mat44 projection_;
+    Mat44 toProjection_;
 
     Vec3 pos_{ 0, 0, -5 };
     Vec3 forward_{ Vec3::FORWARD() };
     Vec3 right_{ Vec3::RIGHT() };
-    float freeflySpeed_{ 20 };
 
     Vec2 angles_{ 0, HS_PI_HALF };
     float fovy_{ 75 };
@@ -56,8 +32,22 @@ private:
     float horizontalExtent_{ 128 };
 
     ProjectionType projectionType_{ ProjectionType::Orthographic };
-
-    void UpdateCameraVectors();
 };
+
+//------------------------------------------------------------------------------
+struct CameraFreelyController
+{
+    Camera* camera_;
+    float freeflySpeed_{ 20 };
+};
+
+//------------------------------------------------------------------------------
+void CameraInitAsPerspective(Camera* camera, const Vec3& pos, const Vec3& target, float fovY = 75, float near = 0.01f, float far = 1000.0f);
+void CameraInit(Camera* camera, const PropertyContainer& data);
+void CameraFillData(Camera* camera, PropertyContainer& data);
+Box2D CameraGetOrthoFrustum(const Camera* camera);
+void CameraUpdate(Camera* camera);
+
+void CameraUpdateFreeFly(CameraFreelyController* freeflyCamera);
 
 }
