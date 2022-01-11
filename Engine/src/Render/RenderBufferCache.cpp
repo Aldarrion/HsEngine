@@ -16,7 +16,7 @@ RenderBufferCache::RenderBufferCache(RenderBufferType cacheType)
     {
         case RenderBufferType::Uniform:
         {
-            minAlignment_ = (uint)g_Render->GetPhysDevProps().limits.minUniformBufferOffsetAlignment;
+            minAlignment_ = (int)g_Render->GetPhysDevProps().limits.minUniformBufferOffsetAlignment;
             break;
         }
         case RenderBufferType::Vertex:
@@ -39,8 +39,8 @@ RenderBufferCache::~RenderBufferCache()
 //------------------------------------------------------------------------------
 RESULT RenderBufferCache::MakeEntry(CacheEntry& entry)
 {
-    entry.buffer_ = new RenderBuffer(cacheType_, BUFFER_SIZE);
-    RESULT res = entry.buffer_->Init();
+    entry.buffer_ = new RenderBuffer;
+    RESULT res = entry.buffer_->Init(cacheType_, RenderBufferMemory::HostToDevice, BUFFER_SIZE);
     return res;
 }
 
@@ -57,7 +57,7 @@ RESULT RenderBufferCache::Init()
 }
 
 //------------------------------------------------------------------------------
-RenderBufferEntry RenderBufferCache::BeginAlloc(uint size, uint align, void** data)
+RenderBufferEntry RenderBufferCache::BeginAlloc(int size, int align, void** data)
 {
     align = Max(align, minAlignment_);
     entries_.Front().begin_ = Align(entries_.Front().begin_, align);

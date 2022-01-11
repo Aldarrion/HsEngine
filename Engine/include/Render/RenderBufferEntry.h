@@ -10,8 +10,8 @@ namespace hs
 struct RenderBufferEntry
 {
     VkBuffer buffer_{};
-    uint offset_{};
-    uint size_{};
+    int offset_{};
+    int size_{};
 };
 
 }

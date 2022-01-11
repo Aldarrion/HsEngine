@@ -90,6 +90,35 @@ uint PosColVertLayout()
 }
 
 //------------------------------------------------------------------------------
+uint PbrVertexLayout()
+{
+    static VkVertexInputAttributeDescription attributeDescriptions[2]{};
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescriptions[0].offset = 0;
+
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescriptions[1].offset = 16;
+
+    static VkVertexInputBindingDescription bindingDescription{};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(ObjectVertex);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = HS_ARR_LEN(attributeDescriptions);
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
+
+    return g_Render->GetOrCreateVertexLayout(vertexInputInfo);
+}
+
+//------------------------------------------------------------------------------
 void SetSceneData()
 {
     void* mapped;
@@ -486,6 +515,8 @@ RESULT PBRMaterial::Init()
     if (!pbrVert_ || !pbrFrag_)
         return R_FAIL;
 
+    vertexLayout_ = PbrVertexLayout();
+
     return R_OK;
 }
 
@@ -529,11 +560,16 @@ void PBRMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
         g_Render->SetDynamicUbo(2, pbrConstBuffer);
     }
 
-    // This material setup
+    // Material setup
+    g_Render->SetVertexBuffer(0, drawData.object_->vertexBuffer_.buffer_);
+    g_Render->SetVertexLayout(0, vertexLayout_);
+    g_Render->SetIndexBuffer(0, drawData.object_->indexBuffer_.buffer_);
+
     g_Render->SetShader<PS_VERT>(pbrVert_);
     g_Render->SetShader<PS_FRAG>(pbrFrag_);
 
-    g_Render->Draw(ctx, 3 * 12, 0);
+    // TODO get the data better
+    g_Render->DrawIndexed(ctx, drawData.object_->indexBuffer_.buffer_.size_ / 4, 0, 0);
 }
 
 //------------------------------------------------------------------------------

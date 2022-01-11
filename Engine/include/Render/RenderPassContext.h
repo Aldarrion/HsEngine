@@ -25,6 +25,7 @@ struct RenderPassContext
 struct DrawData
 {
     Mat44 transform_;
+    struct VisualObject* object_;
 };
 
 }

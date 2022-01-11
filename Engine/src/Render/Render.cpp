@@ -35,7 +35,6 @@
 #include <cstdio>
 #include <cfloat>
 
-
 //------------------------------------------------------------------------------
 //static constexpr const char* CAMERA_CFG = "configs/Camera.json";
 
@@ -1248,6 +1247,10 @@ RESULT Render::Init()
     if (HS_FAILED(vbCache_->Init()))
         return R_FAIL;
 
+    indexCache_ = MakeUnique<RenderBufferCache>(RenderBufferType::Index);
+    if (HS_FAILED(indexCache_->Init()))
+        return R_FAIL;
+
     if (HS_FAILED(CreateMainRenderPass()))
         return R_FAIL;
 
@@ -1707,6 +1710,11 @@ RESULT Render::PrepareForDraw(const RenderPassContext& ctx)
         vkCmdBindVertexBuffers(CmdBuff(), 0, RenderState::MAX_VERT_BUFF, state_.vertexBuffers_, state_.vbOffsets_);
     }
 
+    if (state_.indexBuffers_[0])
+    {
+        vkCmdBindIndexBuffer(CmdBuff(), state_.indexBuffers_[0], state_.indexOffsets_[0], VK_INDEX_TYPE_UINT32);
+    }
+
     vkCmdBindPipeline(CmdBuff(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
     return R_OK;
@@ -1723,6 +1731,15 @@ void Render::Draw(const RenderPassContext& ctx, uint vertexCount, uint firstVert
 {
     if (PrepareForDraw(ctx) == R_OK)
         vkCmdDraw(directCmdBuffers_[currentBBIdx_], vertexCount, 1, firstVertex, 0);
+
+    AfterDraw();
+}
+
+//------------------------------------------------------------------------------
+void Render::DrawIndexed(const RenderPassContext& ctx, uint indexCount, uint firstIndex, uint vertexOffset)
+{
+    if (PrepareForDraw(ctx) == R_OK)
+        vkCmdDrawIndexed(directCmdBuffers_[currentBBIdx_], indexCount, 1, firstIndex, 0, 0);
 
     AfterDraw();
 }
@@ -1761,7 +1778,7 @@ void Render::Update(float dTime)
         for (int i = 0; i < renderObjects_[RPT_MAIN].Count(); ++i)
         {
             VisualObject* rndrObj = renderObjects_[RPT_MAIN][i];
-            rndrObj->material_->Draw(ctx, DrawData{ rndrObj->transform_ });
+            rndrObj->material_->Draw(ctx, DrawData{ rndrObj->transform_, rndrObj });
         }
 
         vkCmdEndRenderPass(directCmdBuffers_[currentBBIdx_]);
@@ -1873,6 +1890,12 @@ RenderBufferCache* Render::GetVertexCache() const
 }
 
 //------------------------------------------------------------------------------
+RenderBufferCache* Render::GetIndexCache() const
+{
+    return indexCache_.Get();
+}
+
+//------------------------------------------------------------------------------
 uint Render::GetWidth() const
 {
     return width_;
@@ -1918,6 +1941,15 @@ void Render::SetVertexBuffer(uint slot, const RenderBufferEntry& entry)
 
     state_.vertexBuffers_[slot] = entry.buffer_;
     state_.vbOffsets_[slot] = entry.offset_;
+}
+
+//------------------------------------------------------------------------------
+void Render::SetIndexBuffer(uint slot, const RenderBufferEntry& entry)
+{
+    HS_ASSERT(slot < RenderState::MAX_INDEX_BUFF);
+
+    state_.indexBuffers_[slot] = entry.buffer_;
+    state_.indexOffsets_[slot] = entry.offset_;
 }
 
 //------------------------------------------------------------------------------
@@ -1984,6 +2016,12 @@ void RenderState::Reset()
         vertexBuffers_[i] = {};
         vbOffsets_[i] = {};
         vertexLayouts_[i] = INVALID_HANDLE;
+    }
+
+    for (int i = 0; i < MAX_INDEX_BUFF; ++i)
+    {
+        indexBuffers_[i] = {};
+        indexOffsets_[i] = {};
     }
 
     primitiveTopology_ = VkrPrimitiveTopology::TRIANGLE_LIST;

@@ -31,8 +31,8 @@ RESULT DrawCanvas::Init()
 
     lineVertType_ = ShapeVertexLayout();
 
-    linesBuffer_ = MakeUnique<RenderBuffer>(RenderBufferType::Vertex, MAX_LINE_VERTS * sizeof(ShapeVertex));
-    if (HS_FAILED(linesBuffer_->Init()))
+    linesBuffer_ = MakeUnique<RenderBuffer>();
+    if (HS_FAILED(linesBuffer_->Init(RenderBufferType::Vertex, RenderBufferMemory::HostToDevice, MAX_LINE_VERTS * sizeof(ShapeVertex))))
         return R_FAIL;
 
     drawMode_ = DrawMode::CatmullRom;

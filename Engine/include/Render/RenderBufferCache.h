@@ -21,7 +21,11 @@ public:
 
     RESULT Init();
 
-    RenderBufferEntry BeginAlloc(uint size, uint align, void** data);
+    RenderBufferEntry BeginAlloc(int size, int align, void** data);
+
+    template<class ItemT>
+    RenderBufferEntry BeginAlloc(int count, ItemT** data);
+
     void EndAlloc();
     uint GetMaxSize() const;
     int GetRemainingBufferSize(uint align) const;
@@ -38,9 +42,16 @@ private:
 
     RenderBufferType cacheType_;
     Array<CacheEntry> entries_;
-    uint minAlignment_{};
+    int minAlignment_{};
 
     RESULT MakeEntry(CacheEntry& entry);
 };
+
+//------------------------------------------------------------------------------
+template<class ItemT>
+RenderBufferEntry RenderBufferCache::BeginAlloc(int count, ItemT** data)
+{
+    return BeginAlloc((int)sizeof(ItemT) * count, alignof(ItemT), (void**)data);
+}
 
 }

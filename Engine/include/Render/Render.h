@@ -7,6 +7,7 @@
 #include "Render/RenderPassContext.h"
 #include "Render/RenderBufferEntry.h"
 #include "Render/VkTypes.h"
+#include "Render/Types.h"
 
 #include "Containers/Hash.h"
 #include "Containers/Array.h"
@@ -68,20 +69,26 @@ class GuiRenderer;
 
 class SerializationManager;
 
-//
 //------------------------------------------------------------------------------
-struct Mesh
+struct VertexBuffer
 {
-    // Some visual data
-    // This is held by the resource manager
+    RenderBufferEntry buffer_;
+    int vertexSize_;
+};
+
+//------------------------------------------------------------------------------
+struct IndexBuffer
+{
+    RenderBufferEntry buffer_;
 };
 
 //------------------------------------------------------------------------------
 struct VisualObject
 {
-    Mat44       transform_;
-    Material*   material_;
-    Mesh*       mesh_;
+    Mat44           transform_;
+    Material*       material_;
+    VertexBuffer    vertexBuffer_;
+    IndexBuffer     indexBuffer_;
 };
 
 //------------------------------------------------------------------------------
@@ -129,6 +136,7 @@ struct RenderState
 {
     static constexpr uint MAX_CONST_BUFF = 1;
     static constexpr uint MAX_VERT_BUFF = 1;
+    static constexpr uint MAX_INDEX_BUFF = 1;
     static constexpr uint INVALID_DESC = (uint)-1;
     static constexpr uint INVALID_HANDLE = (uint)-1;
 
@@ -140,6 +148,8 @@ struct RenderState
 
     VkBuffer                vertexBuffers_[MAX_VERT_BUFF];
     VkDeviceSize            vbOffsets_[MAX_VERT_BUFF];
+    VkBuffer                indexBuffers_[MAX_INDEX_BUFF];
+    VkDeviceSize            indexOffsets_[MAX_INDEX_BUFF];
     VkDescriptorSet         uboDescSet_{};
 
     uint                    vertexLayouts_[MAX_VERT_BUFF];
@@ -180,12 +190,14 @@ public:
     void SetTexture(uint slot, Texture* texture);
     void SetVertexBuffer(uint slot, const RenderBufferEntry& entry);
     void SetVertexLayout(uint slot, uint layoutHandle);
+    void SetIndexBuffer(uint slot, const RenderBufferEntry& entry);
     void SetPrimitiveTopology(VkrPrimitiveTopology primitiveTopology);
     void SetDynamicUbo(uint slot, const RenderBufferEntry& entry);
     void SetDepthState(uint state);
 
     // Drawing
     void Draw(const RenderPassContext& ctx, uint vertexCount, uint firstVertex);
+    void DrawIndexed(const RenderPassContext& ctx, uint indexCount, uint firstIndex, uint vertexOffset);
 
     void Update(float dTime);
 
@@ -211,6 +223,7 @@ public:
 
     RenderBufferCache* GetUBOCache() const;
     RenderBufferCache* GetVertexCache() const;
+    RenderBufferCache* GetIndexCache() const;
 
     uint GetWidth() const;
     uint GetHeight() const;
@@ -332,6 +345,7 @@ private:
     // Caches
     UniquePtr<RenderBufferCache>    uboCache_;
     UniquePtr<RenderBufferCache>    vbCache_;
+    UniquePtr<RenderBufferCache>    indexCache_;
 
     // Allocator
     VmaAllocator        allocator_;

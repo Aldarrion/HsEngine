@@ -2,6 +2,8 @@
 
 #include "Config.h"
 
+#include "Render/Types.h"
+
 #include "Containers/Array.h"
 
 #include "Math/Math.h"

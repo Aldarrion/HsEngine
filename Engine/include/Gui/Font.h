@@ -2,6 +2,7 @@
 
 #include "Config.h"
 
+#include "Render/Types.h"
 #include "Math/Math.h"
 
 #include "Common/Enums.h"

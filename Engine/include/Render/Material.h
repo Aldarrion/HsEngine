@@ -2,6 +2,7 @@
 
 #include "Config.h"
 
+#include "Render/Types.h"
 #include "Containers/Span.h"
 
 #include "Common/Pointers.h"
@@ -113,6 +114,13 @@ private:
 };
 
 //------------------------------------------------------------------------------
+struct ObjectVertex
+{
+    Vec4 position_;
+    Vec4 normal_;
+};
+
+//------------------------------------------------------------------------------
 class PBRMaterial : public Material
 {
 public:
@@ -134,6 +142,7 @@ public:
 private:
     Shader*     pbrVert_{};
     Shader*     pbrFrag_{};
+    uint        vertexLayout_{};
 
     float roughness_{ 0.2f };
     float metallic_{ 1.0f };

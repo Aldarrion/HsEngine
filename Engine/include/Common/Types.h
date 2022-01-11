@@ -34,11 +34,6 @@ argument and use int64.
 using Index_t = int;
 using IndexUnsigned_t = uint;
 
-class Texture;
-class Shader;
-class VertexBuffer;
-class DynamicUniformBuffer;
-
 //------------------------------------------------------------------------------
 template<class DataT>
 struct [[nodiscard]] Result
