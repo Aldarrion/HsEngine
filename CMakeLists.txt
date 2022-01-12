@@ -94,6 +94,7 @@ target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Engi
 target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Extern/stb/include")
 target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Extern/cjson/include")
 target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Extern/sdl/include")
+target_include_directories(${PROJ_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Extern/tinygltf/include")
 
 target_link_libraries(${PROJ_NAME} glfw)
 target_link_libraries(${PROJ_NAME} ImGui)

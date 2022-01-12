@@ -1,0 +1,2 @@
+https://github.com/syoyo/tinygltf
+e7f1ff5c59d3ca2489923beb239bdf93d863498f
