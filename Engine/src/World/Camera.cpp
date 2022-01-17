@@ -134,11 +134,11 @@ void CameraUpdateFreeFly(CameraFreelyController* freeflyCamera)
             camera->pos_ -= camera->right_ * freeflySpeed * g_Engine->GetDTime();
         }
 
-        if (g_Input->GetState(KC_Q))
+        if (g_Input->GetState(KC_E))
         {
             camera->pos_ += Vec3::UP() * freeflySpeed * g_Engine->GetDTime();
         }
-        else if (g_Input->GetState(KC_E))
+        else if (g_Input->GetState(KC_Q))
         {
             camera->pos_ -= Vec3::UP() * freeflySpeed * g_Engine->GetDTime();
         }

@@ -1,8 +1,14 @@
 #pragma once
 
-#pragma warning(push)
-#pragma warning(disable : 4530)
+#include "Config.h"
+
+#if HS_MSVC
+    #pragma warning(push)
+    #pragma warning(disable : 4530)
+#endif
 
 #include "tinygltf/tiny_gltf.h"
 
-#pragma warning(pop)
+#if HS_MSVC
+    #pragma warning(pop)
+#endif
