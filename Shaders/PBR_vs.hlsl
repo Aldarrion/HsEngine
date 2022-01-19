@@ -2,8 +2,9 @@
 
 struct vs_in
 {
-    float4 Pos      : POSITION;
-    float4 Normal   : NORMAL;
+    float3 Pos      : POSITION;
+    float3 Normal   : NORMAL;
+    float2 UV       : TEXCOORD0;
 };
 
 struct vs_out
@@ -22,10 +23,10 @@ vs_out main(vs_in vertex, uint vertID : SV_VERTEXID)
 {
     vs_out o = (vs_out)0;
 
-    o.Pos = mul(mul(Scene.VP, Instance.World), vertex.Pos);
+    o.Pos = mul(mul(Scene.VP, Instance.World), float4(vertex.Pos, 1));
     o.WorldPos = mul(Instance.World, vertex.Pos).xyz;
 
-    o.Normal = normalize(vertex.Normal.xyz);
+    o.Normal = normalize(vertex.Normal);
 
     return o;
 }
