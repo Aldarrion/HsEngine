@@ -39,9 +39,10 @@ RESULT Texture::CreateTex2D(const char* file, const char* name, Texture** tex)
         return R_FAIL;
     }
 
-    *tex = new Texture(VK_FORMAT_R8G8B8A8_SRGB, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
+    *tex = new Texture;
+    (*tex)->Init(VK_FORMAT_R8G8B8A8_SRGB, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
 
-    auto texAllocRes = (*tex)->Allocate((void**)&pixels, name);
+    auto texAllocRes = (*tex)->Allocate((const void**)&pixels, name);
     stbi_image_free(pixels);
 
     if (HS_FAILED(texAllocRes))
@@ -51,11 +52,11 @@ RESULT Texture::CreateTex2D(const char* file, const char* name, Texture** tex)
 }
 
 //------------------------------------------------------------------------------
-Texture::Texture(VkFormat format, VkExtent3D size, Type type)
-    : format_(format)
-    , size_(size)
-    , type_(type)
+void Texture::Init(VkFormat format, VkExtent3D size, Type type)
 {
+    format_ = format;
+    size_ = size;
+    type_ = type;
 }
 
 //------------------------------------------------------------------------------
@@ -71,7 +72,7 @@ uint Texture::GetBindlessIndex() const
 }
 
 //------------------------------------------------------------------------------
-RESULT Texture::Allocate(void** data, const char* diagName)
+RESULT Texture::Allocate(const void** data, const char* diagName) // TODO(pavel): This is a terrible API with the void**, callers need to cast.
 {
     VkImageLayout initLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 

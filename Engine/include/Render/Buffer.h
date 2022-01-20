@@ -53,7 +53,7 @@ class TempStagingBuffer
 {
 public:
     TempStagingBuffer(int size);
-    RESULT Allocate(void* data);
+    RESULT Allocate(const void* data);
 
     VkBuffer GetBuffer() const;
 

@@ -18,9 +18,8 @@ public:
 
     static RESULT CreateTex2D(const char* file, const char* name, Texture** tex);
 
-    Texture(VkFormat format, VkExtent3D size, Type type);
-
-    RESULT Allocate(void** data, const char* diagName = nullptr);
+    void Init(VkFormat format, VkExtent3D size, Type type);
+    RESULT Allocate(const void** data, const char* diagName = nullptr);
     void Free();
 
     VkImageView GetView() const;

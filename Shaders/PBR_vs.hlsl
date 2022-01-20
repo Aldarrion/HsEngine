@@ -24,7 +24,7 @@ vs_out main(vs_in vertex, uint vertID : SV_VERTEXID)
     vs_out o = (vs_out)0;
 
     o.Pos = mul(mul(Scene.VP, Instance.World), float4(vertex.Pos, 1));
-    o.WorldPos = mul(Instance.World, vertex.Pos).xyz;
+    o.WorldPos = mul(Instance.World, float4(vertex.Pos, 1)).xyz;
 
     o.Normal = normalize(vertex.Normal);
 

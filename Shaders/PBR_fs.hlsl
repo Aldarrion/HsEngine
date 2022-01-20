@@ -12,6 +12,8 @@ struct ps_in
 ConstantBuffer<SceneData>   Scene   : register(b1, space2);
 ConstantBuffer<PBRData>     PBR     : register(b3, space2); // Space3 maybe?
 
+SamplerState SamplerAlbedo : register(s32, space0);
+
 //------------------------------------------------------------------------------
 static const float3 LightPositions[4] =
 {
@@ -84,6 +86,9 @@ float4 main(ps_in input) : SV_Target
     float3 V = normalize(Scene.ViewPos.xyz - input.FragPos);
 
     float3 Lo = (float3)0;
+    float3 albedo = GetTex2D(0).Sample(SamplerAlbedo, input.UV.xy).rgb;
+    albedo *= PBR.Albedo;
+
     for (int i = 0; i < 4; ++i)
     {
         float3 L = normalize(LightPositions[i] - input.FragPos);
@@ -99,7 +104,7 @@ float4 main(ps_in input) : SV_Target
 
         // Fresnel
         float3 F0   = float3(0.04, 0.04, 0.04); // Average value for all dielectrics
-        F0          = lerp(F0, PBR.Albedo, PBR.Metallic);
+        F0          = lerp(F0, albedo, PBR.Metallic);
         float3 F    = FresnelShlick(max(dot(H, V), 0.0), F0);
 
         // Normal distribution function
@@ -119,7 +124,7 @@ float4 main(ps_in input) : SV_Target
         // Metallic surfaces don't have a diffuse term, the light energy is absorbed instead
         kD *= 1.0 - PBR.Metallic;
 
-        Lo += (kD * PBR.Albedo / HS_PI + specular) * radiance * NdotL;
+        Lo += (kD * albedo / HS_PI + specular) * radiance * NdotL;
     }
 
     float3 ambient = float3(0.03, 0.03, 0.03) * PBR.Albedo * PBR.AO;

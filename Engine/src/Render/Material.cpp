@@ -327,9 +327,10 @@ RESULT TexturedTriangleMaterial::Init()
         int texWidth, texHeight, texChannels;
         stbi_uc* pixels = stbi_load("textures/grass_tile.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-        texture_ = new Texture(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
+        texture_ = new Texture;
+        texture_->Init(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
 
-        auto texAllocRes = texture_->Allocate((void**)&pixels, "GrassTile");
+        auto texAllocRes = texture_->Allocate((const void**)&pixels, "GrassTile");
         stbi_image_free(pixels);
 
         if (HS_FAILED(texAllocRes))
@@ -340,9 +341,10 @@ RESULT TexturedTriangleMaterial::Init()
         int texWidth, texHeight, texChannels;
         stbi_uc* pixels = stbi_load("textures/tree.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-        textureTree_ = new Texture(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
+        textureTree_ = new Texture;
+        textureTree_->Init(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
 
-        auto texAllocRes = textureTree_->Allocate((void**)&pixels, "Tree");
+        auto texAllocRes = textureTree_->Allocate((const void**)&pixels, "Tree");
         stbi_image_free(pixels);
 
         if (HS_FAILED(texAllocRes))
@@ -353,9 +355,10 @@ RESULT TexturedTriangleMaterial::Init()
         int texWidth, texHeight, texChannels;
         stbi_uc* pixels = stbi_load("textures/box.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-        textureBox_ = new Texture(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
+        textureBox_ = new Texture;
+        textureBox_->Init(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
 
-        auto texAllocRes = textureBox_->Allocate((void**)&pixels, "Box");
+        auto texAllocRes = textureBox_->Allocate((const void**)&pixels, "Box");
         stbi_image_free(pixels);
 
         if (HS_FAILED(texAllocRes))
@@ -450,9 +453,10 @@ RESULT SkyboxMaterial::Init()
             }
         }
 
-        skyboxCubemap_ = new Texture(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_CUBE);
+        skyboxCubemap_ = new Texture;
+        skyboxCubemap_->Init(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_CUBE);
 
-        auto texAllocRes = skyboxCubemap_->Allocate((void**)pixels, "Skybox");
+        auto texAllocRes = skyboxCubemap_->Allocate((const void**)pixels, "Skybox");
         for (uint i = 0; i < HS_ARR_LEN(pixels); ++i)
             stbi_image_free(pixels[i]);
 
@@ -573,49 +577,10 @@ void PBRMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
     g_Render->SetShader<PS_VERT>(pbrVert_);
     g_Render->SetShader<PS_FRAG>(pbrFrag_);
 
+    g_Render->SetTexture(0, albedoTex_);
+
     // TODO get the data better
     g_Render->DrawIndexed(ctx, drawData.object_->indexBuffer_.buffer_.size_ / 4, 0, 0);
-}
-
-//------------------------------------------------------------------------------
-float PBRMaterial::GetRoughness() const
-{
-    return roughness_;
-}
-//------------------------------------------------------------------------------
-void PBRMaterial::SetRoughness(float roughness)
-{
-    roughness_ = roughness;
-}
-//------------------------------------------------------------------------------
-float PBRMaterial::GetMetallic() const
-{
-    return metallic_;
-}
-//------------------------------------------------------------------------------
-void PBRMaterial::SetMetallic(float metallic)
-{
-    metallic_ = metallic;
-}
-//------------------------------------------------------------------------------
-float PBRMaterial::GetAo() const
-{
-    return ao_;
-}
-//------------------------------------------------------------------------------
-void PBRMaterial::SetAo(float ao)
-{
-    ao_ = ao;
-}
-//------------------------------------------------------------------------------
-const Vec3& PBRMaterial::GetAlbedo() const
-{
-    return albedo_;
-}
-//------------------------------------------------------------------------------
-void PBRMaterial::SetAlbedo(const Vec3& albedo)
-{
-    albedo_ = albedo;
 }
 
 }

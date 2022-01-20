@@ -117,7 +117,7 @@ TempStagingBuffer::TempStagingBuffer(int size)
 }
 
 //------------------------------------------------------------------------------
-RESULT TempStagingBuffer::Allocate(void* data)
+RESULT TempStagingBuffer::Allocate(const void* data)
 {
     // Create the buffer
     VkBufferCreateInfo bufferInfo{};

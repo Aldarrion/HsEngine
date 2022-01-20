@@ -22,9 +22,10 @@ RESULT Font::Init(const char* name)
         int texWidth, texHeight, texChannels;
         stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
-        texture_ = new Texture(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
+        texture_ = new Texture;
+        texture_->Init(VK_FORMAT_R8G8B8A8_UNORM, VkExtent3D{ (uint)texWidth, (uint)texHeight, 1 }, Texture::Type::TEX_2D);
 
-        auto texAllocRes = texture_->Allocate((void**)&pixels, name);
+        auto texAllocRes = texture_->Allocate((const void**)&pixels, name);
         stbi_image_free(pixels);
 
         if (HS_FAILED(texAllocRes))

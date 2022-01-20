@@ -128,28 +128,16 @@ public:
     RESULT Init() override;
     void Draw(const RenderPassContext& ctx, const DrawData& drawData) override;
 
-    float GetRoughness() const;
-    void SetRoughness(float roughness);
-
-    float GetMetallic() const;
-    void SetMetallic(float metallic);
-
-    float GetAo() const;
-    void SetAo(float ao);
-
-    const Vec3& GetAlbedo() const;
-    void SetAlbedo(const Vec3& albedo);
-
-private:
-    Shader*     pbrVert_{};
-    Shader*     pbrFrag_{};
-    uint        vertexLayout_{};
-
+    Texture* albedoTex_{};
     float roughness_{ 0.2f };
     float metallic_{ 1.0f };
     float ao_{ 1.0f };
     Vec3 albedo_{ 0.8f, 0.5f, 0.5f };
 
+private:
+    Shader*     pbrVert_{};
+    Shader*     pbrFrag_{};
+    uint        vertexLayout_{};
 };
 
 }
