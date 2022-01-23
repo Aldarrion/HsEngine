@@ -35,6 +35,12 @@
 #include <cstdio>
 #include <cfloat>
 
+#if HS_RENDER_DEBUG
+    #define HS_RENDER_VALIDATION 1
+#else
+    #define HS_RENDER_VALIDATION 0
+#endif
+
 //------------------------------------------------------------------------------
 //static constexpr const char* CAMERA_CFG = "configs/Camera.json";
 
@@ -105,7 +111,7 @@ bool CheckResult(VkResult result, const char* file, int line, const char* fun)
     return true;
 }
 
-#if HS_DEBUG
+#if HS_RENDER_VALIDATION
     //------------------------------------------------------------------------------
     VkResult CreateDebugReportCallbackEXT(
         VkInstance instance,
@@ -192,35 +198,37 @@ constexpr const char* IGNORED_MSGS[] = {
     "UNASSIGNED-BestPractices-vkCreateDevice-deprecated-extension",
 };
 
-//------------------------------------------------------------------------------
-constexpr const char* VALIDATION_WARNING = "Validation Warning:";
+#if HS_RENDER_VALIDATION
+    //------------------------------------------------------------------------------
+    constexpr const char* VALIDATION_WARNING = "Validation Warning:";
 
-//------------------------------------------------------------------------------
-VkBool32 ValidationCallback(
-    VkDebugReportFlagsEXT flags,
-    VkDebugReportObjectTypeEXT objType,
-    uint64_t obj,
-    size_t location,
-    int32_t code,
-    const char* layerPrefix,
-    const char* msg,
-    void* userData)
-{
-    for (uint i = 0; i < HS_ARR_LEN(IGNORED_MSGS); ++i)
+    //------------------------------------------------------------------------------
+    VkBool32 ValidationCallback(
+        VkDebugReportFlagsEXT flags,
+        VkDebugReportObjectTypeEXT objType,
+        uint64_t obj,
+        size_t location,
+        int32_t code,
+        const char* layerPrefix,
+        const char* msg,
+        void* userData)
     {
-        if (strstr(msg, IGNORED_MSGS[i]) != NULL)
-            return VK_FALSE;
+        for (uint i = 0; i < HS_ARR_LEN(IGNORED_MSGS); ++i)
+        {
+            if (strstr(msg, IGNORED_MSGS[i]) != NULL)
+                return VK_FALSE;
+        }
+
+        auto logLevel = LogLevel::Error;
+        if (strncmp(msg, VALIDATION_WARNING, strlen(VALIDATION_WARNING)) == 0)
+            logLevel = LogLevel::Warning;
+
+        Log(logLevel, "%s", msg);
+
+        // Return true only when we want to test the VL themselves
+        return VK_FALSE;
     }
-
-    auto logLevel = LogLevel::Error;
-    if (strncmp(msg, VALIDATION_WARNING, strlen(VALIDATION_WARNING)) == 0)
-        logLevel = LogLevel::Warning;
-
-    Log(logLevel, "%s", msg);
-
-    // Return true only when we want to test the VL themselves
-    return VK_FALSE;
-}
+#endif
 
 //------------------------------------------------------------------------------
 RESULT Render::OnWindowResized(uint width, uint height)
@@ -325,7 +333,7 @@ RESULT Render::CreateInstance()
     instInfo.sType              = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instInfo.pApplicationInfo   = &appInfo;
 
-    #if HS_RENDER_DEBUG
+    #if HS_RENDER_VALIDATION
         const char* validationLayers[] =
         {
             "VK_LAYER_KHRONOS_validation",
@@ -362,7 +370,7 @@ RESULT Render::CreateInstance()
     if (VKR_FAILED(vkCreateInstance(&instInfo, nullptr, &vkInstance_)))
         return R_FAIL;
 
-    #if HS_RENDER_DEBUG
+    #if HS_RENDER_VALIDATION
         VkDebugReportCallbackCreateInfoEXT createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
         createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
@@ -614,7 +622,7 @@ RESULT Render::CreateSwapchain()
         VkImageCreateInfo depthImageInfo{};
         depthImageInfo.sType            = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         depthImageInfo.imageType        = VK_IMAGE_TYPE_2D;
-        depthImageInfo.format           = VK_FORMAT_D24_UNORM_S8_UINT;
+        depthImageInfo.format           = VK_FORMAT_D32_SFLOAT;
         depthImageInfo.extent           = VkExtent3D{ width_, height_, 1 };
         depthImageInfo.mipLevels        = 1;
         depthImageInfo.arrayLayers      = 1;
@@ -633,7 +641,7 @@ RESULT Render::CreateSwapchain()
         depthViewInfo.sType               = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         depthViewInfo.image               = depthImages_[i];
         depthViewInfo.viewType            = VK_IMAGE_VIEW_TYPE_2D;
-        depthViewInfo.format              = VK_FORMAT_D24_UNORM_S8_UINT;
+        depthViewInfo.format              = VK_FORMAT_D32_SFLOAT;
 
         depthViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         depthViewInfo.subresourceRange.baseMipLevel = 0;
@@ -666,7 +674,7 @@ RESULT Render::CreateMainRenderPass()
     colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription depthAttachment{};
-    depthAttachment.format          = VK_FORMAT_D24_UNORM_S8_UINT;
+    depthAttachment.format          = VK_FORMAT_D32_SFLOAT;
     depthAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -1064,8 +1072,24 @@ RESULT Render::Init()
     if (VKR_FAILED(vkCreateSampler(vkDevice_, &pointClampInfo, nullptr, &pointClamp)))
         return R_FAIL;
 
+    VkSamplerCreateInfo anisoWrapInfo{};
+    anisoWrapInfo.sType            = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    anisoWrapInfo.magFilter        = VK_FILTER_LINEAR;
+    anisoWrapInfo.minFilter        = VK_FILTER_LINEAR;
+    anisoWrapInfo.mipmapMode       = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    anisoWrapInfo.addressModeU     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    anisoWrapInfo.addressModeV     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    anisoWrapInfo.addressModeW     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    anisoWrapInfo.anisotropyEnable = VK_TRUE;
+    anisoWrapInfo.maxAnisotropy    = Min(16.0f, vkPhysicalDeviceProperties_.limits.maxSamplerAnisotropy);
+    anisoWrapInfo.maxLod           = FLT_MAX;
+
+    VkSampler anisoWrap{};
+    if (VKR_FAILED(vkCreateSampler(vkDevice_, &anisoWrapInfo, nullptr, &anisoWrap)))
+        return R_FAIL;
+
     VkSampler immutableSamplers[IMMUTABLE_SAMPLER_COUNT] = {
-        pointClamp
+        pointClamp,
     };
 
     // Skybox sampler
@@ -1083,18 +1107,24 @@ RESULT Render::Init()
     if (VKR_FAILED(vkCreateSampler(vkDevice_, &skyboxSampInfo, nullptr, &skyboxSampler)))
         return R_FAIL;
 
-    VkDescriptorSetLayoutBinding bindings[2]{};
+    VkDescriptorSetLayoutBinding bindings[3]{};
     bindings[0].binding             = 0;
     bindings[0].descriptorType      = VK_DESCRIPTOR_TYPE_SAMPLER;
     bindings[0].descriptorCount     = IMMUTABLE_SAMPLER_COUNT;
     bindings[0].stageFlags          = VK_SHADER_STAGE_FRAGMENT_BIT;
     bindings[0].pImmutableSamplers  = immutableSamplers;
 
-    bindings[1].binding             = 32;
+    bindings[1].binding             = 1;
     bindings[1].descriptorType      = VK_DESCRIPTOR_TYPE_SAMPLER;
     bindings[1].descriptorCount     = 1;
     bindings[1].stageFlags          = VK_SHADER_STAGE_FRAGMENT_BIT;
-    bindings[1].pImmutableSamplers  = &skyboxSampler;
+    bindings[1].pImmutableSamplers  = &anisoWrap;
+
+    bindings[2].binding             = 32;
+    bindings[2].descriptorType      = VK_DESCRIPTOR_TYPE_SAMPLER;
+    bindings[2].descriptorCount     = 1;
+    bindings[2].stageFlags          = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[2].pImmutableSamplers  = &skyboxSampler;
 
     VkDescriptorSetLayoutCreateInfo dsLayoutInfo{};
     dsLayoutInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1350,7 +1380,7 @@ RESULT Render::InitImgui()
         poolInfo.poolSizeCount = (uint32_t)IM_ARRAYSIZE(poolSizes);
         poolInfo.pPoolSizes = poolSizes;
 
-        if (HS_FAILED(vkCreateDescriptorPool(vkDevice_, &poolInfo, nullptr, &imguiDescriptorPool_)))
+        if (VKR_FAILED(vkCreateDescriptorPool(vkDevice_, &poolInfo, nullptr, &imguiDescriptorPool_)))
         {
             return R_FAIL;
         }
@@ -1397,6 +1427,8 @@ void Render::Free()
     {
         vkDestroyFramebuffer(vkDevice_, mainFrameBuffer_[bbIdx], nullptr);
     }
+
+    shaderManager_ = nullptr;
 
     vkDestroyRenderPass(vkDevice_, mainRenderPass_, nullptr);
     vkDestroyDevice(vkDevice_, nullptr);

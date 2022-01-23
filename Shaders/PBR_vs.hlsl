@@ -19,7 +19,7 @@ struct vs_out
 ConstantBuffer<SceneData>       Scene       : register(b1, space2);
 ConstantBuffer<InstanceData>    Instance    : register(b2, space2);
 
-vs_out main(vs_in vertex, uint vertID : SV_VERTEXID)
+vs_out main(vs_in vertex)
 {
     vs_out o = (vs_out)0;
 
@@ -27,6 +27,8 @@ vs_out main(vs_in vertex, uint vertID : SV_VERTEXID)
     o.WorldPos = mul(Instance.World, float4(vertex.Pos, 1)).xyz;
 
     o.Normal = normalize(vertex.Normal);
+
+    o.UV = vertex.UV;
 
     return o;
 }

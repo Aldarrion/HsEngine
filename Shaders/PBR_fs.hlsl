@@ -12,7 +12,7 @@ struct ps_in
 ConstantBuffer<SceneData>   Scene   : register(b1, space2);
 ConstantBuffer<PBRData>     PBR     : register(b3, space2); // Space3 maybe?
 
-SamplerState SamplerAlbedo : register(s32, space0);
+SamplerState SamplerAlbedo : register(s1, space0);
 
 //------------------------------------------------------------------------------
 static const float3 LightPositions[4] =
@@ -88,6 +88,7 @@ float4 main(ps_in input) : SV_Target
     float3 Lo = (float3)0;
     float3 albedo = GetTex2D(0).Sample(SamplerAlbedo, input.UV.xy).rgb;
     albedo *= PBR.Albedo;
+    R3(albedo);
 
     for (int i = 0; i < 4; ++i)
     {
@@ -127,7 +128,7 @@ float4 main(ps_in input) : SV_Target
         Lo += (kD * albedo / HS_PI + specular) * radiance * NdotL;
     }
 
-    float3 ambient = float3(0.03, 0.03, 0.03) * PBR.Albedo * PBR.AO;
+    float3 ambient = float3(0.03, 0.03, 0.03) * albedo * PBR.AO;
     float3 color = ambient + Lo;
 
     return float4(color, 1.0);
