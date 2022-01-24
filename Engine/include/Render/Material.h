@@ -129,6 +129,7 @@ public:
     void Draw(const RenderPassContext& ctx, const DrawData& drawData) override;
 
     Texture* albedoTex_{};
+    Texture* roughnessMetalnessTex_{};
     float roughness_{ 0.2f };
     float metallic_{ 1.0f };
     float ao_{ 1.0f };

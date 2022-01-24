@@ -578,6 +578,7 @@ void PBRMaterial::Draw(const RenderPassContext& ctx, const DrawData& drawData)
     g_Render->SetShader<PS_FRAG>(pbrFrag_);
 
     g_Render->SetTexture(0, albedoTex_);
+    g_Render->SetTexture(1, roughnessMetalnessTex_);
 
     // TODO get the data better
     g_Render->DrawIndexed(ctx, drawData.object_->indexBuffer_.buffer_.size_ / 4, 0, 0);

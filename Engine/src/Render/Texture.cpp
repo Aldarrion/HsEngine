@@ -71,6 +71,32 @@ uint Texture::GetBindlessIndex() const
     return bindlessIdx_;
 }
 
+static int FormatBytesPerPixel(VkFormat format)
+{
+    switch (format)
+    {
+        case VK_FORMAT_R8G8_SRGB:
+        case VK_FORMAT_R8G8_SINT:
+        case VK_FORMAT_R8G8_SNORM:
+        case VK_FORMAT_R8G8_SSCALED:
+        case VK_FORMAT_R8G8_UINT:
+        case VK_FORMAT_R8G8_UNORM:
+        case VK_FORMAT_R8G8_USCALED:
+            return 2;
+        case VK_FORMAT_R8G8B8A8_SRGB:
+        case VK_FORMAT_R8G8B8A8_SINT:
+        case VK_FORMAT_R8G8B8A8_SNORM:
+        case VK_FORMAT_R8G8B8A8_SSCALED:
+        case VK_FORMAT_R8G8B8A8_UINT:
+        case VK_FORMAT_R8G8B8A8_UNORM:
+        case VK_FORMAT_R8G8B8A8_USCALED:
+            return 4;
+        default:
+            HS_NOT_IMPLEMENTED;
+            return 0;
+    }
+}
+
 //------------------------------------------------------------------------------
 RESULT Texture::Allocate(const void** data, const char* diagName) // TODO(pavel): This is a terrible API with the void**, callers need to cast.
 {
@@ -123,6 +149,8 @@ RESULT Texture::Allocate(const void** data, const char* diagName) // TODO(pavel)
     allSubres.baseArrayLayer   = 0;
     allSubres.layerCount       = imgInfo.arrayLayers;
 
+    int bpp = FormatBytesPerPixel(format_);
+
     if (data)
     {
         g_Render->TransitionBarrier(
@@ -136,7 +164,7 @@ RESULT Texture::Allocate(const void** data, const char* diagName) // TODO(pavel)
         // baseArrayLayer correspond to faces in the order +X, -X, +Y, -Y, +Z, -Z.
         for (uint i = 0; i < imgInfo.arrayLayers; ++i)
         {
-            uint buffSize = size_.width * size_.height * 4;
+            uint buffSize = size_.width * size_.height * bpp;
             TempStagingBuffer staging(buffSize);
             if (HS_FAILED(staging.Allocate(data[i])))
                 return R_FAIL;
