@@ -1641,7 +1641,7 @@ RESULT Render::PrepareForDraw(const RenderPassContext& ctx)
     // Fill bindless UBO
     {
         BindingUBO* ubo;
-        state_.bindlessUBO_ = uboCache_->BeginAlloc(sizeof(BindingUBO), sizeof(BindingUBO), (void**)&ubo);
+        state_.bindlessUBO_ = uboCache_->BeginAlloc(sizeof(BindingUBO), alignof(BindingUBO), (void**)&ubo);
 
         for (uint i = 0; i < SRV_SLOT_COUNT; ++i)
         {

@@ -126,7 +126,7 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
         }
     }
 
-    guiVbEntry_ = vbCache->BeginAlloc(glyphCount * VERTS_PER_GLYPH * sizeof(GuiVertex), sizeof(GuiVertex), (void**)&guiVerts_);
+    guiVbEntry_ = vbCache->BeginAlloc(glyphCount * VERTS_PER_GLYPH * sizeof(GuiVertex), alignof(GuiVertex), (void**)&guiVerts_);
 
     auto SetVert = [](const Font* font, GuiVertex& vert, Vec2 pos, Vec2 uv)
     {
@@ -178,7 +178,7 @@ void GuiRenderer::DrawText(Font* font, StringView text, Vec2 pos)
 
     // Draw
     sh::GuiData* guiData;
-    RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::GuiData), sizeof(sh::GuiData), (void**)&guiData);
+    RenderBufferEntry constBuffer = g_Render->GetUBOCache()->BeginAlloc(sizeof(sh::GuiData), alignof(sh::GuiData), (void**)&guiData);
     guiData->ScreenDimensions = Vec2(g_Render->GetWidth(), g_Render->GetHeight());
     g_Render->GetUBOCache()->EndAlloc();
     
